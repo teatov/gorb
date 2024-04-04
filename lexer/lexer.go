@@ -19,6 +19,16 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
+func isWhitespace(ch byte) bool {
+	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
+}
+
+func (l *Lexer) skipWhitespace() {
+	for isWhitespace(l.ch) {
+		l.readChar()
+	}
+}
+
 func newToken(tokenType token.TokenType, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
 }
@@ -40,6 +50,8 @@ func (l *Lexer) readIdentifier() string {
 
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
+
+	l.skipWhitespace()
 
 	switch l.ch {
 	case '=':
