@@ -3,8 +3,9 @@ package repl
 import (
 	"bufio"
 	"fmt"
-	"gorb/token"
 	"gorb/lexer"
+	"gorb/parser"
+	"gorb/token"
 	"io"
 )
 
@@ -24,7 +25,12 @@ func Start(in io.Reader, out io.Writer) {
 		l := lexer.New(line)
 
 		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
+			fmt.Printf("%v ", tok)
 		}
+		fmt.Print("\n")
+		
+		p := parser.New(lexer.New(line))
+		program := p.ParseProgram()
+		fmt.Println(program)
 	}
 }
