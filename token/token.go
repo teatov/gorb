@@ -1,5 +1,7 @@
 package token
 
+import "fmt"
+
 type TokenType string
 
 const (
@@ -21,11 +23,11 @@ const (
 	NOT_EQUALS   = "!="
 	// delimiters
 	COMMA     = ","
-	SEMICOLON = ";"
 	PAREN_L   = "("
 	PAREN_R   = ")"
 	BRACE_L   = "{"
 	BRACE_R   = "}"
+	SEMICOLON = ";"
 	//keywords
 	FUNCTION    = "FUNCTION"
 	DECLARATION = "DECLARATION"
@@ -39,6 +41,21 @@ const (
 type Token struct {
 	Type    TokenType
 	Literal string
+	Pos     Pos
+	Len     int
+}
+
+func (t Token) String() string {
+	return fmt.Sprintf("{%s %s %v}", t.Type, t.Literal, t.Pos)
+}
+
+type Pos struct {
+	Ln  int
+	Col int
+}
+
+func (p Pos) String() string {
+	return fmt.Sprintf("%d:%d", p.Ln, p.Col)
 }
 
 var keywords = map[string]TokenType{

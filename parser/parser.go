@@ -98,7 +98,7 @@ func (p *Parser) curTokenIs(t token.TokenType) bool {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected `%s`, got `%s`", t, p.peekToken.Type)
+	msg := fmt.Sprintf("%v expected `%s`, got `%s`", p.curToken.Pos, t, p.peekToken.Type)
 	p.errors = append(p.errors, msg)
 }
 
