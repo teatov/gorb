@@ -7,10 +7,16 @@ const (
 	EOF     = "EOF"
 	// identifiers and literals
 	IDENTIFIER = "IDENTIFIER"
-	INT        = "INT"
+	INTEGER    = "INTEGER"
 	// operators
-	ASSIGN = "="
-	PLUS   = "+"
+	ASSIGN       = "="
+	PLUS         = "+"
+	MINUS        = "-"
+	BANG         = "!"
+	ASTERISK     = "*"
+	SLASH        = "/"
+	LESS_THAN    = "<"
+	GREATER_THAN = ">"
 	// delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
