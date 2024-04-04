@@ -7,10 +7,9 @@ import (
 )
 
 func TestLetStatements(t *testing.T) {
-	input := `
-	let x = 5;
-	let y = 10;
-	let foobar = 838383;`
+	input := `so x = 5;
+	so y = 10;
+	so foobar = 838383;`
 
 	l := lexer.New(input)
 	p := New(l)
@@ -40,8 +39,8 @@ func TestLetStatements(t *testing.T) {
 }
 
 func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
-	if s.TokenLiteral() != "let" {
-		t.Errorf("s.TokenLiteral not 'let'. got=%q", s.TokenLiteral())
+	if s.TokenLiteral() != "so" {
+		t.Errorf("s.TokenLiteral not 'so'. got=%q", s.TokenLiteral())
 		return false
 	}
 
