@@ -9,7 +9,7 @@ const (
 	IDENTIFIER = "IDENTIFIER"
 	INTEGER    = "INTEGER"
 	// operators
-	ASSIGN       = "="
+	ASSIGNMENT   = "="
 	PLUS         = "+"
 	MINUS        = "-"
 	BANG         = "!"

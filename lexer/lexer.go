@@ -40,7 +40,7 @@ func (l *Lexer) NextToken() token.Token {
 				Literal: string(ch) + string(l.ch),
 			}
 		} else {
-			tok = newToken(token.ASSIGN, l.ch)
+			tok = newToken(token.ASSIGNMENT, l.ch)
 		}
 	case '+':
 		tok = newToken(token.PLUS, l.ch)
