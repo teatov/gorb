@@ -11,7 +11,7 @@ func TestNextToken(t *testing.T) {
 	
 	so add = fn(x, y) {
 		x + y;
-	}
+	};
 	
 	so result = add(five, ten);`
 
@@ -28,6 +28,7 @@ func TestNextToken(t *testing.T) {
 		{token.IDENTIFIER, "ten"},
 		{token.ASSIGN, "="},
 		{token.INT, "10"},
+		{token.SEMICOLON, ";"},
 		{token.DECLARATION, "so"},
 		{token.IDENTIFIER, "add"},
 		{token.ASSIGN, "="},
