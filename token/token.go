@@ -17,6 +17,8 @@ const (
 	SLASH        = "/"
 	LESS_THAN    = "<"
 	GREATER_THAN = ">"
+	EQUALS       = "=="
+	NOT_EQUALS   = "!="
 	// delimiters
 	COMMA     = ","
 	SEMICOLON = ";"
