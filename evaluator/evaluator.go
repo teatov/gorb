@@ -21,7 +21,13 @@ func Eval(node ast.Node) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 
+	case *ast.BlockStatement:
+		return evalStatements(node.Statements)
+
 	// expressions
+	case *ast.IfExpression:
+		return evalIfExpression(node)
+
 	case *ast.UnaryExpression:
 		right := Eval(node.Right)
 		return evalUnaryExpression(node.Operator, right)
@@ -42,6 +48,8 @@ func Eval(node ast.Node) object.Object {
 	return nil
 }
 
+// statements
+
 func evalStatements(statements []ast.Statement) object.Object {
 	var result object.Object
 
@@ -50,6 +58,19 @@ func evalStatements(statements []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+// expressions
+
+func evalIfExpression(ie *ast.IfExpression) object.Object {
+	condition := Eval(ie.Condition)
+	if isTruthy(condition) {
+		return Eval(ie.Consequence)
+	} else if ie.Alternative != nil {
+		return Eval(ie.Alternative)
+	} else {
+		return NULL
+	}
 }
 
 func evalUnaryExpression(
@@ -137,9 +158,24 @@ func evalIntegerBinaryExpression(
 	}
 }
 
+// helpers
+
 func boolToBooleanObject(input bool) *object.Boolean {
 	if input {
 		return TRUE
 	}
 	return FALSE
+}
+
+func isTruthy(obj object.Object) bool {
+	switch obj {
+	case NULL:
+		return false
+	case TRUE:
+		return true
+	case FALSE:
+		return false
+	default:
+		return true
+	}
 }
