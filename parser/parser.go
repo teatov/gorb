@@ -16,6 +16,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
 	p.registerUnary(token.PAREN_OPEN, p.parseGroupedExpression)
+	p.registerUnary(token.IF, p.parseIfExpression)
 	p.registerUnary(token.NOT, p.parseUnaryExpression)
 	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
@@ -142,6 +143,23 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 	return stmt
 }
 
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken}
+	block.Statements = []ast.Statement{}
+
+	p.nextToken()
+
+	for !p.curTokenIs(token.BRACE_CLOSE) && !p.curTokenIs(token.EOF) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+
+	return block
+}
+
 // expressions
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
@@ -151,6 +169,39 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	if !p.expectPeek(token.PAREN_CLOSE) {
 		return nil
+	}
+
+	return exp
+}
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	exp := &ast.IfExpression{Token: p.curToken}
+
+	if !p.expectPeek(token.PAREN_OPEN) {
+		return nil
+	}
+
+	p.nextToken()
+	exp.Condition = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.PAREN_CLOSE) {
+		return nil
+	}
+
+	if !p.expectPeek(token.BRACE_OPEN) {
+		return nil
+	}
+
+	exp.Consequence = p.parseBlockStatement()
+
+	if p.peekTokenIs(token.ELSE) {
+		p.nextToken()
+
+		if !p.expectPeek(token.BRACE_OPEN) {
+			return nil
+		}
+
+		exp.Alternative = p.parseBlockStatement()
 	}
 
 	return exp
