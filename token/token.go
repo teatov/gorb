@@ -2,42 +2,6 @@ package token
 
 import "fmt"
 
-type TokenType string
-
-const (
-	ILLEGAL = "ILLEGAL"
-	EOF     = "EOF"
-	// identifiers and literals
-	IDENTIFIER = "IDENTIFIER"
-	INTEGER    = "INTEGER"
-	// operators
-	ASSIGNMENT   = "="
-	PLUS         = "+"
-	MINUS        = "-"
-	BANG         = "!"
-	ASTERISK     = "*"
-	SLASH        = "/"
-	LESS_THAN    = "<"
-	GREATER_THAN = ">"
-	EQUALS       = "=="
-	NOT_EQUALS   = "!="
-	// delimiters
-	COMMA     = ","
-	PAREN_L   = "("
-	PAREN_R   = ")"
-	BRACE_L   = "{"
-	BRACE_R   = "}"
-	SEMICOLON = ";"
-	//keywords
-	FUNCTION    = "FUNCTION"
-	DECLARATION = "DECLARATION"
-	TRUE        = "TRUE"
-	FALSE       = "FALSE"
-	IF          = "IF"
-	ELSE        = "ELSE"
-	RETURN      = "RETURN"
-)
-
 type Token struct {
 	Type    TokenType
 	Literal string
@@ -53,14 +17,52 @@ func (t Token) String() string {
 	return fmt.Sprintf("{%s %v}", typeAndLiteral, t.Pos)
 }
 
+type TokenType string
+
 type Pos struct {
 	Ln  int
 	Col int
 }
 
-func (p Pos) String() string {
-	return fmt.Sprintf("%d:%d", p.Ln, p.Col)
-}
+func (p Pos) String() string { return fmt.Sprintf("%d:%d", p.Ln, p.Col) }
+
+const (
+	ILLEGAL = "ILLEGAL"
+	EOF     = "EOF"
+
+	// identifiers and literals
+	IDENTIFIER = "IDENTIFIER"
+	INTEGER    = "INTEGER"
+
+	// operators
+	ASSIGNMENT   = "="
+	PLUS         = "+"
+	MINUS        = "-"
+	BANG         = "!"
+	ASTERISK     = "*"
+	SLASH        = "/"
+	LESS_THAN    = "<"
+	GREATER_THAN = ">"
+	EQUALS       = "=="
+	NOT_EQUALS   = "!="
+
+	// delimiters
+	COMMA     = ","
+	PAREN_L   = "("
+	PAREN_R   = ")"
+	BRACE_L   = "{"
+	BRACE_R   = "}"
+	SEMICOLON = ";"
+
+	//keywords
+	FUNCTION    = "FUNCTION"
+	DECLARATION = "DECLARATION"
+	TRUE        = "TRUE"
+	FALSE       = "FALSE"
+	IF          = "IF"
+	ELSE        = "ELSE"
+	RETURN      = "RETURN"
+)
 
 var keywords = map[string]TokenType{
 	"fn":     FUNCTION,
