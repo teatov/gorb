@@ -382,9 +382,9 @@ func TestBooleanExpression(t *testing.T) {
 				program.Statements[0])
 		}
 
-		boolean, ok := stmt.Expression.(*ast.Boolean)
+		boolean, ok := stmt.Expression.(*ast.BooleanLiteral)
 		if !ok {
-			t.Fatalf("exp not *ast.Boolean. got=%T", stmt.Expression)
+			t.Fatalf("exp not *ast.BooleanLiteral. got=%T", stmt.Expression)
 		}
 		if boolean.Value != tt.expectedBoolean {
 			t.Errorf("boolean.Value not %t. got=%t", tt.expectedBoolean,
@@ -784,9 +784,9 @@ func testIdentifier(t *testing.T, exp ast.Expression, value string) bool {
 }
 
 func testBooleanLiteral(t *testing.T, exp ast.Expression, value bool) bool {
-	bo, ok := exp.(*ast.Boolean)
+	bo, ok := exp.(*ast.BooleanLiteral)
 	if !ok {
-		t.Errorf("exp not *ast.Boolean. got=%T", exp)
+		t.Errorf("exp not *ast.BooleanLiteral. got=%T", exp)
 		return false
 	}
 
