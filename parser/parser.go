@@ -52,12 +52,12 @@ type (
 	binaryParseFn func(ast.Expression) ast.Expression
 )
 
-func (p *Parser) registerUnary(tokenType token.TokenType, fn unaryParseFn) {
-	p.unaryParseFns[tokenType] = fn
+func (p *Parser) registerUnary(tt token.TokenType, fn unaryParseFn) {
+	p.unaryParseFns[tt] = fn
 }
 
-func (p *Parser) registerBinary(tokenType token.TokenType, fn binaryParseFn) {
-	p.binaryParseFns[tokenType] = fn
+func (p *Parser) registerBinary(tt token.TokenType, fn binaryParseFn) {
+	p.binaryParseFns[tt] = fn
 }
 
 func (p *Parser) nextToken() {
@@ -142,42 +142,42 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 // expressions
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	unary := p.unaryParseFns[p.curToken.Type]
-	if unary == nil {
+	parseUnary := p.unaryParseFns[p.curToken.Type]
+	if parseUnary == nil {
 		p.noUnaryParseFnError(p.curToken.Type)
 		return nil
 	}
-	leftExp := unary()
+	leftExp := parseUnary()
 
 	for !p.peekTokenIs(token.TERMINATOR) && precedence < p.peekPrecedence() {
-		binary := p.binaryParseFns[p.peekToken.Type]
-		if binary == nil {
+		parseBinary := p.binaryParseFns[p.peekToken.Type]
+		if parseBinary == nil {
 			return leftExp
 		}
 
 		p.nextToken()
 
-		leftExp = binary(leftExp)
+		leftExp = parseBinary(leftExp)
 	}
 
 	return leftExp
 }
 
 func (p *Parser) parseUnaryExpression() ast.Expression {
-	expr := &ast.UnaryExpression{
+	exp := &ast.UnaryExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 	}
 
 	p.nextToken()
 
-	expr.Right = p.parseExpression(UNARY)
+	exp.Right = p.parseExpression(UNARY)
 
-	return expr
+	return exp
 }
 
 func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
-	expr := &ast.BinaryExpression{
+	exp := &ast.BinaryExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 		Left:     left,
@@ -185,9 +185,9 @@ func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
 
 	precedence := p.curPrecedence()
 	p.nextToken()
-	expr.Right = p.parseExpression(precedence)
+	exp.Right = p.parseExpression(precedence)
 
-	return expr
+	return exp
 }
 
 // literals
@@ -200,6 +200,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+
 	if err != nil {
 		msg := fmt.Sprintf("%v could not parse %q as integer", p.curToken.Pos, p.curToken.Literal)
 		p.errors = append(p.errors, msg)
@@ -213,22 +214,22 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 
 // helpers
 
-func (p *Parser) curTokenIs(t token.TokenType) bool {
-	return p.curToken.Type == t
+func (p *Parser) curTokenIs(tt token.TokenType) bool {
+	return p.curToken.Type == tt
 }
 
-func (p *Parser) expectPeek(t token.TokenType) bool {
-	if p.peekTokenIs(t) {
+func (p *Parser) expectPeek(tt token.TokenType) bool {
+	if p.peekTokenIs(tt) {
 		p.nextToken()
 		return true
 	} else {
-		p.peekError(t)
+		p.peekError(tt)
 		return false
 	}
 }
 
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
-	return p.peekToken.Type == t
+func (p *Parser) peekTokenIs(tt token.TokenType) bool {
+	return p.peekToken.Type == tt
 }
 
 const (

@@ -108,8 +108,8 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-func newToken(tokenType token.TokenType, ch byte, pos token.Pos) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch), Pos: pos, Len: 1}
+func newToken(tt token.TokenType, ch byte, pos token.Pos) token.Token {
+	return token.Token{Type: tt, Literal: string(ch), Pos: pos, Len: 1}
 }
 
 func isWhitespace(ch byte) bool {

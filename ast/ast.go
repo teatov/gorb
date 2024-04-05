@@ -161,6 +161,6 @@ type IntegerLiteral struct {
 	Value int64
 }
 
-func (i *IntegerLiteral) expressionNode()      {}
-func (i *IntegerLiteral) TokenLiteral() string { return i.Token.Literal }
-func (i *IntegerLiteral) String() string       { return i.Token.Literal }
+func (il *IntegerLiteral) expressionNode()      {}
+func (il *IntegerLiteral) TokenLiteral() string { return il.Token.Literal }
+func (il *IntegerLiteral) String() string       { return il.Token.Literal }
