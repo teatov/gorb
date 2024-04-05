@@ -288,7 +288,7 @@ func evalIdentifier(
 func applyFunction(function object.Object, args []object.Object) object.Object {
 	fn, ok := function.(*object.Function)
 	if !ok {
-		return newError("not a function: %s", fn.Type())
+		return newError("not a function: %s", function.Type())
 	}
 
 	extEnv := extendFunctionEnv(fn, args)
