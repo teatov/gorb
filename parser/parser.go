@@ -19,20 +19,21 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.IF, p.parseIfExpression)
 	p.registerUnary(token.NOT, p.parseUnaryExpression)
 	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
+	p.registerUnary(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
 	p.registerUnary(token.TRUE, p.parseBoolean)
 	p.registerUnary(token.FALSE, p.parseBoolean)
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
-	p.registerBinary(token.ADD, p.parsseBinaryExpression)
-	p.registerBinary(token.SUBTRACT, p.parsseBinaryExpression)
-	p.registerBinary(token.DIVIDE, p.parsseBinaryExpression)
-	p.registerBinary(token.MULTIPLY, p.parsseBinaryExpression)
-	p.registerBinary(token.EQUALS, p.parsseBinaryExpression)
-	p.registerBinary(token.NOT_EQUALS, p.parsseBinaryExpression)
-	p.registerBinary(token.LESS_THAN, p.parsseBinaryExpression)
-	p.registerBinary(token.GREATER_THAN, p.parsseBinaryExpression)
+	p.registerBinary(token.ADD, p.parseBinaryExpression)
+	p.registerBinary(token.SUBTRACT, p.parseBinaryExpression)
+	p.registerBinary(token.DIVIDE, p.parseBinaryExpression)
+	p.registerBinary(token.MULTIPLY, p.parseBinaryExpression)
+	p.registerBinary(token.EQUALS, p.parseBinaryExpression)
+	p.registerBinary(token.NOT_EQUALS, p.parseBinaryExpression)
+	p.registerBinary(token.LESS_THAN, p.parseBinaryExpression)
+	p.registerBinary(token.GREATER_THAN, p.parseBinaryExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -242,7 +243,7 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 	return exp
 }
 
-func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
+func (p *Parser) parseBinaryExpression(left ast.Expression) ast.Expression {
 	exp := &ast.BinaryExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
@@ -257,6 +258,51 @@ func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
 }
 
 // literals
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	lit := &ast.FunctionLiteral{Token: p.curToken}
+
+	if !p.expectPeek(token.PAREN_OPEN) {
+		return nil
+	}
+
+	lit.Parameters = p.parseFunctionParameters()
+
+	if !p.expectPeek(token.BRACE_OPEN) {
+		return nil
+	}
+
+	lit.Body = p.parseBlockStatement()
+
+	return lit
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	identifiers := []*ast.Identifier{}
+
+	if p.peekTokenIs(token.PAREN_CLOSE) {
+		p.nextToken()
+		return identifiers
+	}
+
+	p.nextToken()
+
+	ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	identifiers = append(identifiers, ident)
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		ident := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		identifiers = append(identifiers, ident)
+	}
+
+	if !p.expectPeek(token.PAREN_CLOSE) {
+		return nil
+	}
+
+	return identifiers
+}
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
