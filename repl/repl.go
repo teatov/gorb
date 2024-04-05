@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gorb/lexer"
 	"gorb/parser"
-	"gorb/token"
 	"io"
 )
 
@@ -23,19 +22,22 @@ func Start(in io.Reader, out io.Writer) {
 
 		line := scanner.Text()
 		l := lexer.New(line)
+		p := parser.New(l)
 
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%v ", tok)
-		}
-		fmt.Print("\n")
-
-		p := parser.New(lexer.New(line))
 		program := p.ParseProgram()
-		errors := p.Errors()
-		for _, msg := range errors {
-			fmt.Printf("parser error: %q\n", msg)
+		if len(p.Errors()) != 0 {
+			printParserErrors(out, p.Errors())
+			continue
 		}
 
-		fmt.Println(program)
+		io.WriteString(out, program.String())
+		io.WriteString(out, "\n")
+	}
+}
+
+func printParserErrors(out io.Writer, errors []string) {
+	io.WriteString(out, "syntax error!\n")
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
 	}
 }
