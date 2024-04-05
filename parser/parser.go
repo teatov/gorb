@@ -16,6 +16,8 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
+	p.registerUnary(token.TRUE, p.parseBoolean)
+	p.registerUnary(token.FALSE, p.parseBoolean)
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
 	p.registerUnary(token.NOT, p.parseUnaryExpression)
 	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
@@ -194,6 +196,10 @@ func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+}
+
+func (p *Parser) parseBoolean() ast.Expression {
+	return &ast.Boolean{Token: p.curToken, Value: p.curTokenIs(token.TRUE)}
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
