@@ -19,6 +19,8 @@ func (t Token) String() string {
 
 type TokenType string
 
+func (tt TokenType) String() string { return string(tt) }
+
 type Pos struct {
 	Ln  int
 	Col int

@@ -2,7 +2,6 @@ package repl
 
 import (
 	"bufio"
-	"fmt"
 	"gorb/evaluator"
 	"gorb/lexer"
 	"gorb/parser"
@@ -15,7 +14,7 @@ func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 
 	for {
-		fmt.Print(PROMPT)
+		io.WriteString(out, PROMPT)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
@@ -30,6 +29,8 @@ func Start(in io.Reader, out io.Writer) {
 			printParserErrors(out, p.Errors())
 			continue
 		}
+		io.WriteString(out, program.String())
+		io.WriteString(out, "\n")
 
 		value := evaluator.Eval(program)
 		if value != nil {

@@ -270,7 +270,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 func (p *Parser) parseUnaryExpression() ast.Expression {
 	exp := &ast.UnaryExpression{
 		Token:    p.curToken,
-		Operator: p.curToken.Literal,
+		Operator: p.curToken.Type,
 	}
 
 	p.nextToken()
@@ -283,7 +283,7 @@ func (p *Parser) parseUnaryExpression() ast.Expression {
 func (p *Parser) parseBinaryExpression(left ast.Expression) ast.Expression {
 	exp := &ast.BinaryExpression{
 		Token:    p.curToken,
-		Operator: p.curToken.Literal,
+		Operator: p.curToken.Type,
 		Left:     left,
 	}
 

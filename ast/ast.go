@@ -175,7 +175,7 @@ func (ie *IfExpression) String() string {
 
 type UnaryExpression struct {
 	Token    token.Token
-	Operator string
+	Operator token.TokenType
 	Right    Expression
 }
 
@@ -185,7 +185,7 @@ func (ue *UnaryExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(ue.Operator)
+	out.WriteString(ue.Operator.String())
 	out.WriteString(ue.Right.String())
 	out.WriteString(")")
 
@@ -195,7 +195,7 @@ func (ue *UnaryExpression) String() string {
 type BinaryExpression struct {
 	Token    token.Token
 	Left     Expression
-	Operator string
+	Operator token.TokenType
 	Right    Expression
 }
 
@@ -206,7 +206,7 @@ func (ie *BinaryExpression) String() string {
 
 	out.WriteString("(")
 	out.WriteString(ie.Left.String())
-	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(" " + ie.Operator.String() + " ")
 	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 

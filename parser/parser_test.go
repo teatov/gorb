@@ -174,7 +174,7 @@ func TestParsingPrefixExpressions(t *testing.T) {
 		if !ok {
 			t.Fatalf("stmt is not ast.UnaryExpression. got=%T", stmt.Expression)
 		}
-		if exp.Operator != tt.operator {
+		if string(exp.Operator) != tt.operator {
 			t.Fatalf("exp.Operator is not '%s'. got=%s",
 				tt.operator, exp.Operator)
 		}
@@ -710,7 +710,7 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
 		return false
 	}
 
-	if opExp.Operator != operator {
+	if string(opExp.Operator) != operator {
 		t.Errorf("exp.Operator is not '%s'. got=%q", operator, opExp.Operator)
 		return false
 	}
