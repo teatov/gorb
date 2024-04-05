@@ -3,6 +3,7 @@ package evaluator
 import (
 	"gorb/ast"
 	"gorb/object"
+	"gorb/token"
 )
 
 var (
@@ -20,9 +21,15 @@ func Eval(node ast.Node) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 
+		// expressions
+	case *ast.UnaryExpression:
+		right := Eval(node.Right)
+		return evalPrefixExpression(node.Operator, right)
+
 	// literals
 	case *ast.BooleanLiteral:
 		return boolToBooleanObject(node.Value)
+
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	}
@@ -38,6 +45,31 @@ func evalStatements(statements []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+func evalPrefixExpression(
+	operator token.TokenType,
+	right object.Object,
+) object.Object {
+	switch operator {
+	case token.NOT:
+		return evalNegateOperatorExpression(right)
+	default:
+		return NULL
+	}
+}
+
+func evalNegateOperatorExpression(right object.Object) object.Object {
+	switch right {
+	case TRUE:
+		return FALSE
+	case FALSE:
+		return TRUE
+	case NULL:
+		return TRUE
+	default:
+		return FALSE
+	}
 }
 
 func boolToBooleanObject(input bool) *object.Boolean {
