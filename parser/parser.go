@@ -18,7 +18,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.PAREN_OPEN, p.parseGroupedExpression)
 	p.registerUnary(token.IF, p.parseIfExpression)
 	p.registerUnary(token.NEGATE, p.parseUnaryExpression)
-	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
+	p.registerUnary(token.MINUS, p.parseUnaryExpression)
 	p.registerUnary(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
 	p.registerUnary(token.TRUE, p.parseBoolean)
@@ -27,10 +27,10 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
 	p.registerBinary(token.PAREN_OPEN, p.parseCallExpression)
-	p.registerBinary(token.ADD, p.parseBinaryExpression)
-	p.registerBinary(token.SUBTRACT, p.parseBinaryExpression)
-	p.registerBinary(token.DIVIDE, p.parseBinaryExpression)
-	p.registerBinary(token.MULTIPLY, p.parseBinaryExpression)
+	p.registerBinary(token.PLUS, p.parseBinaryExpression)
+	p.registerBinary(token.MINUS, p.parseBinaryExpression)
+	p.registerBinary(token.SLASH, p.parseBinaryExpression)
+	p.registerBinary(token.ASTERISK, p.parseBinaryExpression)
 	p.registerBinary(token.EQUALS, p.parseBinaryExpression)
 	p.registerBinary(token.NOT_EQUALS, p.parseBinaryExpression)
 	p.registerBinary(token.LESS_THAN, p.parseBinaryExpression)
@@ -405,10 +405,10 @@ var precedences = map[token.TokenType]int{
 	token.NOT_EQUALS:   EQUALITY,
 	token.LESS_THAN:    COMPARISON,
 	token.GREATER_THAN: COMPARISON,
-	token.ADD:          SUM,
-	token.SUBTRACT:     SUM,
-	token.MULTIPLY:     PRODUCT,
-	token.DIVIDE:       PRODUCT,
+	token.PLUS:          SUM,
+	token.MINUS:     SUM,
+	token.ASTERISK:     PRODUCT,
+	token.SLASH:       PRODUCT,
 	token.PAREN_OPEN:   CALL,
 }
 

@@ -41,18 +41,18 @@ func (l *Lexer) NextToken() token.Token {
 			[]SecondChar{{'=', token.EQUALS}},
 		)
 	case '+':
-		tok = l.newToken(token.ADD)
+		tok = l.newToken(token.PLUS)
 	case '-':
-		tok = l.newToken(token.SUBTRACT)
+		tok = l.newToken(token.MINUS)
 	case '!':
 		tok = l.newSingleOrDoubleToken(
 			token.NEGATE,
 			[]SecondChar{{'=', token.NOT_EQUALS}},
 		)
 	case '*':
-		tok = l.newToken(token.MULTIPLY)
+		tok = l.newToken(token.ASTERISK)
 	case '/':
-		tok = l.newToken(token.DIVIDE)
+		tok = l.newToken(token.SLASH)
 	case '<':
 		tok = l.newToken(token.LESS_THAN)
 	case '>':

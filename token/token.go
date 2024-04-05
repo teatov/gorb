@@ -38,11 +38,11 @@ const (
 
 	// operators
 	ASSIGN       = "="
-	ADD          = "+"
-	SUBTRACT     = "-"
+	PLUS         = "+"
+	MINUS        = "-"
 	NEGATE       = "!"
-	MULTIPLY     = "*"
-	DIVIDE       = "/"
+	ASTERISK     = "*"
+	SLASH        = "/"
 	LESS_THAN    = "<"
 	GREATER_THAN = ">"
 	EQUALS       = "=="
