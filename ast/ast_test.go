@@ -8,8 +8,8 @@ import (
 func TestString(t *testing.T) {
 	program := &Program{
 		Statements: []Statement{
-			&LetStatement{
-				Token: token.Token{Type: token.ASSIGNMENT, Literal: "let"},
+			&DeclarationStatement{
+				Token: token.Token{Type: token.ASSIGN, Literal: "let"},
 				Name: &Identifier{
 					Token: token.Token{Type: token.IDENTIFIER, Literal: "myVar"},
 					Value: "myVar",

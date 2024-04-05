@@ -156,9 +156,9 @@ func TestParsingPrefixExpressions(t *testing.T) {
 				program.Statements[0])
 		}
 
-		exp, ok := stmt.Expression.(*ast.PrefixExpression)
+		exp, ok := stmt.Expression.(*ast.UnaryExpression)
 		if !ok {
-			t.Fatalf("stmt is not ast.PrefixExpression. got=%T", stmt.Expression)
+			t.Fatalf("stmt is not ast.UnaryExpression. got=%T", stmt.Expression)
 		}
 		if exp.Operator != tt.operator {
 			t.Fatalf("exp.Operator is not '%s'. got=%s",
@@ -293,9 +293,9 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 		return false
 	}
 
-	letStmt, ok := s.(*ast.LetStatement)
+	letStmt, ok := s.(*ast.DeclarationStatement)
 	if !ok {
-		t.Errorf("s not *ast.LetStatement. got=%T", s)
+		t.Errorf("s not *ast.DeclarationStatement. got=%T", s)
 		return false
 	}
 
@@ -315,7 +315,7 @@ func testLetStatement(t *testing.T, s ast.Statement, name string) bool {
 func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
 	operator string, right interface{}) bool {
 
-	opExp, ok := exp.(*ast.InfixExpression)
+	opExp, ok := exp.(*ast.BinaryExpression)
 	if !ok {
 		t.Errorf("exp is not ast.OperatorExpression. got=%T(%s)", exp, exp)
 		return false

@@ -35,24 +35,24 @@ const (
 	INTEGER    = "INTEGER"
 
 	// operators
-	ASSIGNMENT   = "="
-	PLUS         = "+"
-	MINUS        = "-"
-	BANG         = "!"
-	ASTERISK     = "*"
-	SLASH        = "/"
+	ASSIGN       = "="
+	ADD          = "+"
+	SUBTRACT     = "-"
+	NOT          = "!"
+	MULTIPLY     = "*"
+	DIVIDE       = "/"
 	LESS_THAN    = "<"
 	GREATER_THAN = ">"
 	EQUALS       = "=="
 	NOT_EQUALS   = "!="
 
 	// delimiters
-	COMMA     = ","
-	PAREN_L   = "("
-	PAREN_R   = ")"
-	BRACE_L   = "{"
-	BRACE_R   = "}"
-	SEMICOLON = ";"
+	COMMA      = ","
+	PAREN_L    = "("
+	PAREN_R    = ")"
+	BRACE_L    = "{"
+	BRACE_R    = "}"
+	TERMINATOR = ";"
 
 	//keywords
 	FUNCTION    = "FUNCTION"

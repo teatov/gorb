@@ -64,15 +64,15 @@ func (rs *ReturnStatement) String() string {
 	return out.String()
 }
 
-type LetStatement struct {
+type DeclarationStatement struct {
 	Token token.Token
 	Name  *Identifier
 	Value Expression
 }
 
-func (ls *LetStatement) statementNode()       {}
-func (ls *LetStatement) TokenLiteral() string { return ls.Token.Literal }
-func (ls *LetStatement) String() string {
+func (ls *DeclarationStatement) statementNode()       {}
+func (ls *DeclarationStatement) TokenLiteral() string { return ls.Token.Literal }
+func (ls *DeclarationStatement) String() string {
 	var out bytes.Buffer
 
 	out.WriteString(ls.TokenLiteral() + " ")
@@ -105,35 +105,35 @@ func (es *ExpressionStatement) String() string {
 
 // expressions
 
-type PrefixExpression struct {
+type UnaryExpression struct {
 	Token    token.Token
 	Operator string
 	Right    Expression
 }
 
-func (pe *PrefixExpression) expressionNode()      {}
-func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
-func (pe *PrefixExpression) String() string {
+func (ue *UnaryExpression) expressionNode()      {}
+func (ue *UnaryExpression) TokenLiteral() string { return ue.Token.Literal }
+func (ue *UnaryExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String())
+	out.WriteString(ue.Operator)
+	out.WriteString(ue.Right.String())
 	out.WriteString(")")
 
 	return out.String()
 }
 
-type InfixExpression struct {
+type BinaryExpression struct {
 	Token    token.Token
 	Left     Expression
 	Operator string
 	Right    Expression
 }
 
-func (ie *InfixExpression) expressionNode()      {}
-func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
-func (ie *InfixExpression) String() string {
+func (ie *BinaryExpression) expressionNode()      {}
+func (ie *BinaryExpression) TokenLiteral() string { return ie.Token.Literal }
+func (ie *BinaryExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")

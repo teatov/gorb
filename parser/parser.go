@@ -8,38 +8,27 @@ import (
 	"strconv"
 )
 
-const (
-	_ int = iota
-	LOWEST
-	EQUALS
-	LESS_GREATER
-	SUM
-	PRODUCT
-	PREFIX
-	CALL
-)
-
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{
 		l:      l,
 		errors: []string{},
 	}
 
-	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
-	p.registerPrefix(token.IDENTIFIER, p.parseIdentifier)
-	p.registerPrefix(token.INTEGER, p.parseIntegerLiteral)
-	p.registerPrefix(token.BANG, p.parsePrefixExpression)
-	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
+	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
+	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
+	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
+	p.registerUnary(token.NOT, p.parseUnaryExpression)
+	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 
-	p.infixParseFns = make(map[token.TokenType]infixParseFn)
-	p.registerInfix(token.PLUS, p.parsseInfixExpression)
-	p.registerInfix(token.MINUS, p.parsseInfixExpression)
-	p.registerInfix(token.SLASH, p.parsseInfixExpression)
-	p.registerInfix(token.ASTERISK, p.parsseInfixExpression)
-	p.registerInfix(token.EQUALS, p.parsseInfixExpression)
-	p.registerInfix(token.NOT_EQUALS, p.parsseInfixExpression)
-	p.registerInfix(token.LESS_THAN, p.parsseInfixExpression)
-	p.registerInfix(token.GREATER_THAN, p.parsseInfixExpression)
+	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
+	p.registerBinary(token.ADD, p.parsseBinaryExpression)
+	p.registerBinary(token.SUBTRACT, p.parsseBinaryExpression)
+	p.registerBinary(token.DIVIDE, p.parsseBinaryExpression)
+	p.registerBinary(token.MULTIPLY, p.parsseBinaryExpression)
+	p.registerBinary(token.EQUALS, p.parsseBinaryExpression)
+	p.registerBinary(token.NOT_EQUALS, p.parsseBinaryExpression)
+	p.registerBinary(token.LESS_THAN, p.parsseBinaryExpression)
+	p.registerBinary(token.GREATER_THAN, p.parsseBinaryExpression)
 
 	p.nextToken()
 	p.nextToken()
@@ -54,21 +43,21 @@ type Parser struct {
 	curToken  token.Token
 	peekToken token.Token
 
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
+	unaryParseFns  map[token.TokenType]unaryParseFn
+	binaryParseFns map[token.TokenType]binaryParseFn
 }
 
 type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
+	unaryParseFn  func() ast.Expression
+	binaryParseFn func(ast.Expression) ast.Expression
 )
 
-func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
-	p.prefixParseFns[tokenType] = fn
+func (p *Parser) registerUnary(tokenType token.TokenType, fn unaryParseFn) {
+	p.unaryParseFns[tokenType] = fn
 }
 
-func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
-	p.infixParseFns[tokenType] = fn
+func (p *Parser) registerBinary(tokenType token.TokenType, fn binaryParseFn) {
+	p.binaryParseFns[tokenType] = fn
 }
 
 func (p *Parser) nextToken() {
@@ -110,15 +99,15 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	p.nextToken()
 
 	// TODO parse expressions
-	for !p.curTokenIs(token.SEMICOLON) {
+	for !p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
 
 	return stmt
 }
 
-func (p *Parser) parseLetStatement() *ast.LetStatement {
-	stmt := &ast.LetStatement{Token: p.curToken}
+func (p *Parser) parseLetStatement() *ast.DeclarationStatement {
+	stmt := &ast.DeclarationStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENTIFIER) {
 		return nil
@@ -126,12 +115,12 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 
 	stmt.Name = &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
 
-	if !p.expectPeek(token.ASSIGNMENT) {
+	if !p.expectPeek(token.ASSIGN) {
 		return nil
 	}
 
 	// TODO parse expressions
-	for !p.curTokenIs(token.SEMICOLON) {
+	for !p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
 
@@ -143,7 +132,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	for p.peekTokenIs(token.SEMICOLON) {
+	for p.peekTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
 
@@ -153,42 +142,42 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 // expressions
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
-	prefix := p.prefixParseFns[p.curToken.Type]
-	if prefix == nil {
-		p.noPrefixParseFnError(p.curToken.Type)
+	unary := p.unaryParseFns[p.curToken.Type]
+	if unary == nil {
+		p.noUnaryParseFnError(p.curToken.Type)
 		return nil
 	}
-	leftExp := prefix()
+	leftExp := unary()
 
-	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
-		infix := p.infixParseFns[p.peekToken.Type]
-		if infix == nil {
+	for !p.peekTokenIs(token.TERMINATOR) && precedence < p.peekPrecedence() {
+		binary := p.binaryParseFns[p.peekToken.Type]
+		if binary == nil {
 			return leftExp
 		}
 
 		p.nextToken()
 
-		leftExp = infix(leftExp)
+		leftExp = binary(leftExp)
 	}
 
 	return leftExp
 }
 
-func (p *Parser) parsePrefixExpression() ast.Expression {
-	expr := &ast.PrefixExpression{
+func (p *Parser) parseUnaryExpression() ast.Expression {
+	expr := &ast.UnaryExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 	}
 
 	p.nextToken()
 
-	expr.Right = p.parseExpression(PREFIX)
+	expr.Right = p.parseExpression(UNARY)
 
 	return expr
 }
 
-func (p *Parser) parsseInfixExpression(left ast.Expression) ast.Expression {
-	expr := &ast.InfixExpression{
+func (p *Parser) parsseBinaryExpression(left ast.Expression) ast.Expression {
+	expr := &ast.BinaryExpression{
 		Token:    p.curToken,
 		Operator: p.curToken.Literal,
 		Left:     left,
@@ -242,15 +231,26 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALITY
+	COMPARISON
+	SUM
+	PRODUCT
+	UNARY
+	CALL
+)
+
 var precedences = map[token.TokenType]int{
-	token.EQUALS:       EQUALS,
-	token.NOT_EQUALS:   EQUALS,
-	token.LESS_THAN:    LESS_GREATER,
-	token.GREATER_THAN: LESS_GREATER,
-	token.PLUS:         SUM,
-	token.MINUS:        SUM,
-	token.ASTERISK:     PRODUCT,
-	token.SLASH:        PRODUCT,
+	token.EQUALS:       EQUALITY,
+	token.NOT_EQUALS:   EQUALITY,
+	token.LESS_THAN:    COMPARISON,
+	token.GREATER_THAN: COMPARISON,
+	token.ADD:          SUM,
+	token.SUBTRACT:     SUM,
+	token.MULTIPLY:     PRODUCT,
+	token.DIVIDE:       PRODUCT,
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -276,8 +276,8 @@ func (p *Parser) peekError(t token.TokenType) {
 	p.errors = append(p.errors, msg)
 }
 
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("%v no prefix parse function for %s found", p.curToken.Pos, t)
+func (p *Parser) noUnaryParseFnError(t token.TokenType) {
+	msg := fmt.Sprintf("%v no unary parse function for %s found", p.curToken.Pos, t)
 	p.errors = append(p.errors, msg)
 }
 
