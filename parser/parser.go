@@ -31,6 +31,16 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.BANG, p.parsePrefixExpression)
 	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
 
+	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.registerInfix(token.PLUS, p.parsseInfixExpression)
+	p.registerInfix(token.MINUS, p.parsseInfixExpression)
+	p.registerInfix(token.SLASH, p.parsseInfixExpression)
+	p.registerInfix(token.ASTERISK, p.parsseInfixExpression)
+	p.registerInfix(token.EQUALS, p.parsseInfixExpression)
+	p.registerInfix(token.NOT_EQUALS, p.parsseInfixExpression)
+	p.registerInfix(token.LESS_THAN, p.parsseInfixExpression)
+	p.registerInfix(token.GREATER_THAN, p.parsseInfixExpression)
+
 	p.nextToken()
 	p.nextToken()
 
@@ -150,6 +160,17 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := prefix()
 
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Type]
+		if infix == nil {
+			return leftExp
+		}
+
+		p.nextToken()
+
+		leftExp = infix(leftExp)
+	}
+
 	return leftExp
 }
 
@@ -181,6 +202,20 @@ func (p *Parser) parsePrefixExpression() ast.Expression {
 	return expr
 }
 
+func (p *Parser) parsseInfixExpression(left ast.Expression) ast.Expression {
+	expr := &ast.InfixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+		Left:     left,
+	}
+
+	precedence := p.curPrecedence()
+	p.nextToken()
+	expr.Right = p.parseExpression(precedence)
+
+	return expr
+}
+
 func (p *Parser) expectPeek(t token.TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
@@ -207,6 +242,33 @@ func (p *Parser) peekError(t token.TokenType) {
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
 	msg := fmt.Sprintf("%v no prefix parse function for %s found", p.curToken.Pos, t)
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) peekPrecedence() int {
+	if p, ok := precedences[p.peekToken.Type]; ok {
+		return p
+	}
+
+	return LOWEST
+}
+
+func (p *Parser) curPrecedence() int {
+	if p, ok := precedences[p.curToken.Type]; ok {
+		return p
+	}
+
+	return LOWEST
+}
+
+var precedences = map[token.TokenType]int{
+	token.EQUALS:       EQUALS,
+	token.NOT_EQUALS:   EQUALS,
+	token.LESS_THAN:    LESS_GREATER,
+	token.GREATER_THAN: LESS_GREATER,
+	token.PLUS:         SUM,
+	token.MINUS:        SUM,
+	token.ASTERISK:     PRODUCT,
+	token.SLASH:        PRODUCT,
 }
 
 func (p *Parser) Errors() []string {

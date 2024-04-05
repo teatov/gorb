@@ -46,7 +46,11 @@ type Token struct {
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("{%s %s %v}", t.Type, t.Literal, t.Pos)
+	typeAndLiteral := string(t.Type)
+	if typeAndLiteral != t.Literal {
+		typeAndLiteral += " " + t.Literal
+	}
+	return fmt.Sprintf("{%s %v}", typeAndLiteral, t.Pos)
 }
 
 type Pos struct {
