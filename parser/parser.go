@@ -15,6 +15,7 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
+	p.registerUnary(token.PAREN_OPEN, p.parseGroupedExpression)
 	p.registerUnary(token.NOT, p.parseUnaryExpression)
 	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
@@ -142,6 +143,18 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 // expressions
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+
+	exp := p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.PAREN_CLOSE) {
+		return nil
+	}
+
+	return exp
+}
 
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	parseUnary := p.unaryParseFns[p.curToken.Type]
