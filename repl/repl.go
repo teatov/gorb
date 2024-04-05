@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"gorb/evaluator"
 	"gorb/lexer"
+	"gorb/object"
 	"gorb/parser"
 	"io"
 )
@@ -12,6 +13,7 @@ const PROMPT = ">> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
+	env := object.NewEnvironment()
 
 	for {
 		io.WriteString(out, PROMPT)
@@ -32,7 +34,7 @@ func Start(in io.Reader, out io.Writer) {
 		io.WriteString(out, program.String())
 		io.WriteString(out, "\n")
 
-		val := evaluator.Eval(program)
+		val := evaluator.Eval(program, env)
 		if val != nil {
 			io.WriteString(out, val.Inspect())
 			io.WriteString(out, "\n")
