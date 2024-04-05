@@ -352,7 +352,7 @@ func (p *Parser) parseBoolean() ast.Expression {
 func (p *Parser) parseIntegerLiteral() ast.Expression {
 	lit := &ast.IntegerLiteral{Token: p.curToken}
 
-	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
+	val, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 
 	if err != nil {
 		msg := fmt.Sprintf(
@@ -364,7 +364,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		return nil
 	}
 
-	lit.Value = value
+	lit.Value = val
 
 	return lit
 }
