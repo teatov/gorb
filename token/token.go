@@ -47,12 +47,12 @@ const (
 	NOT_EQUALS   = "!="
 
 	// delimiters
-	COMMA      = ","
-	PAREN_L    = "("
-	PAREN_R    = ")"
-	BRACE_L    = "{"
-	BRACE_R    = "}"
-	TERMINATOR = ";"
+	COMMA       = ","
+	PAREN_OPEN  = "("
+	PAREN_CLOSE = ")"
+	BRACE_OPEN  = "{"
+	BRACE_CLOSE = "}"
+	TERMINATOR  = ";"
 
 	//keywords
 	FUNCTION    = "FUNCTION"

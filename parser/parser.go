@@ -15,12 +15,12 @@ func New(l *lexer.Lexer) *Parser {
 	}
 
 	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
+	p.registerUnary(token.NOT, p.parseUnaryExpression)
+	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
 	p.registerUnary(token.TRUE, p.parseBoolean)
 	p.registerUnary(token.FALSE, p.parseBoolean)
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
-	p.registerUnary(token.NOT, p.parseUnaryExpression)
-	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
 	p.registerBinary(token.ADD, p.parsseBinaryExpression)
