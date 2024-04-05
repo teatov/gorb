@@ -21,10 +21,15 @@ func Eval(node ast.Node) object.Object {
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 
-		// expressions
+	// expressions
 	case *ast.UnaryExpression:
 		right := Eval(node.Right)
-		return evalPrefixExpression(node.Operator, right)
+		return evalUnaryExpression(node.Operator, right)
+
+	case *ast.BinaryExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalBinaryExpression(node.Operator, left, right)
 
 	// literals
 	case *ast.BooleanLiteral:
@@ -47,21 +52,21 @@ func evalStatements(statements []ast.Statement) object.Object {
 	return result
 }
 
-func evalPrefixExpression(
+func evalUnaryExpression(
 	operator token.TokenType,
 	right object.Object,
 ) object.Object {
 	switch operator {
 	case token.MINUS:
-		return evalInverseOperatorExpression(right)
+		return evalInverseExpression(right)
 	case token.NEGATE:
-		return evalNegateOperatorExpression(right)
+		return evalNegateExpression(right)
 	default:
 		return NULL
 	}
 }
 
-func evalInverseOperatorExpression(right object.Object) object.Object {
+func evalInverseExpression(right object.Object) object.Object {
 	if right.Type() != object.INTEGER {
 		return NULL
 	}
@@ -70,7 +75,7 @@ func evalInverseOperatorExpression(right object.Object) object.Object {
 	return &object.Integer{Value: -value}
 }
 
-func evalNegateOperatorExpression(right object.Object) object.Object {
+func evalNegateExpression(right object.Object) object.Object {
 	switch right {
 	case TRUE:
 		return FALSE
@@ -80,6 +85,39 @@ func evalNegateOperatorExpression(right object.Object) object.Object {
 		return TRUE
 	default:
 		return FALSE
+	}
+}
+
+func evalBinaryExpression(
+	operator token.TokenType,
+	left, right object.Object,
+) object.Object {
+	switch {
+	case left.Type() == object.INTEGER && right.Type() == object.INTEGER:
+		return evalIntegerBinaryExpression(operator, left, right)
+	default:
+		return NULL
+	}
+}
+
+func evalIntegerBinaryExpression(
+	operator token.TokenType,
+	left, right object.Object,
+) object.Object {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch operator {
+	case token.PLUS:
+		return &object.Integer{Value: leftVal + rightVal}
+	case token.MINUS:
+		return &object.Integer{Value: leftVal - rightVal}
+	case token.ASTERISK:
+		return &object.Integer{Value: leftVal * rightVal}
+	case token.SLASH:
+		return &object.Integer{Value: leftVal / rightVal}
+	default:
+		return NULL
 	}
 }
 
