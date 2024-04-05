@@ -26,6 +26,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
+	p.registerBinary(token.PAREN_OPEN, p.parseCallExpression)
 	p.registerBinary(token.ADD, p.parseBinaryExpression)
 	p.registerBinary(token.SUBTRACT, p.parseBinaryExpression)
 	p.registerBinary(token.DIVIDE, p.parseBinaryExpression)
@@ -173,6 +174,38 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	}
 
 	return exp
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.PAREN_CLOSE) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(token.PAREN_CLOSE) {
+		return nil
+	}
+
+	return args
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
@@ -372,6 +405,7 @@ var precedences = map[token.TokenType]int{
 	token.SUBTRACT:     SUM,
 	token.MULTIPLY:     PRODUCT,
 	token.DIVIDE:       PRODUCT,
+	token.PAREN_OPEN:   CALL,
 }
 
 func (p *Parser) peekPrecedence() int {
