@@ -28,9 +28,14 @@ func Start(in io.Reader, out io.Writer) {
 			fmt.Printf("%v ", tok)
 		}
 		fmt.Print("\n")
-		
+
 		p := parser.New(lexer.New(line))
 		program := p.ParseProgram()
+		errors := p.Errors()
+		for _, msg := range errors {
+			fmt.Printf("parser error: %q\n", msg)
+		}
+
 		fmt.Println(program)
 	}
 }
