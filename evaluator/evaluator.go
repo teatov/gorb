@@ -18,6 +18,10 @@ func Eval(node ast.Node) object.Object {
 		return evalStatements(node.Statements)
 
 	// statements
+	case *ast.ReturnStatement:
+		val := Eval(node.ReturnValue)
+		return &object.ReturnValue{Value: val}
+
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 
@@ -55,6 +59,10 @@ func evalStatements(statements []ast.Statement) object.Object {
 
 	for _, stmt := range statements {
 		result = Eval(stmt)
+
+		if returnVal, ok := result.(*object.ReturnValue); ok {
+			return returnVal.Value
+		}
 	}
 
 	return result
@@ -92,8 +100,8 @@ func evalInverseExpression(right object.Object) object.Object {
 		return NULL
 	}
 
-	value := right.(*object.Integer).Value
-	return &object.Integer{Value: -value}
+	val := right.(*object.Integer).Value
+	return &object.Integer{Value: -val}
 }
 
 func evalNegateExpression(right object.Object) object.Object {
