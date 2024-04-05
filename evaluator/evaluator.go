@@ -116,6 +116,16 @@ func evalIntegerBinaryExpression(
 		return &object.Integer{Value: leftVal * rightVal}
 	case token.SLASH:
 		return &object.Integer{Value: leftVal / rightVal}
+
+	case token.LESS_THAN:
+		return boolToBooleanObject(leftVal < rightVal)
+	case token.GREATER_THAN:
+		return boolToBooleanObject(leftVal > rightVal)
+	case token.EQUALS:
+		return boolToBooleanObject(leftVal == rightVal)
+	case token.NOT_EQUALS:
+		return boolToBooleanObject(leftVal != rightVal)
+
 	default:
 		return NULL
 	}
