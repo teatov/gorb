@@ -33,6 +33,11 @@ func TestLetStatements(t *testing.T) {
 		if !testLetStatement(t, stmt, tt.expectedIdentifier) {
 			return
 		}
+
+		val := stmt.(*ast.DeclarationStatement).Value
+		if !testLiteralExpression(t, val, tt.expectedValue) {
+			return
+		}
 	}
 }
 
@@ -65,6 +70,9 @@ func TestReturnStatements(t *testing.T) {
 		if returnStmt.TokenLiteral() != "return" {
 			t.Fatalf("returnStmt.TokenLiteral not 'return', got %q",
 				returnStmt.TokenLiteral())
+		}
+		if testLiteralExpression(t, returnStmt.ReturnValue, tt.expectedValue) {
+			return
 		}
 	}
 }
@@ -297,7 +305,6 @@ func TestOperatorPrecedenceParsing(t *testing.T) {
 			"3 < 5 == true",
 			"((3 < 5) == true)",
 		},
-
 		{
 			"1 + (2 + 3) + 4",
 			"((1 + (2 + 3)) + 4)",
@@ -695,7 +702,7 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{},
 
 	opExp, ok := exp.(*ast.BinaryExpression)
 	if !ok {
-		t.Errorf("exp is not ast.OperatorExpression. got=%T(%s)", exp, exp)
+		t.Errorf("exp is not ast.BinaryExpression. got=%T(%s)", exp, exp)
 		return false
 	}
 

@@ -104,7 +104,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	p.nextToken()
 
-	// TODO parse expressions
+	stmt.ReturnValue = p.parseExpression(LOWEST)
+
 	for !p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
@@ -125,7 +126,10 @@ func (p *Parser) parseLetStatement() *ast.DeclarationStatement {
 		return nil
 	}
 
-	// TODO parse expressions
+	p.nextToken()
+
+	stmt.Value = p.parseExpression(LOWEST)
+
 	for !p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
