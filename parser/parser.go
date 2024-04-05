@@ -93,7 +93,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case token.RETURN:
 		return p.parseReturnStatement()
 	case token.DECLARATION:
-		return p.parseLetStatement()
+		return p.parseDeclarationStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -106,14 +106,14 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	stmt.ReturnValue = p.parseExpression(LOWEST)
 
-	for !p.curTokenIs(token.TERMINATOR) {
+	for p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
 
 	return stmt
 }
 
-func (p *Parser) parseLetStatement() *ast.DeclarationStatement {
+func (p *Parser) parseDeclarationStatement() *ast.DeclarationStatement {
 	stmt := &ast.DeclarationStatement{Token: p.curToken}
 
 	if !p.expectPeek(token.IDENTIFIER) {
@@ -130,7 +130,7 @@ func (p *Parser) parseLetStatement() *ast.DeclarationStatement {
 
 	stmt.Value = p.parseExpression(LOWEST)
 
-	for !p.curTokenIs(token.TERMINATOR) {
+	for p.curTokenIs(token.TERMINATOR) {
 		p.nextToken()
 	}
 
@@ -375,6 +375,10 @@ func (p *Parser) curTokenIs(tt token.TokenType) bool {
 	return p.curToken.Type == tt
 }
 
+func (p *Parser) peekTokenIs(tt token.TokenType) bool {
+	return p.peekToken.Type == tt
+}
+
 func (p *Parser) expectPeek(tt token.TokenType) bool {
 	if p.peekTokenIs(tt) {
 		p.nextToken()
@@ -383,10 +387,6 @@ func (p *Parser) expectPeek(tt token.TokenType) bool {
 		p.peekError(tt)
 		return false
 	}
-}
-
-func (p *Parser) peekTokenIs(tt token.TokenType) bool {
-	return p.peekToken.Type == tt
 }
 
 const (
@@ -430,6 +430,10 @@ func (p *Parser) curPrecedence() int {
 
 // errors
 
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
 func (p *Parser) peekError(t token.TokenType) {
 	msg := fmt.Sprintf(
 		"%v expected %s, got %s",
@@ -447,8 +451,4 @@ func (p *Parser) noUnaryParseFnError(t token.TokenType) {
 		t,
 	)
 	p.errors = append(p.errors, msg)
-}
-
-func (p *Parser) Errors() []string {
-	return p.errors
 }
