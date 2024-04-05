@@ -1,6 +1,11 @@
 package object
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"gorb/ast"
+	"strings"
+)
 
 type Object interface {
 	Type() ObjectType
@@ -10,12 +15,38 @@ type Object interface {
 type ObjectType string
 
 const (
+	FUNCTION     = "FUNCTION"
 	NULL         = "NULL"
 	BOOLEAN      = "BOOLEAN"
 	INTEGER      = "INTEGER"
 	RETURN_VALUE = "RETURN_VALUE"
 	ERROR        = "ERROR"
 )
+
+type Function struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (f *Function) Type() ObjectType { return FUNCTION }
+func (f *Function) Inspect() string {
+	var out bytes.Buffer
+
+	params := []string{}
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	out.WriteString("fn")
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(") {\n")
+	out.WriteString(f.Body.String())
+	out.WriteString("}")
+
+	return out.String()
+}
 
 type Null struct{}
 
