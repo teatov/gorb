@@ -66,7 +66,7 @@ func TestNextToken(t *testing.T) {
 		{token.IDENTIFIER, "ten"},
 		{token.PAREN_CLOSE, ")"},
 		{token.TERMINATOR, ";"},
-		{token.NOT, "!"},
+		{token.NEGATE, "!"},
 		{token.SUBTRACT, "-"},
 		{token.DIVIDE, "/"},
 		{token.MULTIPLY, "*"},

@@ -40,7 +40,7 @@ const (
 	ASSIGN       = "="
 	ADD          = "+"
 	SUBTRACT     = "-"
-	NOT          = "!"
+	NEGATE       = "!"
 	MULTIPLY     = "*"
 	DIVIDE       = "/"
 	LESS_THAN    = "<"

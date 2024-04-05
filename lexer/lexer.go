@@ -46,7 +46,7 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.newToken(token.SUBTRACT)
 	case '!':
 		tok = l.newSingleOrDoubleToken(
-			token.NOT,
+			token.NEGATE,
 			[]SecondChar{{'=', token.NOT_EQUALS}},
 		)
 	case '*':

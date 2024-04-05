@@ -52,7 +52,7 @@ func evalPrefixExpression(
 	right object.Object,
 ) object.Object {
 	switch operator {
-	case token.NOT:
+	case token.NEGATE:
 		return evalNegateOperatorExpression(right)
 	default:
 		return NULL

@@ -17,7 +17,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.unaryParseFns = make(map[token.TokenType]unaryParseFn)
 	p.registerUnary(token.PAREN_OPEN, p.parseGroupedExpression)
 	p.registerUnary(token.IF, p.parseIfExpression)
-	p.registerUnary(token.NOT, p.parseUnaryExpression)
+	p.registerUnary(token.NEGATE, p.parseUnaryExpression)
 	p.registerUnary(token.SUBTRACT, p.parseUnaryExpression)
 	p.registerUnary(token.FUNCTION, p.parseFunctionLiteral)
 	p.registerUnary(token.IDENTIFIER, p.parseIdentifier)
