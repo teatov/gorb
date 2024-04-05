@@ -95,6 +95,12 @@ func evalBinaryExpression(
 	switch {
 	case left.Type() == object.INTEGER && right.Type() == object.INTEGER:
 		return evalIntegerBinaryExpression(operator, left, right)
+
+	case operator == "==":
+		return boolToBooleanObject(left == right)
+	case operator == "!=":
+		return boolToBooleanObject(left != right)
+
 	default:
 		return NULL
 	}
