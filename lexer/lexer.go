@@ -36,56 +36,38 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		if l.peekChar() == '=' {
-			tok.Pos = l.pos
-			ch := l.ch
-			l.readChar()
-			tok.Type = token.EQUALS
-			tok.Literal = string(ch) + string(l.ch)
-			tok.Len = len(tok.Literal)
-		} else {
-			tok = newToken(token.ASSIGN, l.ch, l.pos)
-		}
+		tok = l.newSingleOrDoubleToken(token.ASSIGN, []SecondChar{{'=', token.EQUALS}})
 	case '+':
-		tok = newToken(token.ADD, l.ch, l.pos)
+		tok = l.newToken(token.ADD)
 	case '-':
-		tok = newToken(token.SUBTRACT, l.ch, l.pos)
+		tok = l.newToken(token.SUBTRACT)
 	case '!':
-		if l.peekChar() == '=' {
-			tok.Pos = l.pos
-			ch := l.ch
-			l.readChar()
-			tok.Type = token.NOT_EQUALS
-			tok.Literal = string(ch) + string(l.ch)
-			tok.Len = len(tok.Literal)
-		} else {
-			tok = newToken(token.NOT, l.ch, l.pos)
-		}
+		tok = l.newSingleOrDoubleToken(token.NOT, []SecondChar{{'=', token.NOT_EQUALS}})
 	case '*':
-		tok = newToken(token.MULTIPLY, l.ch, l.pos)
+		tok = l.newToken(token.MULTIPLY)
 	case '/':
-		tok = newToken(token.DIVIDE, l.ch, l.pos)
+		tok = l.newToken(token.DIVIDE)
 	case '<':
-		tok = newToken(token.LESS_THAN, l.ch, l.pos)
+		tok = l.newToken(token.LESS_THAN)
 	case '>':
-		tok = newToken(token.GREATER_THAN, l.ch, l.pos)
+		tok = l.newToken(token.GREATER_THAN)
 	case ',':
-		tok = newToken(token.COMMA, l.ch, l.pos)
+		tok = l.newToken(token.COMMA)
 	case '(':
-		tok = newToken(token.PAREN_L, l.ch, l.pos)
+		tok = l.newToken(token.PAREN_L)
 	case ')':
-		tok = newToken(token.PAREN_R, l.ch, l.pos)
+		tok = l.newToken(token.PAREN_R)
 	case '{':
-		tok = newToken(token.BRACE_L, l.ch, l.pos)
+		tok = l.newToken(token.BRACE_L)
 	case '}':
-		tok = newToken(token.BRACE_R, l.ch, l.pos)
+		tok = l.newToken(token.BRACE_R)
 	case ';':
-		tok = newToken(token.TERMINATOR, l.ch, l.pos)
+		tok = l.newToken(token.TERMINATOR)
 	case '\n':
 		l.pos.Ln++
 		l.pos.Col = 0
 	case 0:
-		tok = newToken(token.EOF, l.ch, l.pos)
+		tok = l.newToken(token.EOF)
 	default:
 		if isLetter(l.ch) {
 			tok.Pos = l.pos
@@ -100,7 +82,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok.Len = len(tok.Literal)
 			return tok
 		} else {
-			tok = newToken(token.ILLEGAL, l.ch, l.pos)
+			tok = l.newToken(token.ILLEGAL)
 		}
 	}
 
@@ -108,8 +90,32 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-func newToken(tt token.TokenType, ch byte, pos token.Pos) token.Token {
-	return token.Token{Type: tt, Literal: string(ch), Pos: pos, Len: 1}
+func (l *Lexer) newToken(tt token.TokenType) token.Token {
+	return token.Token{Type: tt, Literal: string(l.ch), Pos: l.pos, Len: 1}
+}
+
+type SecondChar struct {
+	ch byte
+	tt token.TokenType
+}
+
+func (l *Lexer) newSingleOrDoubleToken(ttSingle token.TokenType, secondChars []SecondChar) token.Token {
+	var tok token.Token
+
+	for _, secondCh := range secondChars {
+		if l.peekChar() == secondCh.ch {
+			tok.Pos = l.pos
+			ch := l.ch
+			l.readChar()
+			tok.Type = secondCh.tt
+			tok.Literal = string(ch) + string(l.ch)
+			tok.Len = len(tok.Literal)
+			return tok
+		}
+	}
+
+	tok = l.newToken(ttSingle)
+	return tok
 }
 
 func isWhitespace(ch byte) bool {
