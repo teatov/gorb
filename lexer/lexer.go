@@ -36,13 +36,19 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		tok = l.newSingleOrDoubleToken(token.ASSIGN, []SecondChar{{'=', token.EQUALS}})
+		tok = l.newSingleOrDoubleToken(
+			token.ASSIGN,
+			[]SecondChar{{'=', token.EQUALS}},
+		)
 	case '+':
 		tok = l.newToken(token.ADD)
 	case '-':
 		tok = l.newToken(token.SUBTRACT)
 	case '!':
-		tok = l.newSingleOrDoubleToken(token.NOT, []SecondChar{{'=', token.NOT_EQUALS}})
+		tok = l.newSingleOrDoubleToken(
+			token.NOT,
+			[]SecondChar{{'=', token.NOT_EQUALS}},
+		)
 	case '*':
 		tok = l.newToken(token.MULTIPLY)
 	case '/':
@@ -99,7 +105,10 @@ type SecondChar struct {
 	tt token.TokenType
 }
 
-func (l *Lexer) newSingleOrDoubleToken(ttSingle token.TokenType, secondChars []SecondChar) token.Token {
+func (l *Lexer) newSingleOrDoubleToken(
+	ttSingle token.TokenType,
+	secondChars []SecondChar,
+) token.Token {
 	var tok token.Token
 
 	for _, secondCh := range secondChars {

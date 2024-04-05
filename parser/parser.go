@@ -208,7 +208,11 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	value, err := strconv.ParseInt(p.curToken.Literal, 0, 64)
 
 	if err != nil {
-		msg := fmt.Sprintf("%v could not parse %q as integer", p.curToken.Pos, p.curToken.Literal)
+		msg := fmt.Sprintf(
+			"%v could not parse %q as integer",
+			p.curToken.Pos,
+			p.curToken.Literal,
+		)
 		p.errors = append(p.errors, msg)
 		return nil
 	}
@@ -279,12 +283,21 @@ func (p *Parser) curPrecedence() int {
 // errors
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("%v expected %s, got %s", p.curToken.Pos, t, p.peekToken.Type)
+	msg := fmt.Sprintf(
+		"%v expected %s, got %s",
+		p.curToken.Pos,
+		t,
+		p.peekToken.Type,
+	)
 	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) noUnaryParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("%v no unary parse function for %s found", p.curToken.Pos, t)
+	msg := fmt.Sprintf(
+		"%v no unary parse function for %s found",
+		p.curToken.Pos,
+		t,
+	)
 	p.errors = append(p.errors, msg)
 }
 

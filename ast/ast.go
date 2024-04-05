@@ -70,7 +70,8 @@ type DeclarationStatement struct {
 	Value Expression
 }
 
-func (ls *DeclarationStatement) statementNode()       {}
+func (ls *DeclarationStatement) statementNode() {}
+
 func (ls *DeclarationStatement) TokenLiteral() string { return ls.Token.Literal }
 func (ls *DeclarationStatement) String() string {
 	var out bytes.Buffer
