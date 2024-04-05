@@ -5,6 +5,12 @@ import (
 	"gorb/object"
 )
 
+var (
+	NULL  = &object.Null{}
+	TRUE  = &object.Boolean{Value: true}
+	FALSE = &object.Boolean{Value: false}
+)
+
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	case *ast.Program:
@@ -16,7 +22,7 @@ func Eval(node ast.Node) object.Object {
 
 	// literals
 	case *ast.BooleanLiteral:
-		return &object.Boolean{Value: node.Value}
+		return boolToBooleanObject(node.Value)
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 	}
@@ -32,4 +38,11 @@ func evalStatements(statements []ast.Statement) object.Object {
 	}
 
 	return result
+}
+
+func boolToBooleanObject(input bool) *object.Boolean {
+	if input {
+		return TRUE
+	}
+	return FALSE
 }

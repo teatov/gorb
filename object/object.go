@@ -15,6 +15,11 @@ const (
 	NULL    = "NULL"
 )
 
+type Null struct{}
+
+func (n *Null) Type() ObjectType { return NULL }
+func (n *Null) Inspect() string  { return "null" }
+
 type Boolean struct {
 	Value bool
 }
@@ -28,8 +33,3 @@ type Integer struct {
 
 func (i *Integer) Type() ObjectType { return INTEGER }
 func (i *Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
-
-type Null struct{}
-
-func (n *Null) Type() ObjectType { return NULL }
-func (n *Null) Inspect() string  { return "null" }
