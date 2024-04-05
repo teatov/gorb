@@ -52,11 +52,22 @@ func evalPrefixExpression(
 	right object.Object,
 ) object.Object {
 	switch operator {
+	case token.MINUS:
+		return evalInverseOperatorExpression(right)
 	case token.NEGATE:
 		return evalNegateOperatorExpression(right)
 	default:
 		return NULL
 	}
+}
+
+func evalInverseOperatorExpression(right object.Object) object.Object {
+	if right.Type() != object.INTEGER {
+		return NULL
+	}
+
+	value := right.(*object.Integer).Value
+	return &object.Integer{Value: -value}
 }
 
 func evalNegateOperatorExpression(right object.Object) object.Object {
