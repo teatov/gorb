@@ -11,28 +11,6 @@ import (
 	"os"
 )
 
-func Run(text string, env *object.Environment, out io.Writer) object.Object {
-	l := lexer.New(text)
-	p := parser.New(l)
-
-	program := p.ParseProgram()
-	if len(p.Errors()) != 0 {
-		printParserErrors(out, p.Errors())
-		return nil
-	}
-	io.WriteString(out, program.String())
-	io.WriteString(out, "\n")
-
-	return evaluator.Eval(program, env)
-}
-
-func printParserErrors(out io.Writer, errors []string) {
-	io.WriteString(out, "syntax error!\n")
-	for _, msg := range errors {
-		io.WriteString(out, "\t"+msg+"\n")
-	}
-}
-
 func ExecuteFile(path string, out io.Writer) {
 	data, err := os.ReadFile(os.Args[1])
 
@@ -46,9 +24,9 @@ func ExecuteFile(path string, out io.Writer) {
 
 	env := object.NewEnvironment()
 	val := Run(text, env, out)
+	fmt.Println()
 
-	// if val != nil && val.Type() == object.ERROR {
-	if val != nil {
+	if val != nil && val.Type() == object.ERROR {
 		io.WriteString(out, val.Inspect())
 		io.WriteString(out, "\n")
 	}
@@ -76,5 +54,27 @@ func StartRepl(in io.Reader, out io.Writer) {
 			io.WriteString(out, val.Inspect())
 			io.WriteString(out, "\n")
 		}
+	}
+}
+
+func Run(text string, env *object.Environment, out io.Writer) object.Object {
+	l := lexer.New(text)
+	p := parser.New(l)
+
+	program := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		printParserErrors(out, p.Errors())
+		return nil
+	}
+	// io.WriteString(out, program.String())
+	// io.WriteString(out, "\n")
+
+	return evaluator.Eval(program, env)
+}
+
+func printParserErrors(out io.Writer, errors []string) {
+	io.WriteString(out, "syntax error!\n")
+	for _, msg := range errors {
+		io.WriteString(out, "\t"+msg+"\n")
 	}
 }
