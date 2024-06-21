@@ -16,10 +16,11 @@ type ObjectType string
 
 const (
 	FUNCTION     = "FUNCTION"
+	BUILTIN      = "BUILTIN"
 	NULL         = "NULL"
 	BOOLEAN      = "BOOLEAN"
 	INTEGER      = "INTEGER"
-	STRING      = "STRING"
+	STRING       = "STRING"
 	RETURN_VALUE = "RETURN_VALUE"
 	ERROR        = "ERROR"
 )
@@ -49,6 +50,15 @@ func (f *Function) Inspect() string {
 	return out.String()
 }
 
+type BuiltinFunction func(args ...Object) Object
+
+type Builtin struct {
+	Fn BuiltinFunction
+}
+
+func (b *Builtin) Type() ObjectType { return BUILTIN }
+func (b *Builtin) Inspect() string  { return "builtin function" }
+
 type Null struct{}
 
 func (n *Null) Type() ObjectType { return NULL }
@@ -73,7 +83,7 @@ type String struct {
 }
 
 func (s *String) Type() ObjectType { return STRING }
-func (s *String) Inspect() string  { return s.Value }
+func (s *String) Inspect() string  { return fmt.Sprintf(`"%s"`, s.Value) }
 
 type ReturnValue struct {
 	Value Object
