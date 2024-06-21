@@ -86,6 +86,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
+
+	case *ast.StringLiteral:
+		return &object.String{Value: node.Value}
 	}
 
 	return nil
@@ -211,6 +214,9 @@ func evalBinaryExpression(
 	case left.Type() == object.INTEGER && right.Type() == object.INTEGER:
 		return evalIntegerBinaryExpression(operator, left, right)
 
+	case left.Type() == object.STRING && right.Type() == object.STRING:
+		return evalStringBinaryExpression(operator, left, right)
+
 	case operator == "==":
 		return boolToBooleanObject(left == right)
 	case operator == "!=":
@@ -267,6 +273,25 @@ func evalIntegerBinaryExpression(
 			right.Type(),
 		)
 	}
+}
+
+func evalStringBinaryExpression(
+	operator token.TokenType,
+	left, right object.Object,
+) object.Object {
+	if operator != token.PLUS {
+		return newError(
+			"unknown operation: %s %s %s",
+			left.Type(),
+			operator,
+			right.Type(),
+		)
+	}
+
+	leftVal := left.(*object.String).Value
+	rightVal := right.(*object.String).Value
+
+	return &object.String{Value: leftVal + rightVal}
 }
 
 // literals

@@ -24,6 +24,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.TRUE, p.parseBoolean)
 	p.registerUnary(token.FALSE, p.parseBoolean)
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
+	p.registerUnary(token.STRING, p.parseStringLiteral)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
 	p.registerBinary(token.PAREN_OPEN, p.parseCallExpression)
@@ -369,6 +370,10 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 	return lit
 }
 
+func (p *Parser) parseStringLiteral() ast.Expression {
+	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
+}
+
 // helpers
 
 func (p *Parser) curTokenIs(tt token.TokenType) bool {
@@ -405,10 +410,10 @@ var precedences = map[token.TokenType]int{
 	token.NOT_EQUALS:   EQUALITY,
 	token.LESS_THAN:    COMPARISON,
 	token.GREATER_THAN: COMPARISON,
-	token.PLUS:          SUM,
-	token.MINUS:     SUM,
+	token.PLUS:         SUM,
+	token.MINUS:        SUM,
 	token.ASTERISK:     PRODUCT,
-	token.SLASH:       PRODUCT,
+	token.SLASH:        PRODUCT,
 	token.PAREN_OPEN:   CALL,
 }
 

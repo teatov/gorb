@@ -35,6 +35,7 @@ const (
 	// identifiers and literals
 	IDENTIFIER = "IDENTIFIER"
 	INTEGER    = "INTEGER"
+	STRING    = "STRING"
 
 	// operators
 	ASSIGN       = "="
