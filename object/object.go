@@ -21,6 +21,7 @@ const (
 	BOOLEAN      = "BOOLEAN"
 	INTEGER      = "INTEGER"
 	STRING       = "STRING"
+	ARRAY        = "ARRAY"
 	RETURN_VALUE = "RETURN_VALUE"
 	ERROR        = "ERROR"
 )
@@ -83,7 +84,27 @@ type String struct {
 }
 
 func (s *String) Type() ObjectType { return STRING }
-func (s *String) Inspect() string  { return fmt.Sprintf(`"%s"`, s.Value) }
+func (s *String) Inspect() string  { return s.Value }
+
+type Array struct {
+	Elements []Object
+}
+
+func (a *Array) Type() ObjectType { return ARRAY }
+func (a *Array) Inspect() string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, e := range a.Elements {
+		elements = append(elements, e.Inspect())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+
+	return out.String()
+}
 
 type ReturnValue struct {
 	Value Object

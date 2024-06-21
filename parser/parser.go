@@ -25,8 +25,10 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.FALSE, p.parseBoolean)
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
 	p.registerUnary(token.STRING, p.parseStringLiteral)
+	p.registerUnary(token.BRACKET_OPEN, p.parseArrayLiteral)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
+	p.registerBinary(token.BRACKET_OPEN, p.parseIndexExpression)
 	p.registerBinary(token.PAREN_OPEN, p.parseCallExpression)
 	p.registerBinary(token.PLUS, p.parseBinaryExpression)
 	p.registerBinary(token.MINUS, p.parseBinaryExpression)
@@ -181,36 +183,24 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 	return exp
 }
 
-func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
-	exp := &ast.CallExpression{Token: p.curToken, Function: function}
-	exp.Arguments = p.parseCallArguments()
+func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
+	exp := &ast.IndexExpression{Token: p.curToken, Left: left}
+
+	p.nextToken()
+	exp.Index = p.parseExpression(LOWEST)
+
+	if !p.expectPeek(token.BRACKET_CLOSE) {
+		return nil
+	}
 
 	return exp
 }
 
-func (p *Parser) parseCallArguments() []ast.Expression {
-	args := []ast.Expression{}
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseExpressionList(token.PAREN_CLOSE)
 
-	if p.peekTokenIs(token.PAREN_CLOSE) {
-		p.nextToken()
-		return args
-	}
-
-	p.nextToken()
-
-	args = append(args, p.parseExpression(LOWEST))
-
-	for p.peekTokenIs(token.COMMA) {
-		p.nextToken()
-		p.nextToken()
-		args = append(args, p.parseExpression(LOWEST))
-	}
-
-	if !p.expectPeek(token.PAREN_CLOSE) {
-		return nil
-	}
-
-	return args
+	return exp
 }
 
 func (p *Parser) parseIfExpression() ast.Expression {
@@ -374,6 +364,38 @@ func (p *Parser) parseStringLiteral() ast.Expression {
 	return &ast.StringLiteral{Token: p.curToken, Value: p.curToken.Literal}
 }
 
+func (p *Parser) parseArrayLiteral() ast.Expression {
+	array := &ast.ArrayLiteral{Token: p.curToken}
+
+	array.Elements = p.parseExpressionList(token.BRACKET_CLOSE)
+
+	return array
+}
+
+func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
+	list := []ast.Expression{}
+
+	if p.peekTokenIs(end) {
+		p.nextToken()
+		return list
+	}
+
+	p.nextToken()
+	list = append(list, p.parseExpression(LOWEST))
+
+	for p.peekTokenIs(token.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		list = append(list, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectPeek(end) {
+		return nil
+	}
+
+	return list
+}
+
 // helpers
 
 func (p *Parser) curTokenIs(tt token.TokenType) bool {
@@ -403,18 +425,20 @@ const (
 	PRODUCT
 	UNARY
 	CALL
+	INDEX
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQUALS:       EQUALITY,
-	token.NOT_EQUALS:   EQUALITY,
-	token.LESS_THAN:    COMPARISON,
-	token.GREATER_THAN: COMPARISON,
-	token.PLUS:         SUM,
-	token.MINUS:        SUM,
-	token.ASTERISK:     PRODUCT,
-	token.SLASH:        PRODUCT,
-	token.PAREN_OPEN:   CALL,
+	token.EQUALS:        EQUALITY,
+	token.NOT_EQUALS:    EQUALITY,
+	token.LESS_THAN:     COMPARISON,
+	token.GREATER_THAN:  COMPARISON,
+	token.PLUS:          SUM,
+	token.MINUS:         SUM,
+	token.ASTERISK:      PRODUCT,
+	token.SLASH:         PRODUCT,
+	token.PAREN_OPEN:    CALL,
+	token.BRACKET_OPEN: INDEX,
 }
 
 func (p *Parser) peekPrecedence() int {

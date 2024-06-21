@@ -35,7 +35,7 @@ const (
 	// identifiers and literals
 	IDENTIFIER = "IDENTIFIER"
 	INTEGER    = "INTEGER"
-	STRING    = "STRING"
+	STRING     = "STRING"
 
 	// operators
 	ASSIGN       = "="
@@ -50,12 +50,14 @@ const (
 	NOT_EQUALS   = "!="
 
 	// delimiters
-	COMMA       = ","
-	PAREN_OPEN  = "("
-	PAREN_CLOSE = ")"
-	BRACE_OPEN  = "{"
-	BRACE_CLOSE = "}"
-	TERMINATOR  = ";"
+	COMMA         = ","
+	PAREN_OPEN    = "("
+	PAREN_CLOSE   = ")"
+	BRACE_OPEN    = "{"
+	BRACE_CLOSE   = "}"
+	BRACKET_OPEN  = "["
+	BRACKET_CLOSE = "]"
+	TERMINATOR    = ";"
 
 	//keywords
 	FUNCTION    = "FUNCTION"

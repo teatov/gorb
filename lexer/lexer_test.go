@@ -26,7 +26,8 @@ func TestNextToken(t *testing.T) {
 	10 == 10;
 	10!=9;
 	"foobar";
-	"foo bar";`
+	"foo bar";
+	[1, 2];`
 
 	tests := []struct {
 		expectedType    token.TokenType
@@ -109,6 +110,12 @@ func TestNextToken(t *testing.T) {
 		{token.TERMINATOR, ";"},
 		{token.STRING, "foo bar"},
 		{token.TERMINATOR, ";"},
+		{token.BRACKET_OPEN, "["},
+		{token.INTEGER, "1"},
+		{token.COMMA, ","},
+		{token.INTEGER, "2"},
+		{token.BRACKET_CLOSE, "]"},
+		{token.TERMINATOR, ";"},
 		{token.EOF, ""},
 	}
 
@@ -118,7 +125,12 @@ func TestNextToken(t *testing.T) {
 		tok := l.NextToken()
 
 		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - TokenType wrong, expected=%q, got %q", i, tt.expectedType, tok.Type)
+			t.Fatalf(
+				"tests[%d] - TokenType wrong, expected=%q, got %q",
+				i,
+				tt.expectedType,
+				tok.Type,
+			)
 		}
 	}
 }
