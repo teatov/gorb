@@ -1,12 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"gorb/repl"
+	"gorb/run"
 	"os"
 )
 
 func main() {
-	fmt.Println("Welcome to Gorb.")
-	repl.Start(os.Stdin, os.Stdout)
+	if len(os.Args) > 1 {
+		run.ExecuteFile(os.Args[1], os.Stdout)
+		return
+	}
+
+	run.StartRepl(os.Stdin, os.Stdout)
 }
