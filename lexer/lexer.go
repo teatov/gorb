@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"gorb/token"
+	"strings"
 )
 
 func New(input string) *Lexer {
@@ -184,12 +185,26 @@ func (l *Lexer) readNumber() string {
 }
 
 func (l *Lexer) readString() string {
-	position := l.position + 1
+	b := strings.Builder{}
+
 	for {
 		l.readChar()
+		if l.ch == '\\' {
+			switch l.peekChar() {
+			case 'n':
+				b.WriteByte('\n')
+			case '\\':
+				b.WriteByte('\\')
+			}
+			l.readChar()
+			continue
+		}
+
 		if l.ch == '"' || l.ch == 0 {
 			break
 		}
+
+		b.WriteByte(l.ch)
 	}
-	return l.input[position:l.position]
+	return b.String()
 }
