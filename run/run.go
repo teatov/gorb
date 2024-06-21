@@ -11,13 +11,13 @@ import (
 	"os"
 )
 
-func ExecuteFile(path string, out io.Writer) {
-	data, err := os.ReadFile(os.Args[1])
+func ExecuteFile(out io.Writer, path string) *object.Environment {
+	data, err := os.ReadFile(path)
 
 	if err != nil {
-		fmt.Println("can't read file:", os.Args[1])
+		fmt.Println("can't read file:", path)
 		fmt.Println(err.Error())
-		return
+		return nil
 	}
 
 	text := string(data)
@@ -29,16 +29,21 @@ func ExecuteFile(path string, out io.Writer) {
 	if val != nil && val.Type() == object.ERROR {
 		io.WriteString(out, val.Inspect())
 		io.WriteString(out, "\n")
+		return nil
 	}
+
+	return env
 }
 
 const PROMPT = ">> "
 
-func StartRepl(in io.Reader, out io.Writer) {
+func StartRepl(in io.Reader, out io.Writer, env *object.Environment) {
 	fmt.Println("welcome to gorb.")
 
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
+	if env == nil {
+		env = object.NewEnvironment()
+	}
 
 	for {
 		io.WriteString(out, PROMPT)

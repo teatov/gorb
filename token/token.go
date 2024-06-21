@@ -41,9 +41,9 @@ const (
 	ASSIGN       = "="
 	PLUS         = "+"
 	MINUS        = "-"
-	NEGATE       = "!"
 	ASTERISK     = "*"
 	SLASH        = "/"
+	BANG         = "!"
 	LESS_THAN    = "<"
 	GREATER_THAN = ">"
 	EQUALS       = "=="
@@ -51,14 +51,14 @@ const (
 
 	// delimiters
 	COMMA         = ","
+	COLON         = ":"
+	SEMICOLON     = ";"
 	PAREN_OPEN    = "("
 	PAREN_CLOSE   = ")"
 	BRACE_OPEN    = "{"
 	BRACE_CLOSE   = "}"
 	BRACKET_OPEN  = "["
 	BRACKET_CLOSE = "]"
-	COLON         = ":"
-	SEMICOLON     = ";"
 
 	//keywords
 	FUNCTION    = "FUNCTION"

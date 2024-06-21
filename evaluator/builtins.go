@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"fmt"
+	"unicode/utf8"
 	"gorb/object"
 )
 
@@ -14,7 +15,7 @@ var builtins = map[string]*object.Builtin{
 
 			switch arg := args[0].(type) {
 			case *object.String:
-				return &object.Integer{Value: int64(len(arg.Value))}
+				return &object.Integer{Value: int64(utf8.RuneCountInString(arg.Value))}
 			case *object.Array:
 				return &object.Integer{Value: int64(len(arg.Elements))}
 			default:

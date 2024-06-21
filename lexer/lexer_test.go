@@ -28,6 +28,7 @@ func TestNextToken(t *testing.T) {
 	10!=9;
 	"foobar";
 	"foo bar";
+	"\n\r\t\\\"";
 	[1, 2];
 	{"foo": "bar"};
 	`
@@ -72,7 +73,7 @@ func TestNextToken(t *testing.T) {
 		{token.IDENTIFIER, "ten"},
 		{token.PAREN_CLOSE, ")"},
 		{token.SEMICOLON, ";"},
-		{token.NEGATE, "!"},
+		{token.BANG, "!"},
 		{token.MINUS, "-"},
 		{token.SLASH, "/"},
 		{token.ASTERISK, "*"},
@@ -112,6 +113,8 @@ func TestNextToken(t *testing.T) {
 		{token.STRING, "foobar"},
 		{token.SEMICOLON, ";"},
 		{token.STRING, "foo bar"},
+		{token.SEMICOLON, ";"},
+		{token.STRING, "\n\r\t\\\""},
 		{token.SEMICOLON, ";"},
 		{token.BRACKET_OPEN, "["},
 		{token.INTEGER, "1"},

@@ -37,19 +37,27 @@ func (l *Lexer) NextToken() token.Token {
 
 	switch l.ch {
 	case '=':
-		tok = l.newSingleOrDoubleToken(
-			token.ASSIGN,
-			[]SecondChar{{'=', token.EQUALS}},
-		)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.EQUALS, Literal: literal}
+		} else {
+			tok = l.newToken(token.ASSIGN)
+		}
 	case '+':
 		tok = l.newToken(token.PLUS)
 	case '-':
 		tok = l.newToken(token.MINUS)
 	case '!':
-		tok = l.newSingleOrDoubleToken(
-			token.NEGATE,
-			[]SecondChar{{'=', token.NOT_EQUALS}},
-		)
+		if l.peekChar() == '=' {
+			ch := l.ch
+			l.readChar()
+			literal := string(ch) + string(l.ch)
+			tok = token.Token{Type: token.NOT_EQUALS, Literal: literal}
+		} else {
+			tok = l.newToken(token.BANG)
+		}
 	case '*':
 		tok = l.newToken(token.ASTERISK)
 	case '/':
@@ -112,39 +120,8 @@ func (l *Lexer) newToken(tt token.TokenType) token.Token {
 	return token.Token{Type: tt, Literal: string(l.ch), Pos: l.pos, Len: 1}
 }
 
-type SecondChar struct {
-	ch byte
-	tt token.TokenType
-}
-
-func (l *Lexer) newSingleOrDoubleToken(
-	ttSingle token.TokenType,
-	secondChars []SecondChar,
-) token.Token {
-	var tok token.Token
-
-	for _, secondCh := range secondChars {
-		if l.peekChar() == secondCh.ch {
-			tok.Pos = l.pos
-			ch := l.ch
-			l.readChar()
-			tok.Type = secondCh.tt
-			tok.Literal = string(ch) + string(l.ch)
-			tok.Len = len(tok.Literal)
-			return tok
-		}
-	}
-
-	tok = l.newToken(ttSingle)
-	return tok
-}
-
-func isWhitespace(ch byte) bool {
-	return ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r'
-}
-
 func (l *Lexer) skipWhitespace() {
-	for isWhitespace(l.ch) {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
 		l.readChar()
 	}
 }
@@ -193,9 +170,16 @@ func (l *Lexer) readString() string {
 			switch l.peekChar() {
 			case 'n':
 				b.WriteByte('\n')
+			case 'r':
+				b.WriteByte('\r')
+			case 't':
+				b.WriteByte('\t')
 			case '\\':
 				b.WriteByte('\\')
+			case '"':
+				b.WriteByte('"')
 			}
+
 			l.readChar()
 			continue
 		}

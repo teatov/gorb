@@ -5,9 +5,9 @@ import (
 	"strings"
 )
 
-var traceLevel int = 0
+var traceLevel int
 
-const traceIdentPlaceholder string = "    "
+const traceIdentPlaceholder string = "\t"
 
 func identLevel() string {
 	return strings.Repeat(traceIdentPlaceholder, traceLevel-1)

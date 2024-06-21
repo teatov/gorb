@@ -238,7 +238,7 @@ func evalUnaryExpression(
 	switch operator {
 	case token.MINUS:
 		return evalInverseExpression(right)
-	case token.NEGATE:
+	case token.BANG:
 		return evalNegateExpression(right)
 	default:
 		return newError("unknown operation: %s%s", operator, right.Type())
