@@ -6,7 +6,8 @@ import (
 )
 
 func TestNextToken(t *testing.T) {
-	input := `let five = 5;
+	input := `
+	let five = 5;
 	let ten = 10;
 	
 	let add = fn(x, y) {
@@ -27,7 +28,9 @@ func TestNextToken(t *testing.T) {
 	10!=9;
 	"foobar";
 	"foo bar";
-	[1, 2];`
+	[1, 2];
+	{"foo": "bar"};
+	`
 
 	tests := []struct {
 		expectedType    token.TokenType
@@ -37,12 +40,12 @@ func TestNextToken(t *testing.T) {
 		{token.IDENTIFIER, "five"},
 		{token.ASSIGN, "="},
 		{token.INTEGER, "5"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.DECLARATION, "let"},
 		{token.IDENTIFIER, "ten"},
 		{token.ASSIGN, "="},
 		{token.INTEGER, "10"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.DECLARATION, "let"},
 		{token.IDENTIFIER, "add"},
 		{token.ASSIGN, "="},
@@ -56,9 +59,9 @@ func TestNextToken(t *testing.T) {
 		{token.IDENTIFIER, "x"},
 		{token.PLUS, "+"},
 		{token.IDENTIFIER, "y"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.BRACE_CLOSE, "}"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.DECLARATION, "let"},
 		{token.IDENTIFIER, "result"},
 		{token.ASSIGN, "="},
@@ -68,19 +71,19 @@ func TestNextToken(t *testing.T) {
 		{token.COMMA, ","},
 		{token.IDENTIFIER, "ten"},
 		{token.PAREN_CLOSE, ")"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.NEGATE, "!"},
 		{token.MINUS, "-"},
 		{token.SLASH, "/"},
 		{token.ASTERISK, "*"},
 		{token.INTEGER, "5"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.INTEGER, "5"},
 		{token.LESS_THAN, "<"},
 		{token.INTEGER, "10"},
 		{token.GREATER_THAN, ">"},
 		{token.INTEGER, "5"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.IF, "if"},
 		{token.PAREN_OPEN, "("},
 		{token.INTEGER, "5"},
@@ -90,32 +93,38 @@ func TestNextToken(t *testing.T) {
 		{token.BRACE_OPEN, "{"},
 		{token.RETURN, "return"},
 		{token.TRUE, "true"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.BRACE_CLOSE, "}"},
 		{token.ELSE, "else"},
 		{token.BRACE_OPEN, "{"},
 		{token.RETURN, "return"},
 		{token.FALSE, "false"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.BRACE_CLOSE, "}"},
 		{token.INTEGER, "10"},
 		{token.EQUALS, "=="},
 		{token.INTEGER, "10"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.INTEGER, "10"},
 		{token.NOT_EQUALS, "!="},
 		{token.INTEGER, "9"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.STRING, "foobar"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.STRING, "foo bar"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
 		{token.BRACKET_OPEN, "["},
 		{token.INTEGER, "1"},
 		{token.COMMA, ","},
 		{token.INTEGER, "2"},
 		{token.BRACKET_CLOSE, "]"},
-		{token.TERMINATOR, ";"},
+		{token.SEMICOLON, ";"},
+		{token.BRACE_OPEN, "{"},
+		{token.STRING, "foo"},
+		{token.COLON, ":"},
+		{token.STRING, "bar"},
+		{token.BRACE_CLOSE, "}"},
+		{token.SEMICOLON, ";"},
 		{token.EOF, ""},
 	}
 

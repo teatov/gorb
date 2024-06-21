@@ -71,8 +71,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = l.newToken(token.BRACKET_OPEN)
 	case ']':
 		tok = l.newToken(token.BRACKET_CLOSE)
+	case ':':
+		tok = l.newToken(token.COLON)
 	case ';':
-		tok = l.newToken(token.TERMINATOR)
+		tok = l.newToken(token.SEMICOLON)
 	case '"':
 		tok.Pos = l.pos
 		tok.Literal = l.readString()

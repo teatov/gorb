@@ -57,7 +57,8 @@ const (
 	BRACE_CLOSE   = "}"
 	BRACKET_OPEN  = "["
 	BRACKET_CLOSE = "]"
-	TERMINATOR    = ";"
+	COLON         = ":"
+	SEMICOLON     = ";"
 
 	//keywords
 	FUNCTION    = "FUNCTION"

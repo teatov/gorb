@@ -26,6 +26,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerUnary(token.INTEGER, p.parseIntegerLiteral)
 	p.registerUnary(token.STRING, p.parseStringLiteral)
 	p.registerUnary(token.BRACKET_OPEN, p.parseArrayLiteral)
+	p.registerUnary(token.BRACE_OPEN, p.parseHashLiteral)
 
 	p.binaryParseFns = make(map[token.TokenType]binaryParseFn)
 	p.registerBinary(token.BRACKET_OPEN, p.parseIndexExpression)
@@ -109,7 +110,7 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 
 	stmt.ReturnValue = p.parseExpression(LOWEST)
 
-	for p.peekTokenIs(token.TERMINATOR) {
+	for p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
@@ -133,7 +134,7 @@ func (p *Parser) parseDeclarationStatement() *ast.DeclarationStatement {
 
 	stmt.Value = p.parseExpression(LOWEST)
 
-	for p.peekTokenIs(token.TERMINATOR) {
+	for p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
@@ -145,7 +146,7 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 
 	stmt.Expression = p.parseExpression(LOWEST)
 
-	for p.peekTokenIs(token.TERMINATOR) {
+	for p.peekTokenIs(token.SEMICOLON) {
 		p.nextToken()
 	}
 
@@ -244,7 +245,7 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 	leftExp := parseUnary()
 
-	for !p.peekTokenIs(token.TERMINATOR) && precedence < p.peekPrecedence() {
+	for !p.peekTokenIs(token.SEMICOLON) && precedence < p.peekPrecedence() {
 		parseBinary := p.binaryParseFns[p.peekToken.Type]
 		if parseBinary == nil {
 			return leftExp
@@ -396,6 +397,36 @@ func (p *Parser) parseExpressionList(end token.TokenType) []ast.Expression {
 	return list
 }
 
+func (p *Parser) parseHashLiteral() ast.Expression {
+	hash := &ast.HashLiteral{Token: p.curToken}
+
+	hash.Pairs = make(map[ast.Expression]ast.Expression)
+
+	for !p.peekTokenIs(token.BRACE_CLOSE) {
+		p.nextToken()
+		key := p.parseExpression(LOWEST)
+
+		if !p.expectPeek(token.COLON) {
+			return nil
+		}
+
+		p.nextToken()
+		value := p.parseExpression(LOWEST)
+
+		hash.Pairs[key] = value
+
+		if !p.peekTokenIs(token.BRACE_CLOSE) && !p.expectPeek(token.COMMA) {
+			return nil
+		}
+	}
+
+	if !p.expectPeek(token.BRACE_CLOSE) {
+		return nil
+	}
+
+	return hash
+}
+
 // helpers
 
 func (p *Parser) curTokenIs(tt token.TokenType) bool {
@@ -429,15 +460,15 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQUALS:        EQUALITY,
-	token.NOT_EQUALS:    EQUALITY,
-	token.LESS_THAN:     COMPARISON,
-	token.GREATER_THAN:  COMPARISON,
-	token.PLUS:          SUM,
-	token.MINUS:         SUM,
-	token.ASTERISK:      PRODUCT,
-	token.SLASH:         PRODUCT,
-	token.PAREN_OPEN:    CALL,
+	token.EQUALS:       EQUALITY,
+	token.NOT_EQUALS:   EQUALITY,
+	token.LESS_THAN:    COMPARISON,
+	token.GREATER_THAN: COMPARISON,
+	token.PLUS:         SUM,
+	token.MINUS:        SUM,
+	token.ASTERISK:     PRODUCT,
+	token.SLASH:        PRODUCT,
+	token.PAREN_OPEN:   CALL,
 	token.BRACKET_OPEN: INDEX,
 }
 
