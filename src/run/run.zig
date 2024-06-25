@@ -9,6 +9,7 @@ pub const RunOptions = struct {
 
 pub fn startRepl(options: RunOptions, in: std.fs.File.Reader, out: std.fs.File.Writer) !void {
     while (true) {
+        _ = try out.write("> ");
         const input = try in.readUntilDelimiterOrEofAlloc(options.main_alloc, '\n', 8192);
 
         if (input) |line_raw| {
@@ -28,5 +29,5 @@ fn run(options: RunOptions, out: std.fs.File.Writer, input: []const u8) !void {
         defer options.main_alloc.free(string);
         _ = try out.write(string);
     }
-    try out.print("\n", .{});
+    _ = try out.write("\n");
 }

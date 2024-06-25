@@ -5,11 +5,11 @@ pub const Token = struct {
     literal: []const u8,
     pos: Pos,
     pub fn string(self: Token, allocator: std.mem.Allocator) ![]const u8 {
-        return try std.fmt.allocPrint(allocator, "({s} {s} {s}) ", .{
-            @tagName(self.type),
-            self.literal,
-            try self.pos.string(allocator),
-        });
+        return try std.fmt.allocPrint(
+            allocator,
+            "({s} {s} {s})\n",
+            .{ @tagName(self.type), self.literal, try self.pos.string(allocator) },
+        );
     }
 };
 
