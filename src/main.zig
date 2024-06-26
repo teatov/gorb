@@ -1,5 +1,5 @@
 const std = @import("std");
-const run = @import("run/run.zig");
+const run = @import("./run/run.zig");
 
 pub fn main() !void {
     const stdin = std.io.getStdIn().reader();
