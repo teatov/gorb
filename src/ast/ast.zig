@@ -19,6 +19,7 @@ pub const Node = union(enum) {
     integer_literal: *IntegerLiteral,
     string_literal: *StringLiteral,
     array_literal: *ArrayLiteral,
+    hash_literal: *HashLiteral,
     function_literal: *FunctionLiteral,
 
     pub fn string(self: Node, allocator: std.mem.Allocator) ![]const u8 {
@@ -155,6 +156,24 @@ pub const Node = union(enum) {
                 }
                 break :blk try std.fmt.allocPrint(allocator, "[{s}]", .{
                     elements.items,
+                });
+            },
+
+            .hash_literal => |node| blk: {
+                var pairs = std.ArrayList(u8).init(allocator);
+                var iterator = node.pairs.keyIterator();
+                var i: u32 = 0;
+                while (iterator.next()) |key| {
+                    try pairs.appendSlice(try key.string(allocator));
+                    try pairs.appendSlice(":");
+                    try pairs.appendSlice(try node.pairs.get(key.*).?.string(allocator));
+                    if (i < iterator.len - 1) {
+                        try pairs.appendSlice(", ");
+                    }
+                    i += 1;
+                }
+                break :blk try std.fmt.allocPrint(allocator, "{{{s}}}", .{
+                    pairs.items,
                 });
             },
 
@@ -314,6 +333,15 @@ pub const ArrayLiteral = struct {
 
     pub fn init(allocator: std.mem.Allocator) !*ArrayLiteral {
         return try allocator.create(ArrayLiteral);
+    }
+};
+
+pub const HashLiteral = struct {
+    token: token.Token = undefined,
+    pairs: std.AutoHashMap(Node, Node) = undefined,
+
+    pub fn init(allocator: std.mem.Allocator) !*HashLiteral {
+        return try allocator.create(HashLiteral);
     }
 };
 

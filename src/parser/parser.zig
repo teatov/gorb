@@ -132,7 +132,7 @@ pub const Parser = struct {
             .integer => try self.parseIntegerLiteral(),
             .string => try self.parseStringLiteral(),
             .bracket_open => try self.parseArrayLiteral(),
-            // .brace_open => try self.parseHashLiteral(),
+            .brace_open => try self.parseHashLiteral(),
             else => {
                 self.noUnaryParseFnError(self.cur_token);
                 return Error.NoUnaryParseFn;
@@ -304,6 +304,33 @@ pub const Parser = struct {
         return .{ .array_literal = array };
     }
 
+    fn parseHashLiteral(self: *Parser) !ast.Node {
+        const hash = try ast.HashLiteral.init(self.allocator);
+        hash.token = self.cur_token;
+        var pairs = std.AutoHashMap(ast.Node, ast.Node).init(self.allocator);
+
+        while (!self.peekTokenIs(.brace_close)) {
+            self.nextToken();
+            const key = try self.parseExpression(.lowest);
+
+            try self.expectPeek(.colon);
+
+            self.nextToken();
+            const value = try self.parseExpression(.lowest);
+
+            try pairs.put(key, value);
+
+            if (!self.peekTokenIs(.brace_close)) {
+                try self.expectPeek(.comma);
+            }
+        }
+
+        try self.expectPeek(.brace_close);
+
+        hash.pairs = pairs;
+        return .{ .hash_literal = hash };
+    }
+
     fn parseFunctionLiteral(self: *Parser) !ast.Node {
         const function = try ast.FunctionLiteral.init(self.allocator);
         function.token = self.cur_token;
@@ -433,7 +460,18 @@ pub const Parser = struct {
         for (0..(tok.pos.col - 1)) |_| {
             _ = pointer.append(' ') catch null;
         }
-        for (0..(tok.literal.len)) |_| {
+
+        var pointer_width = tok.literal.len;
+
+        if (pointer_width == 0) {
+            pointer_width = 1;
+        }
+
+        if (tok.type == .string) {
+            pointer_width += 2;
+        }
+
+        for (0..(pointer_width)) |_| {
             _ = pointer.append('^') catch null;
         }
         _ = pointer.appendSlice(" here") catch null;
@@ -442,7 +480,7 @@ pub const Parser = struct {
             self.allocator,
             "{s}: {s}\n{s}\n{s}\n",
             .{
-                tok.pos.string(self.allocator) catch |err| @errorName(err),
+                tok.pos.string(self.allocator),
                 message,
                 line orelse "???",
                 pointer.items,
@@ -457,10 +495,10 @@ pub const Parser = struct {
     fn expectPeekError(self: *Parser, tok_type: token.TokenType) void {
         const msg = std.fmt.allocPrint(
             self.allocator,
-            "expected `{s}`, got `{s}`",
+            "expected {s}, got {s}",
             .{
-                @tagName(tok_type),
-                @tagName(self.peek_token.type),
+                tok_type.string(self.allocator),
+                self.peek_token.string(self.allocator),
             },
         ) catch |err| {
             std.debug.print("expectPeekError {s}", .{@errorName(err)});
@@ -472,9 +510,9 @@ pub const Parser = struct {
     fn noUnaryParseFnError(self: *Parser, tok: token.Token) void {
         const msg = std.fmt.allocPrint(
             self.allocator,
-            "no unary parse function for `{s}` found",
+            "no unary parse function for {s} found",
             .{
-                @tagName(tok.type),
+                tok.string(self.allocator),
             },
         ) catch |err| {
             std.debug.print("noUnaryParseFnError {s}", .{@errorName(err)});

@@ -4,20 +4,22 @@ pub const Token = struct {
     type: TokenType,
     literal: []const u8,
     pos: Pos,
-    pub fn string(self: Token, allocator: std.mem.Allocator) ![]const u8 {
-        return try std.fmt.allocPrint(
+
+    pub fn string(self: Token, allocator: std.mem.Allocator) []const u8 {
+        return std.fmt.allocPrint(
             allocator,
-            "({s} {s} {s})\n",
-            .{ @tagName(self.type), self.literal, try self.pos.string(allocator) },
-        );
+            "[{s}: '{s}']",
+            .{ @tagName(self.type), self.literal },
+        ) catch |err| @errorName(err);
     }
 };
 
 pub const Pos = struct {
     ln: u32,
     col: u32,
-    pub fn string(self: Pos, allocator: std.mem.Allocator) ![]const u8 {
-        return try std.fmt.allocPrint(allocator, "{d}:{d}", .{ self.ln, self.col });
+
+    pub fn string(self: Pos, allocator: std.mem.Allocator) []const u8 {
+        return std.fmt.allocPrint(allocator, "{d}:{d}", .{ self.ln, self.col }) catch |err| @errorName(err);
     }
 };
 
@@ -61,6 +63,14 @@ pub const TokenType = enum {
     @"if",
     @"else",
     @"return",
+
+    pub fn string(self: TokenType, allocator: std.mem.Allocator) []const u8 {
+        return std.fmt.allocPrint(
+            allocator,
+            "[{s}]",
+            .{@tagName(self)},
+        ) catch |err| @errorName(err);
+    }
 };
 
 const Keyword = enum {

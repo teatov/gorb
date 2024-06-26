@@ -33,8 +33,9 @@ pub fn startRepl(options: RunOptions, in: std.fs.File.Reader, out: std.fs.File.W
 fn run(options: RunOptions, out: std.fs.File.Writer, input: []const u8) !void {
     var l = lexer.Lexer.init(options.mass_alloc, input);
     while (l.next()) |tok| {
-        const tok_string = try tok.string(options.mass_alloc);
+        const tok_string = tok.string(options.mass_alloc);
         _ = try out.write(tok_string);
+        _ = try out.write(" ");
     }
     _ = try out.write("\n");
     l.reset();
