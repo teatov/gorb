@@ -15,7 +15,7 @@ pub fn main() !void {
 
     const options: run.RunOptions = .{
         .main_alloc = gpa.allocator(),
-        .lexer_alloc = arena.allocator(),
+        .mass_alloc = arena.allocator(),
     };
 
     try run.startRepl(options, stdin, stdout);

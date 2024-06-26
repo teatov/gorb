@@ -3,12 +3,15 @@ const token = @import("../token/token.zig");
 
 pub const Lexer = struct {
     input: []const u8,
+
     offset: u32 = 0,
-    readOffset: u32 = 0,
+    read_offset: u32 = 0,
     ch: u8 = 0,
     pos: token.Pos = .{ .ln = 1, .col = 0 },
-    allocator: std.mem.Allocator,
+
     finished: bool = false,
+
+    allocator: std.mem.Allocator,
 
     pub fn init(allocator: std.mem.Allocator, input: []const u8) Lexer {
         var lexer = Lexer{
@@ -19,12 +22,16 @@ pub const Lexer = struct {
         return lexer;
     }
 
-    pub fn deinit(self: Lexer) void {
-        self.allocator.free(self);
+    pub fn reset(self: *Lexer) void {
+        self.offset = 0;
+        self.read_offset = 0;
+        self.ch = 0;
+        self.pos = .{ .ln = 1, .col = 0 };
+        self.readChar();
     }
 
-    pub fn next(self: *Lexer) !?token.Token {
-        const tok = try self.nextToken();
+    pub fn next(self: *Lexer) ?token.Token {
+        const tok = self.nextToken();
 
         if (self.finished) {
             return null;
@@ -37,20 +44,20 @@ pub const Lexer = struct {
         return tok;
     }
 
-    pub fn nextToken(self: *Lexer) !token.Token {
+    pub fn nextToken(self: *Lexer) token.Token {
         self.skipWhitespace();
 
         const tok: token.Token = switch (self.ch) {
             // operators
             '=' => blk: {
                 if (self.peekChar() == '=') {
-                    const startOffset = self.offset;
+                    const start_offset = self.offset;
                     const pos = self.pos;
                     self.readChar();
                     self.readChar();
                     break :blk .{
                         .type = .equals,
-                        .literal = self.input[startOffset..self.offset],
+                        .literal = self.input[start_offset..self.offset],
                         .pos = pos,
                     };
                 } else {
@@ -61,13 +68,13 @@ pub const Lexer = struct {
             '-' => self.newToken(.minus),
             '!' => blk: {
                 if (self.peekChar() == '=') {
-                    const startOffset = self.offset;
+                    const start_offset = self.offset;
                     const pos = self.pos;
                     self.readChar();
                     self.readChar();
                     break :blk .{
                         .type = .not_equals,
-                        .literal = self.input[startOffset..self.offset],
+                        .literal = self.input[start_offset..self.offset],
                         .pos = pos,
                     };
                 } else {
@@ -93,7 +100,7 @@ pub const Lexer = struct {
             // identifiers and literals
             '"' => blk: {
                 const pos = self.pos;
-                const literal = try self.readString();
+                const literal = self.readString() catch "OUT OF MEMORY!!!";
                 break :blk .{
                     .type = .string,
                     .literal = literal,
@@ -125,22 +132,22 @@ pub const Lexer = struct {
         return tok;
     }
 
-    fn newToken(self: *Lexer, tokenType: token.TokenType) token.Token {
+    fn newToken(self: *Lexer, tok_type: token.TokenType) token.Token {
         defer self.readChar();
         return .{
-            .type = tokenType,
-            .literal = self.input[self.offset..self.readOffset],
+            .type = tok_type,
+            .literal = self.input[self.offset..self.read_offset],
             .pos = self.pos,
         };
     }
 
     fn readChar(self: *Lexer) void {
-        self.offset = self.readOffset;
-        if (self.readOffset >= self.input.len) {
+        self.offset = self.read_offset;
+        if (self.read_offset >= self.input.len) {
             self.ch = 0;
         } else {
-            self.ch = self.input[self.readOffset];
-            self.readOffset += 1;
+            self.ch = self.input[self.read_offset];
+            self.read_offset += 1;
         }
 
         if (self.ch == '\n') {
@@ -158,10 +165,10 @@ pub const Lexer = struct {
     }
 
     fn peekChar(self: *Lexer) u8 {
-        if (self.readOffset >= self.input.len) {
+        if (self.read_offset >= self.input.len) {
             return 0;
         } else {
-            return self.input[self.readOffset];
+            return self.input[self.read_offset];
         }
     }
 
@@ -204,19 +211,19 @@ pub const Lexer = struct {
     }
 
     fn readIdentifier(self: *Lexer) []const u8 {
-        const startOffset = self.offset;
+        const start_offset = self.offset;
         while (std.ascii.isAlphabetic(self.ch)) {
             self.readChar();
         }
-        return self.input[startOffset..self.offset];
+        return self.input[start_offset..self.offset];
     }
 
     fn readNumber(self: *Lexer) []const u8 {
-        const startOffset = self.offset;
+        const start_offset = self.offset;
         while (std.ascii.isDigit(self.ch)) {
             self.readChar();
         }
-        return self.input[startOffset..self.offset];
+        return self.input[start_offset..self.offset];
     }
 };
 
