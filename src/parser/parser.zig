@@ -521,3 +521,9 @@ pub const Parser = struct {
         self.newError(msg, "noUnaryParseFnError", tok);
     }
 };
+
+const parser_test = @import("./parser_test.zig");
+
+test {
+    parser_test.hack();
+}

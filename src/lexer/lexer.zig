@@ -1,6 +1,5 @@
 const std = @import("std");
 const token = @import("../token/token.zig");
-const lexer_test = @import("./lexer_test.zig");
 
 pub const Lexer = struct {
     input: []const u8,
@@ -227,6 +226,8 @@ pub const Lexer = struct {
         return self.input[start_offset..self.offset];
     }
 };
+
+const lexer_test = @import("./lexer_test.zig");
 
 test {
     lexer_test.hack();
