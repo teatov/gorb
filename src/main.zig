@@ -38,16 +38,34 @@ pub fn main() !void {
     }
 
     if (file_name) |f| {
-        const file = try std.fs.cwd().openFile(f, .{});
+        const file = std.fs.cwd().openFile(f, .{}) catch |err| {
+            if (err == std.fs.File.OpenError.FileNotFound) {
+                try stdout.print("file '{s}' not found\n", .{f});
+                return;
+            }
+            return err;
+        };
         defer file.close();
-        try run.runFile(allocator, options, file, stdin, stdout);
+
+        const input = file.readToEndAlloc(
+            allocator,
+            std.math.maxInt(usize),
+        ) catch |err| {
+            if (err == std.fs.File.OpenError.IsDir) {
+                try stdout.print("'{s}' is a directory and not a file\n", .{f});
+                return;
+            }
+            return err;
+        };
+
+        try run.runFile(allocator, options, input, stdin, stdout);
     } else {
         _ = try stdout.write("welcome to gorb.\n");
         try run.startRepl(allocator, options, stdin, stdout, null);
     }
 }
 
-const help = 
+const help =
     \\usage: gorb [options] [file path]
     \\you can omit the file path to start a repl
     \\

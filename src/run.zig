@@ -8,16 +8,11 @@ const evaluator = @import("./evaluator.zig");
 pub fn runFile(
     allocator: std.mem.Allocator,
     options: Options,
-    file: std.fs.File,
+    input: []const u8,
     in: std.fs.File.Reader,
     out: std.fs.File.Writer,
 ) !void {
     const environment = try object.Environment.init(allocator);
-
-    const input = try file.readToEndAlloc(
-        allocator,
-        std.math.maxInt(usize),
-    );
 
     const val = try run(allocator, options, out, input, environment);
 
