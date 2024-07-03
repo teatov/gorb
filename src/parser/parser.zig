@@ -12,6 +12,8 @@ pub const Parser = struct {
 
     allocator: std.mem.Allocator,
 
+    const Self = @This();
+
     pub fn init(allocator: std.mem.Allocator, l: *lexer.Lexer) Parser {
         var parser = Parser{
             .lexer = l,
@@ -25,7 +27,7 @@ pub const Parser = struct {
         return parser;
     }
 
-    pub fn parseProgram(self: *Parser) !ast.Node {
+    pub fn parseProgram(self: *Self) !ast.Node {
         const program = try ast.Program.init(self.allocator);
         var statements = std.ArrayList(ast.Node).init(self.allocator);
 
@@ -42,7 +44,7 @@ pub const Parser = struct {
 
     // statements
 
-    fn parseStatement(self: *Parser) !ast.Node {
+    fn parseStatement(self: *Self) !ast.Node {
         return switch (self.cur_token.type) {
             .@"return" => try self.parseReturnStatement(),
             .declaration => try self.parseDeclarationStatement(),
@@ -50,7 +52,7 @@ pub const Parser = struct {
         };
     }
 
-    fn parseReturnStatement(self: *Parser) !ast.Node {
+    fn parseReturnStatement(self: *Self) !ast.Node {
         const stmt = try ast.Return.init(self.allocator);
         stmt.token = self.cur_token;
 
@@ -65,7 +67,7 @@ pub const Parser = struct {
         return .{ .@"return" = stmt };
     }
 
-    fn parseDeclarationStatement(self: *Parser) !ast.Node {
+    fn parseDeclarationStatement(self: *Self) !ast.Node {
         const stmt = try ast.Declaration.init(self.allocator);
         stmt.token = self.cur_token;
 
@@ -90,7 +92,7 @@ pub const Parser = struct {
         return .{ .declaration = stmt };
     }
 
-    fn parseExpressionStatement(self: *Parser) !ast.Node {
+    fn parseExpressionStatement(self: *Self) !ast.Node {
         const node = self.parseExpression(.lowest);
 
         while (self.peekTokenIs(.semicolon)) {
@@ -100,7 +102,7 @@ pub const Parser = struct {
         return node;
     }
 
-    fn parseBlockStatement(self: *Parser) !ast.Node {
+    fn parseBlockStatement(self: *Self) !ast.Node {
         const block = try ast.Block.init(self.allocator);
         var statements = std.ArrayList(ast.Node).init(self.allocator);
 
@@ -119,7 +121,7 @@ pub const Parser = struct {
 
     // expressions
 
-    fn parseExpression(self: *Parser, precedence: Precedence) Error!ast.Node {
+    fn parseExpression(self: *Self, precedence: Precedence) Error!ast.Node {
         var expr: ast.Node = switch (self.cur_token.type) {
             .paren_open => try self.parseGroupedExpression(),
             .@"if" => try self.parseIfExpression(),
@@ -160,7 +162,7 @@ pub const Parser = struct {
         return expr;
     }
 
-    fn parseGroupedExpression(self: *Parser) Error!ast.Node {
+    fn parseGroupedExpression(self: *Self) Error!ast.Node {
         self.nextToken();
 
         const node = try self.parseExpression(.lowest);
@@ -170,7 +172,7 @@ pub const Parser = struct {
         return node;
     }
 
-    fn parseIndexExpression(self: *Parser, left: ast.Node) !ast.Node {
+    fn parseIndexExpression(self: *Self, left: ast.Node) !ast.Node {
         const expr = try ast.Index.init(self.allocator);
         expr.token = self.cur_token;
         expr.left = left;
@@ -183,7 +185,7 @@ pub const Parser = struct {
         return .{ .index = expr };
     }
 
-    fn parseCallExpression(self: *Parser, function: ast.Node) !ast.Node {
+    fn parseCallExpression(self: *Self, function: ast.Node) !ast.Node {
         const expr = try ast.Call.init(self.allocator);
         expr.token = self.cur_token;
         expr.function = function;
@@ -192,7 +194,7 @@ pub const Parser = struct {
         return .{ .call = expr };
     }
 
-    fn parseIfExpression(self: *Parser) !ast.Node {
+    fn parseIfExpression(self: *Self) !ast.Node {
         const expr = try ast.If.init(self.allocator);
         expr.token = self.cur_token;
 
@@ -220,7 +222,7 @@ pub const Parser = struct {
         return .{ .@"if" = expr };
     }
 
-    fn parseUnaryExpression(self: *Parser) !ast.Node {
+    fn parseUnaryExpression(self: *Self) !ast.Node {
         const expr = try ast.UnaryOperation.init(self.allocator);
         expr.token = self.cur_token;
         expr.operator = self.cur_token;
@@ -232,7 +234,7 @@ pub const Parser = struct {
         return .{ .unary_operation = expr };
     }
 
-    fn parseBinaryExpression(self: *Parser, left: ast.Node) !ast.Node {
+    fn parseBinaryExpression(self: *Self, left: ast.Node) !ast.Node {
         const expr = try ast.BinaryOperation.init(self.allocator);
         expr.token = self.cur_token;
         expr.operator = self.cur_token;
@@ -245,7 +247,7 @@ pub const Parser = struct {
         return .{ .binary_operation = expr };
     }
 
-    fn parseExpressionList(self: *Parser, end: token.TokenType) ![]ast.Node {
+    fn parseExpressionList(self: *Self, end: token.TokenType) ![]ast.Node {
         var list = std.ArrayList(ast.Node).init(self.allocator);
 
         if (self.peekTokenIs(end)) {
@@ -269,42 +271,42 @@ pub const Parser = struct {
 
     // literals
 
-    fn parseIdentifier(self: *Parser) !ast.Node {
+    fn parseIdentifier(self: *Self) !ast.Node {
         const identifier = try ast.Identifier.init(self.allocator);
         identifier.token = self.cur_token;
         identifier.value = self.cur_token.literal;
         return .{ .identifier = identifier };
     }
 
-    fn parseBooleanLiteral(self: *Parser) !ast.Node {
+    fn parseBooleanLiteral(self: *Self) !ast.Node {
         const boolean = try ast.BooleanLiteral.init(self.allocator);
         boolean.token = self.cur_token;
         boolean.value = self.curTokenIs(token.TokenType.true);
         return .{ .boolean_literal = boolean };
     }
 
-    fn parseIntegerLiteral(self: *Parser) !ast.Node {
+    fn parseIntegerLiteral(self: *Self) !ast.Node {
         const integer = try ast.IntegerLiteral.init(self.allocator);
         integer.token = self.cur_token;
         integer.value = try std.fmt.parseInt(i32, self.cur_token.literal, 10);
         return .{ .integer_literal = integer };
     }
 
-    fn parseStringLiteral(self: *Parser) !ast.Node {
+    fn parseStringLiteral(self: *Self) !ast.Node {
         const string = try ast.StringLiteral.init(self.allocator);
         string.token = self.cur_token;
         string.value = self.cur_token.literal;
         return .{ .string_literal = string };
     }
 
-    fn parseArrayLiteral(self: *Parser) !ast.Node {
+    fn parseArrayLiteral(self: *Self) !ast.Node {
         const array = try ast.ArrayLiteral.init(self.allocator);
         array.token = self.cur_token;
         array.elements = try self.parseExpressionList(.bracket_close);
         return .{ .array_literal = array };
     }
 
-    fn parseHashLiteral(self: *Parser) !ast.Node {
+    fn parseHashLiteral(self: *Self) !ast.Node {
         const hash = try ast.HashLiteral.init(self.allocator);
         hash.token = self.cur_token;
         var pairs = std.AutoHashMap(ast.Node, ast.Node).init(self.allocator);
@@ -331,7 +333,7 @@ pub const Parser = struct {
         return .{ .hash_literal = hash };
     }
 
-    fn parseFunctionLiteral(self: *Parser) !ast.Node {
+    fn parseFunctionLiteral(self: *Self) !ast.Node {
         const function = try ast.FunctionLiteral.init(self.allocator);
         function.token = self.cur_token;
 
@@ -346,7 +348,7 @@ pub const Parser = struct {
         return .{ .function_literal = function };
     }
 
-    fn parseFunctionParameters(self: *Parser) ![]*ast.Identifier {
+    fn parseFunctionParameters(self: *Self) ![]*ast.Identifier {
         var identifiers = std.ArrayList(*ast.Identifier).init(self.allocator);
 
         if (self.peekTokenIs(.paren_close)) {
@@ -378,20 +380,20 @@ pub const Parser = struct {
 
     // helpers
 
-    fn nextToken(self: *Parser) void {
+    fn nextToken(self: *Self) void {
         self.cur_token = self.peek_token;
         self.peek_token = self.lexer.nextToken();
     }
 
-    fn curTokenIs(self: *Parser, tok_type: token.TokenType) bool {
+    fn curTokenIs(self: *Self, tok_type: token.TokenType) bool {
         return self.cur_token.type == tok_type;
     }
 
-    fn peekTokenIs(self: *Parser, tok_type: token.TokenType) bool {
+    fn peekTokenIs(self: *Self, tok_type: token.TokenType) bool {
         return self.peek_token.type == tok_type;
     }
 
-    fn expectPeek(self: *Parser, tok_type: token.TokenType) !void {
+    fn expectPeek(self: *Self, tok_type: token.TokenType) !void {
         if (self.peekTokenIs(tok_type)) {
             self.nextToken();
         } else {
@@ -427,11 +429,11 @@ pub const Parser = struct {
         };
     }
 
-    fn peekPrecedence(self: *Parser) Precedence {
+    fn peekPrecedence(self: *Self) Precedence {
         return getPrecedence(self.peek_token.type);
     }
 
-    fn curPrecedence(self: *Parser) Precedence {
+    fn curPrecedence(self: *Self) Precedence {
         return getPrecedence(self.cur_token.type);
     }
 
@@ -445,7 +447,7 @@ pub const Parser = struct {
         InvalidCharacter,
     };
 
-    fn newError(self: *Parser, message: []const u8, error_name: []const u8, tok: token.Token) void {
+    fn newError(self: *Self, message: []const u8, error_name: []const u8, tok: token.Token) void {
         var lines = std.mem.splitScalar(u8, self.lexer.input, '\n');
         var line: ?[]const u8 = null;
         var i: u32 = 1;
@@ -492,7 +494,7 @@ pub const Parser = struct {
         self.errors.append(msg) catch |err| std.debug.print("{s} {s}", .{ error_name, @errorName(err) });
     }
 
-    fn expectPeekError(self: *Parser, tok_type: token.TokenType) void {
+    fn expectPeekError(self: *Self, tok_type: token.TokenType) void {
         const msg = std.fmt.allocPrint(
             self.allocator,
             "expected {s}, got {s}",
@@ -507,7 +509,7 @@ pub const Parser = struct {
         self.newError(msg, "expectPeekError", self.peek_token);
     }
 
-    fn noUnaryParseFnError(self: *Parser, tok: token.Token) void {
+    fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
         const msg = std.fmt.allocPrint(
             self.allocator,
             "no unary parse function for {s} found",

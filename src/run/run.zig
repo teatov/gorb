@@ -1,28 +1,30 @@
 const std = @import("std");
-const token = @import("../token/token.zig");
 const lexer = @import("../lexer/lexer.zig");
 const parser = @import("../parser/parser.zig");
 const ast = @import("../ast/ast.zig");
+const object = @import("../object/object.zig");
+const evaluator = @import("../evaluator/evaluator.zig");
 
-pub const RunOptions = struct {
-    main_alloc: std.mem.Allocator,
-    mass_alloc: std.mem.Allocator,
-};
+pub fn startRepl(allocator: std.mem.Allocator, in: std.fs.File.Reader, out: std.fs.File.Writer, env: ?*object.Environment) !void {
+    const environment = if (env) |e| e else try object.Environment.init(allocator);
 
-pub fn startRepl(options: RunOptions, in: std.fs.File.Reader, out: std.fs.File.Writer) !void {
     while (true) {
         _ = try out.write("> ");
-        const input = try in.readUntilDelimiterOrEofAlloc(options.main_alloc, '\n', 8192);
+        const input = try in.readUntilDelimiterOrEofAlloc(allocator, '\n', 8192);
 
         if (input) |line_raw| {
-            defer options.main_alloc.free(line_raw);
             const line = std.mem.trim(u8, line_raw, "\r");
 
             if (std.mem.eql(u8, line, "exit")) {
                 break;
             }
 
-            try run(options, out, line);
+            const val = try run(allocator, out, line, environment);
+
+            if (val) |v| {
+                _ = try out.write(try v.inspect(allocator));
+                _ = try out.write("\n");
+            }
         } else {
             break;
         }
@@ -30,17 +32,18 @@ pub fn startRepl(options: RunOptions, in: std.fs.File.Reader, out: std.fs.File.W
     _ = try out.write("\n");
 }
 
-fn run(options: RunOptions, out: std.fs.File.Writer, input: []const u8) !void {
-    var l = lexer.Lexer.init(options.mass_alloc, input);
+fn run(allocator: std.mem.Allocator, out: std.fs.File.Writer, input: []const u8, env: *object.Environment) !?object.Object {
+    var l = lexer.Lexer.init(allocator, input);
+    _ = try out.write("TOKENS: ");
     while (l.next()) |tok| {
-        const tok_string = tok.string(options.mass_alloc);
+        const tok_string = tok.string(allocator);
         _ = try out.write(tok_string);
         _ = try out.write(" ");
     }
     _ = try out.write("\n");
     l.reset();
 
-    var p = parser.Parser.init(options.mass_alloc, &l);
+    var p = parser.Parser.init(allocator, &l);
 
     const program = p.parseProgram() catch |err| {
         if (err == parser.Parser.Error.OutOfMemory) {
@@ -50,14 +53,16 @@ fn run(options: RunOptions, out: std.fs.File.Writer, input: []const u8) !void {
                 _ = try out.write(parse_err);
                 _ = try out.write("\n");
             }
-            return;
+            return null;
         }
     };
 
-    const program_string = try ast.Node.string(
-        program,
-        options.mass_alloc,
-    );
+    _ = try out.write("AST: ");
+    const program_string = try program.string(allocator);
     _ = try out.write(program_string);
     _ = try out.write("\n");
+
+    var e = evaluator.Evaluator.init(allocator);
+
+    return try e.eval(program, env);
 }

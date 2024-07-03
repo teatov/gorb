@@ -167,7 +167,7 @@ pub const Node = union(enum) {
                     try pairs.appendSlice(try key.string(allocator));
                     try pairs.appendSlice(":");
                     try pairs.appendSlice(try node.pairs.get(key.*).?.string(allocator));
-                    if (i < iterator.len - 1) {
+                    if (i < node.pairs.count() - 1) {
                         try pairs.appendSlice(", ");
                     }
                     i += 1;

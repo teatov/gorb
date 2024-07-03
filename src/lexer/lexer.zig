@@ -13,6 +13,8 @@ pub const Lexer = struct {
 
     allocator: std.mem.Allocator,
 
+    const Self = @This();
+
     pub fn init(allocator: std.mem.Allocator, input: []const u8) Lexer {
         var lexer = Lexer{
             .input = input,
@@ -22,7 +24,7 @@ pub const Lexer = struct {
         return lexer;
     }
 
-    pub fn reset(self: *Lexer) void {
+    pub fn reset(self: *Self) void {
         self.offset = 0;
         self.read_offset = 0;
         self.ch = 0;
@@ -30,7 +32,7 @@ pub const Lexer = struct {
         self.readChar();
     }
 
-    pub fn next(self: *Lexer) ?token.Token {
+    pub fn next(self: *Self) ?token.Token {
         const tok = self.nextToken();
 
         if (self.finished) {
@@ -44,7 +46,7 @@ pub const Lexer = struct {
         return tok;
     }
 
-    pub fn nextToken(self: *Lexer) token.Token {
+    pub fn nextToken(self: *Self) token.Token {
         self.skipWhitespace();
 
         const tok: token.Token = switch (self.ch) {
@@ -132,7 +134,7 @@ pub const Lexer = struct {
         return tok;
     }
 
-    fn newToken(self: *Lexer, tok_type: token.TokenType) token.Token {
+    fn newToken(self: *Self, tok_type: token.TokenType) token.Token {
         defer self.readChar();
         return .{
             .type = tok_type,
@@ -141,7 +143,7 @@ pub const Lexer = struct {
         };
     }
 
-    fn readChar(self: *Lexer) void {
+    fn readChar(self: *Self) void {
         self.offset = self.read_offset;
         if (self.read_offset >= self.input.len) {
             self.ch = 0;
@@ -158,13 +160,13 @@ pub const Lexer = struct {
         }
     }
 
-    fn skipWhitespace(self: *Lexer) void {
+    fn skipWhitespace(self: *Self) void {
         while (std.ascii.isWhitespace(self.ch)) {
             self.readChar();
         }
     }
 
-    fn peekChar(self: *Lexer) u8 {
+    fn peekChar(self: *Self) u8 {
         if (self.read_offset >= self.input.len) {
             return 0;
         } else {
@@ -172,7 +174,7 @@ pub const Lexer = struct {
         }
     }
 
-    fn readString(self: *Lexer) ![]u8 {
+    fn readString(self: *Self) ![]u8 {
         defer self.readChar();
         var literal = std.ArrayList(u8).init(self.allocator);
 
@@ -210,7 +212,7 @@ pub const Lexer = struct {
         return literal.items;
     }
 
-    fn readIdentifier(self: *Lexer) []const u8 {
+    fn readIdentifier(self: *Self) []const u8 {
         const start_offset = self.offset;
         while (std.ascii.isAlphabetic(self.ch)) {
             self.readChar();
@@ -218,7 +220,7 @@ pub const Lexer = struct {
         return self.input[start_offset..self.offset];
     }
 
-    fn readNumber(self: *Lexer) []const u8 {
+    fn readNumber(self: *Self) []const u8 {
         const start_offset = self.offset;
         while (std.ascii.isDigit(self.ch)) {
             self.readChar();
