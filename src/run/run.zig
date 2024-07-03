@@ -5,28 +5,6 @@ const ast = @import("../ast/ast.zig");
 const object = @import("../object/object.zig");
 const evaluator = @import("../evaluator/evaluator.zig");
 
-pub const Options = struct {
-    debug_tokents: bool = false,
-    debug_ast: bool = false,
-    interactive: bool = false,
-
-    pub fn trySet(self: *Options, arg: []const u8) bool {
-        if (std.mem.eql(u8, arg, "--tokens")) {
-            self.debug_tokents = true;
-            return true;
-        }
-        if (std.mem.eql(u8, arg, "--ast")) {
-            self.debug_ast = true;
-            return true;
-        }
-        if (std.mem.eql(u8, arg, "--interactive")) {
-            self.interactive = true;
-            return true;
-        }
-        return false;
-    }
-};
-
 pub fn runFile(
     allocator: std.mem.Allocator,
     options: Options,
@@ -132,3 +110,35 @@ fn run(
 
     return try e.eval(program, env);
 }
+
+pub const Options = struct {
+    debug_tokents: bool = false,
+    debug_ast: bool = false,
+    interactive: bool = false,
+    version: bool = false,
+    help: bool = false,
+
+    pub fn trySet(self: *Options, arg: []const u8) bool {
+        if (std.mem.eql(u8, arg, "--tokens") or std.mem.eql(u8, arg, "-t")) {
+            self.debug_tokents = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--ast") or std.mem.eql(u8, arg, "-a")) {
+            self.debug_ast = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--interactive") or std.mem.eql(u8, arg, "-i")) {
+            self.interactive = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--version") or std.mem.eql(u8, arg, "-v")) {
+            self.version = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--help") or std.mem.eql(u8, arg, "-h")) {
+            self.help = true;
+            return true;
+        }
+        return false;
+    }
+};
