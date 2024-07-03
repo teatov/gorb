@@ -1,7 +1,7 @@
 const std = @import("std");
-const token = @import("../token/token.zig");
-const lexer = @import("../lexer/lexer.zig");
-const ast = @import("../ast/ast.zig");
+const token = @import("./token.zig");
+const lexer = @import("./lexer.zig");
+const ast = @import("./ast.zig");
 const parser = @import("./parser.zig");
 
 pub fn hack() void {}

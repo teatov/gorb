@@ -1,7 +1,7 @@
 const std = @import("std");
-const ast = @import("../ast/ast.zig");
-const token = @import("../token/token.zig");
-const evaluator = @import("../evaluator/evaluator.zig");
+const ast = @import("./ast.zig");
+const token = @import("./token.zig");
+const evaluator = @import("./evaluator.zig");
 
 pub const Environment = struct {
     store: std.StringHashMap(Object),

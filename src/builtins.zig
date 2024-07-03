@@ -1,6 +1,6 @@
 const std = @import("std");
-const object = @import("../object/object.zig");
-const token = @import("../token/token.zig");
+const object = @import("./object.zig");
+const token = @import("./token.zig");
 const evaluator = @import("./evaluator.zig");
 
 const BuiltinTypes = enum {

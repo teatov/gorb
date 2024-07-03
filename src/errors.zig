@@ -1,7 +1,7 @@
 const std = @import("std");
-const lexer = @import("../lexer/lexer.zig");
-const token = @import("../token/token.zig");
-const ast = @import("../ast/ast.zig");
+const lexer = @import("./lexer.zig");
+const token = @import("./token.zig");
+const ast = @import("./ast.zig");
 
 pub fn newError(
     allocator: std.mem.Allocator,

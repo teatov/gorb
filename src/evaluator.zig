@@ -1,9 +1,9 @@
 const std = @import("std");
-const ast = @import("../ast/ast.zig");
-const object = @import("../object/object.zig");
-const token = @import("../token/token.zig");
+const ast = @import("./ast.zig");
+const object = @import("./object.zig");
+const token = @import("./token.zig");
 const builtins = @import("./builtins.zig");
-const errors = @import("../errors/errors.zig");
+const errors = @import("./errors.zig");
 
 pub var @"null" = object.Null{};
 pub var @"true" = object.Boolean{ .value = true };

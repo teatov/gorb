@@ -1,9 +1,9 @@
 const std = @import("std");
-const lexer = @import("../lexer/lexer.zig");
-const parser = @import("../parser/parser.zig");
-const ast = @import("../ast/ast.zig");
-const object = @import("../object/object.zig");
-const evaluator = @import("../evaluator/evaluator.zig");
+const lexer = @import("./lexer.zig");
+const parser = @import("./parser.zig");
+const ast = @import("./ast.zig");
+const object = @import("./object.zig");
+const evaluator = @import("./evaluator.zig");
 
 pub fn runFile(
     allocator: std.mem.Allocator,

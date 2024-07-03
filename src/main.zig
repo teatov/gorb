@@ -1,5 +1,5 @@
 const std = @import("std");
-const run = @import("./run/run.zig");
+const run = @import("./run.zig");
 
 const version = "0.0.1";
 
@@ -52,7 +52,6 @@ const help =
     \\you can omit the file path to start a repl
     \\
     \\options:
-    \\
     \\  -i, --interactive execute the file and start a repl with it's environment
     \\  -t, --tokens      enable debug token information
     \\  -a, --ast         enable debug ast information
