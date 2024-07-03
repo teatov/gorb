@@ -366,7 +366,11 @@ pub const Evaluator = struct {
         var obj: ?object.Object = null;
 
         if (left == object.ObjectType.integer and right == object.ObjectType.integer) {
-            obj = try self.evalIntegerBinaryExpression(operator, left.integer.*, right.integer.*);
+            obj = try self.evalIntegerBinaryExpression(
+                operator,
+                left.integer.*,
+                right.integer.*,
+            );
         }
 
         if (left == object.ObjectType.string and right == object.ObjectType.string) {

@@ -11,7 +11,9 @@ pub fn startRepl(
     out: std.fs.File.Writer,
     env: ?*object.Environment,
 ) !void {
-    const environment = if (env) |e| e else try object.Environment.init(allocator);
+    const environment = if (env) |e| e else try object.Environment.init(
+        allocator,
+    );
 
     while (true) {
         _ = try out.write("> ");
