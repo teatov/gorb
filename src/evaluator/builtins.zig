@@ -1,5 +1,6 @@
 const std = @import("std");
 const object = @import("../object/object.zig");
+const token = @import("../token/token.zig");
 const evaluator = @import("./evaluator.zig");
 
 const BuiltinTypes = enum {
@@ -23,11 +24,13 @@ pub fn getBuiltin(name: []const u8) ?*const object.BuiltinFunction {
 fn len(
     eval: *evaluator.Evaluator,
     args: []object.Object,
+    tok: token.Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 1) {
-        return try eval.newError(
-            "wrong number of arguments. got={d}, want=1",
-            .{args.len},
+        return try eval.invalidArgumentAmountError(
+            1,
+            args.len,
+            tok,
         );
     }
 
@@ -47,8 +50,9 @@ fn len(
             break :blk .{ .integer = val };
         },
         else => try eval.newError(
-            "argument to `len` not supported, got {s}",
-            .{@tagName(args[0])},
+            "'len' does not support {s}",
+            .{args[0].stringify(eval.allocator)},
+            tok,
         ),
     };
 }
@@ -56,6 +60,7 @@ fn len(
 fn puts(
     eval: *evaluator.Evaluator,
     args: []object.Object,
+    _: token.Token,
 ) evaluator.Evaluator.Error!object.Object {
     const writer = std.io.getStdOut();
     for (args) |arg| {

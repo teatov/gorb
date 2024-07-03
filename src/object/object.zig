@@ -1,5 +1,6 @@
 const std = @import("std");
 const ast = @import("../ast/ast.zig");
+const token = @import("../token/token.zig");
 const evaluator = @import("../evaluator/evaluator.zig");
 
 pub const Environment = struct {
@@ -72,6 +73,17 @@ pub const Object = union(ObjectType) {
     hash: *Hash,
     return_value: *ReturnValue,
     @"error": *Error,
+
+    pub fn stringify(
+        self: Object,
+        allocator: std.mem.Allocator,
+    ) []const u8 {
+        return std.fmt.allocPrint(
+            allocator,
+            "[{s}]",
+            .{@tagName(self)},
+        ) catch |err| @errorName(err);
+    }
 
     pub fn inspect(
         self: Object,
@@ -205,6 +217,7 @@ pub const Function = struct {
 pub const BuiltinFunction = fn (
     *evaluator.Evaluator,
     []Object,
+    token.Token,
 ) evaluator.Evaluator.Error!Object;
 
 pub const Builtin = struct {

@@ -2,6 +2,7 @@ const std = @import("std");
 const lexer = @import("../lexer/lexer.zig");
 const token = @import("../token/token.zig");
 const ast = @import("../ast/ast.zig");
+const errors = @import("../errors/errors.zig");
 
 pub const Parser = struct {
     lexer: *lexer.Lexer,
@@ -478,61 +479,10 @@ pub const Parser = struct {
         InvalidCharacter,
     };
 
-    fn newError(
-        self: *Self,
-        message: []const u8,
-        error_name: []const u8,
-        tok: token.Token,
-    ) void {
-        var lines = std.mem.splitScalar(u8, self.lexer.input, '\n');
-        var line: ?[]const u8 = null;
-        var i: u32 = 1;
-        while (lines.next()) |ln| : (i += 1) {
-            if (i == tok.pos.ln) {
-                line = ln;
-                break;
-            }
-        }
-
-        var pointer = std.ArrayList(u8).init(self.allocator);
-        for (0..(tok.pos.col - 1)) |_| {
-            _ = pointer.append(' ') catch null;
-        }
-
-        var pointer_width = tok.literal.len;
-
-        if (pointer_width == 0) {
-            pointer_width = 1;
-        }
-
-        if (tok.type == .string) {
-            pointer_width += 2;
-        }
-
-        for (0..(pointer_width)) |_| {
-            _ = pointer.append('^') catch null;
-        }
-        _ = pointer.appendSlice(" here") catch null;
-
-        const msg = std.fmt.allocPrint(
-            self.allocator,
-            "{s}: {s}\n{s}\n{s}\n",
-            .{
-                tok.pos.string(self.allocator),
-                message,
-                line orelse "???",
-                pointer.items,
-            },
-        ) catch |err| {
-            std.debug.print(
-                "{s} {s}",
-                .{ error_name, @errorName(err) },
-            );
-            return;
-        };
+    fn newError(self: *Self, msg: []const u8) void {
         self.errors.append(msg) catch |err| std.debug.print(
-            "{s} {s}",
-            .{ error_name, @errorName(err) },
+            "{s}",
+            .{@errorName(err)},
         );
     }
 
@@ -554,7 +504,7 @@ pub const Parser = struct {
             );
             return;
         };
-        self.newError(msg, "expectPeekError", self.peek_token);
+        self.newError(errors.newError(self.allocator, msg, self.peek_token));
     }
 
     fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
@@ -571,7 +521,7 @@ pub const Parser = struct {
             );
             return;
         };
-        self.newError(msg, "noUnaryParseFnError", tok);
+        self.newError(errors.newError(self.allocator, msg, tok));
     }
 };
 

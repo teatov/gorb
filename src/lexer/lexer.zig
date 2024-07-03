@@ -8,6 +8,8 @@ pub const Lexer = struct {
     read_offset: u32 = 0,
     ch: u8 = 0,
     pos: token.Pos = .{ .ln = 1, .col = 0 },
+    cur_line: []const u8,
+    lines_it: std.mem.SplitIterator(u8, .scalar),
 
     keywords: std.StaticStringMap(token.TokenType),
 
@@ -21,6 +23,7 @@ pub const Lexer = struct {
         allocator: std.mem.Allocator,
         input: []const u8,
     ) !Lexer {
+        var iterator = std.mem.splitScalar(u8, input, '\n');
         var lexer = Lexer{
             .input = input,
             .allocator = allocator,
@@ -28,6 +31,8 @@ pub const Lexer = struct {
                 token.keywords,
                 allocator,
             ),
+            .lines_it = iterator,
+            .cur_line = iterator.next() orelse "???",
         };
         lexer.readChar();
         return lexer;
@@ -38,6 +43,8 @@ pub const Lexer = struct {
         self.read_offset = 0;
         self.ch = 0;
         self.pos = .{ .ln = 1, .col = 0 };
+        self.lines_it.reset();
+        self.cur_line = self.lines_it.next() orelse "???";
         self.readChar();
     }
 
@@ -64,12 +71,14 @@ pub const Lexer = struct {
                 if (self.peekChar() == '=') {
                     const start_offset = self.offset;
                     const pos = self.pos;
+                    const line = self.cur_line;
                     self.readChar();
                     self.readChar();
                     break :blk .{
                         .type = .equals,
                         .literal = self.input[start_offset..self.offset],
                         .pos = pos,
+                        .line = line,
                     };
                 } else {
                     break :blk self.newToken(.assign);
@@ -81,12 +90,14 @@ pub const Lexer = struct {
                 if (self.peekChar() == '=') {
                     const start_offset = self.offset;
                     const pos = self.pos;
+                    const line = self.cur_line;
                     self.readChar();
                     self.readChar();
                     break :blk .{
                         .type = .not_equals,
                         .literal = self.input[start_offset..self.offset],
                         .pos = pos,
+                        .line = line,
                     };
                 } else {
                     break :blk self.newToken(.bang);
@@ -111,28 +122,34 @@ pub const Lexer = struct {
             // identifiers and literals
             '"' => blk: {
                 const pos = self.pos;
+                const line = self.cur_line;
                 const literal = self.readString() catch "OUT OF MEMORY!!!";
                 break :blk .{
                     .type = .string,
                     .literal = literal,
                     .pos = pos,
+                    .line = line,
                 };
             },
             '_', 'a'...'z', 'A'...'Z' => blk: {
                 const pos = self.pos;
+                const line = self.cur_line;
                 const literal = self.readIdentifier();
                 break :blk .{
                     .type = self.lookupIdentifier(literal),
                     .literal = literal,
                     .pos = pos,
+                    .line = line,
                 };
             },
             '0'...'9' => blk: {
                 const pos = self.pos;
+                const line = self.cur_line;
                 break :blk .{
                     .type = .integer,
                     .literal = self.readNumber(),
                     .pos = pos,
+                    .line = line,
                 };
             },
             0 => self.newToken(.eof),
@@ -151,6 +168,7 @@ pub const Lexer = struct {
             .type = tok_type,
             .literal = self.input[self.offset..self.read_offset],
             .pos = self.pos,
+            .line = self.cur_line,
         };
     }
 
@@ -166,6 +184,7 @@ pub const Lexer = struct {
         if (self.ch == '\n') {
             self.pos.ln += 1;
             self.pos.col = 0;
+            self.cur_line = self.lines_it.next() orelse "???";
         } else {
             self.pos.col += 1;
         }
@@ -225,7 +244,7 @@ pub const Lexer = struct {
 
     fn readIdentifier(self: *Self) []const u8 {
         const start_offset = self.offset;
-        while (std.ascii.isAlphabetic(self.ch)) {
+        while (std.ascii.isAlphabetic(self.ch) or self.ch == '_') {
             self.readChar();
         }
         return self.input[start_offset..self.offset];

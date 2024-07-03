@@ -3,6 +3,7 @@ const ast = @import("../ast/ast.zig");
 const object = @import("../object/object.zig");
 const token = @import("../token/token.zig");
 const builtins = @import("./builtins.zig");
+const errors = @import("../errors/errors.zig");
 
 pub var @"null" = object.Null{};
 pub var @"true" = object.Boolean{ .value = true };
@@ -67,6 +68,7 @@ pub const Evaluator = struct {
                 break :blk try self.evalIndexExpression(
                     left,
                     index,
+                    obj.token,
                 );
             },
 
@@ -83,7 +85,7 @@ pub const Evaluator = struct {
                     return args[0];
                 }
 
-                break :blk try self.applyFunction(function, args);
+                break :blk try self.applyFunction(function, args, obj.token);
             },
 
             .@"if" => |obj| self.evalIfExpression(obj, env),
@@ -238,6 +240,7 @@ pub const Evaluator = struct {
         self: *Self,
         left: object.Object,
         index: object.Object,
+        tok: token.Token,
     ) !object.Object {
         return switch (left) {
             .array => |obj| self.evalArrayIndexExpression(
@@ -247,10 +250,12 @@ pub const Evaluator = struct {
             .hash => |obj| try self.evalHashIndexExpression(
                 obj.*,
                 index,
+                tok,
             ),
             else => try self.newError(
-                "index operator not supported: {s}",
-                .{@tagName(left)},
+                "index operator is not supported on {s}",
+                .{left.stringify(self.allocator)},
+                tok,
             ),
         };
     }
@@ -274,13 +279,15 @@ pub const Evaluator = struct {
         self: *Self,
         hash: object.Hash,
         index: object.Object,
+        tok: token.Token,
     ) !object.Object {
         const hash_key = index.hashKey();
 
         if (hash_key == null) {
             return try self.newError(
-                "unusable as hash key: {s}",
-                .{@tagName(index)},
+                "{s} is unusable as hash key",
+                .{index.stringify(self.allocator)},
+                tok,
             );
         }
 
@@ -329,7 +336,8 @@ pub const Evaluator = struct {
 
         return try self.newError(
             "unknown operation: {s}{s}",
-            .{ operator.literal, @tagName(right) },
+            .{ operator.literal, right.stringify(self.allocator) },
+            operator,
         );
     }
 
@@ -394,12 +402,22 @@ pub const Evaluator = struct {
         if (@intFromEnum(left) != @intFromEnum(right)) {
             return try self.newError(
                 "type mismatch: {s} {s} {s}",
-                .{ @tagName(left), operator.literal, @tagName(right) },
+                .{
+                    left.stringify(self.allocator),
+                    operator.literal,
+                    right.stringify(self.allocator),
+                },
+                operator,
             );
         }
         return try self.newError(
             "unknown operation: {s} {s} {s}",
-            .{ @tagName(left), operator.literal, @tagName(right) },
+            .{
+                left.stringify(self.allocator),
+                operator.literal,
+                right.stringify(self.allocator),
+            },
+            operator,
         );
     }
 
@@ -498,8 +516,9 @@ pub const Evaluator = struct {
         }
 
         return try self.newError(
-            "identifier not found: {s}",
+            "identifier '{s}' not found",
             .{node.value},
+            node.token,
         );
     }
 
@@ -523,8 +542,9 @@ pub const Evaluator = struct {
             const hash_key = key.hashKey();
             if (hash_key == null) {
                 return try self.newError(
-                    "unusable as hash key: {s}",
-                    .{@tagName(key)},
+                    "{s} is unusable as hash key",
+                    .{key.stringify(self.allocator)},
+                    node.token,
                 );
             }
 
@@ -551,9 +571,18 @@ pub const Evaluator = struct {
         self: *Self,
         function: object.Object,
         args: []object.Object,
+        tok: token.Token,
     ) !object.Object {
         return switch (function) {
             .function => |obj| blk: {
+                if (obj.parameters.len != args.len) {
+                    break :blk try self.invalidArgumentAmountError(
+                        obj.parameters.len,
+                        args.len,
+                        tok,
+                    );
+                }
+
                 const extended_env = try self.extendFunctionEnv(
                     obj.*,
                     args,
@@ -565,11 +594,12 @@ pub const Evaluator = struct {
                 break :blk self.unwrapReturnValue(val);
             },
 
-            .builtin => |obj| obj.function(self, args),
+            .builtin => |obj| obj.function(self, args, tok),
 
             else => try self.newError(
-                "not a function: {s}",
-                .{@tagName(function)},
+                "{s} is not a function",
+                .{function.stringify(self.allocator)},
+                tok,
             ),
         };
     }
@@ -601,21 +631,44 @@ pub const Evaluator = struct {
         };
     }
 
-    // helpers
+    // error
 
     pub fn newError(
         self: *Self,
         comptime format: []const u8,
         a: anytype,
+        tok: token.Token,
     ) !object.Object {
-        const message = try std.fmt.allocPrint(
+        const msg = try std.fmt.allocPrint(
             self.allocator,
             format,
             a,
         );
-        const err = try object.Error.init(self.allocator, message);
+        const err = try object.Error.init(
+            self.allocator,
+            errors.newError(self.allocator, msg, tok),
+        );
         return .{ .@"error" = err };
     }
+
+    pub fn invalidArgumentAmountError(
+        self: *Self,
+        expect: usize,
+        got: usize,
+        tok: token.Token,
+    ) !object.Object {
+        return try self.newError(
+            "expected {d} argument{s}, got {d}",
+            .{
+                expect,
+                if (expect % 10 == 1) "" else "s",
+                got,
+            },
+            tok,
+        );
+    }
+
+    // helpers
 
     fn isError(obj: object.Object) bool {
         return switch (obj) {
@@ -640,3 +693,9 @@ pub const Evaluator = struct {
         OutOfMemory,
     };
 };
+
+const evaluator_test = @import("./evaluator_test.zig");
+
+test {
+    evaluator_test.hack();
+}
