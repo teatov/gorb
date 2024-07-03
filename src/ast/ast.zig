@@ -22,14 +22,19 @@ pub const Node = union(enum) {
     hash_literal: *HashLiteral,
     function_literal: *FunctionLiteral,
 
-    pub fn string(self: Node, allocator: std.mem.Allocator) ![]const u8 {
+    pub fn string(
+        self: Node,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
         return switch (self) {
             .nothing => "NOTHING",
 
             .program => |node| blk: {
                 var node_string = std.ArrayList(u8).init(allocator);
                 for (node.statements) |statement| {
-                    try node_string.appendSlice(try statement.string(allocator));
+                    try node_string.appendSlice(
+                        try statement.string(allocator),
+                    );
                 }
                 break :blk node_string.items;
             },
@@ -37,126 +42,169 @@ pub const Node = union(enum) {
             .block => |node| blk: {
                 var node_string = std.ArrayList(u8).init(allocator);
                 for (node.statements) |statement| {
-                    try node_string.appendSlice(try statement.string(allocator));
+                    try node_string.appendSlice(
+                        try statement.string(allocator),
+                    );
                 }
                 break :blk node_string.items;
             },
 
             .@"return" => |node| blk: {
-                const return_value: []const u8 = try node.return_value.string(allocator);
-                break :blk try std.fmt.allocPrint(allocator, "{s} {s};", .{
-                    node.token.literal,
-                    return_value,
-                });
+                const return_value: []const u8 = try node.return_value.string(
+                    allocator,
+                );
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s} {s};",
+                    .{ node.token.literal, return_value },
+                );
             },
 
             .declaration => |node| blk: {
-                const value: []const u8 = try node.value.string(allocator);
-                break :blk try std.fmt.allocPrint(allocator, "{s} {s} = {s};", .{
-                    node.token.literal,
-                    node.name.value,
-                    value,
-                });
+                const value: []const u8 = try node.value.string(
+                    allocator,
+                );
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s} {s} = {s};",
+                    .{ node.token.literal, node.name.value, value },
+                );
             },
 
             .index => |node| blk: {
-                const left: []const u8 = try node.left.string(allocator);
-                const index: []const u8 = try node.index.string(allocator);
-                break :blk try std.fmt.allocPrint(allocator, "({s}[{s}])", .{
-                    left,
-                    index,
-                });
+                const left: []const u8 = try node.left.string(
+                    allocator,
+                );
+                const index: []const u8 = try node.index.string(
+                    allocator,
+                );
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "({s}[{s}])",
+                    .{ left, index },
+                );
             },
 
             .call => |node| blk: {
-                const function: []const u8 = try node.function.string(allocator);
+                const function: []const u8 = try node.function.string(
+                    allocator,
+                );
                 var args = std.ArrayList(u8).init(allocator);
                 for (node.arguments, 0..) |argument, i| {
-                    try args.appendSlice(try argument.string(allocator));
+                    try args.appendSlice(
+                        try argument.string(allocator),
+                    );
                     if (i < node.arguments.len - 1) {
                         try args.appendSlice(", ");
                     }
                 }
-                break :blk try std.fmt.allocPrint(allocator, "{s}({s})", .{
-                    function,
-                    args.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s}({s})",
+                    .{ function, args.items },
+                );
             },
 
             .@"if" => |node| blk: {
-                const condition: []const u8 = try node.condition.string(allocator);
+                const condition: []const u8 = try node.condition.string(
+                    allocator,
+                );
 
                 var body = std.ArrayList(u8).init(allocator);
                 for (node.consequence.statements) |statement| {
-                    try body.appendSlice(try statement.string(allocator));
+                    try body.appendSlice(
+                        try statement.string(allocator),
+                    );
                 }
 
                 if (node.alternative) |alternative| {
                     try body.appendSlice(" else ");
                     for (alternative.statements) |statement| {
-                        try body.appendSlice(try statement.string(allocator));
+                        try body.appendSlice(
+                            try statement.string(allocator),
+                        );
                     }
                 }
 
-                break :blk try std.fmt.allocPrint(allocator, "if {s} {s}", .{
-                    condition,
-                    body.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "if {s} {s}",
+                    .{ condition, body.items },
+                );
             },
 
             .unary_operation => |node| blk: {
-                const right: []const u8 = try node.right.string(allocator);
-                break :blk try std.fmt.allocPrint(allocator, "({s}{s})", .{
-                    node.operator.literal,
-                    right,
-                });
+                const right: []const u8 = try node.right.string(
+                    allocator,
+                );
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "({s}{s})",
+                    .{ node.operator.literal, right },
+                );
             },
 
             .binary_operation => |node| blk: {
-                const left: []const u8 = try node.left.string(allocator);
-                const right: []const u8 = try node.right.string(allocator);
-                break :blk try std.fmt.allocPrint(allocator, "({s} {s} {s})", .{
-                    left,
-                    node.operator.literal,
-                    right,
-                });
+                const left: []const u8 = try node.left.string(
+                    allocator,
+                );
+                const right: []const u8 = try node.right.string(
+                    allocator,
+                );
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "({s} {s} {s})",
+                    .{ left, node.operator.literal, right },
+                );
             },
 
             .identifier => |node| blk: {
-                break :blk try std.fmt.allocPrint(allocator, "{s}", .{
-                    node.value,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s}",
+                    .{node.value},
+                );
             },
 
             .boolean_literal => |node| blk: {
-                break :blk try std.fmt.allocPrint(allocator, "{any}", .{
-                    node.value,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{any}",
+                    .{node.value},
+                );
             },
 
             .integer_literal => |node| blk: {
-                break :blk try std.fmt.allocPrint(allocator, "{d}", .{
-                    node.value,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{d}",
+                    .{node.value},
+                );
             },
 
             .string_literal => |node| blk: {
-                break :blk try std.fmt.allocPrint(allocator, "{s}", .{
-                    node.value,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s}",
+                    .{node.value},
+                );
             },
 
             .array_literal => |node| blk: {
                 var elements = std.ArrayList(u8).init(allocator);
                 for (node.elements, 0..) |element, i| {
-                    try elements.appendSlice(try element.string(allocator));
+                    try elements.appendSlice(
+                        try element.string(allocator),
+                    );
                     if (i < node.elements.len - 1) {
                         try elements.appendSlice(", ");
                     }
                 }
-                break :blk try std.fmt.allocPrint(allocator, "[{s}]", .{
-                    elements.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "[{s}]",
+                    .{elements.items},
+                );
             },
 
             .hash_literal => |node| blk: {
@@ -164,17 +212,25 @@ pub const Node = union(enum) {
                 var iterator = node.pairs.keyIterator();
                 var i: u32 = 0;
                 while (iterator.next()) |key| {
-                    try pairs.appendSlice(try key.string(allocator));
+                    try pairs.appendSlice(
+                        try key.string(allocator),
+                    );
                     try pairs.appendSlice(":");
-                    try pairs.appendSlice(try node.pairs.get(key.*).?.string(allocator));
+                    try pairs.appendSlice(
+                        try node.pairs.get(key.*).?.string(
+                            allocator,
+                        ),
+                    );
                     if (i < node.pairs.count() - 1) {
                         try pairs.appendSlice(", ");
                     }
                     i += 1;
                 }
-                break :blk try std.fmt.allocPrint(allocator, "{{{s}}}", .{
-                    pairs.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{{{s}}}",
+                    .{pairs.items},
+                );
             },
 
             .function_literal => |node| blk: {
@@ -188,14 +244,20 @@ pub const Node = union(enum) {
 
                 var body = std.ArrayList(u8).init(allocator);
                 for (node.body.statements) |statement| {
-                    try body.appendSlice(try statement.string(allocator));
+                    try body.appendSlice(
+                        try statement.string(allocator),
+                    );
                 }
 
-                break :blk try std.fmt.allocPrint(allocator, "{s}({s}){s}", .{
-                    node.token.literal,
-                    params.items,
-                    body.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{s}({s}){s}",
+                    .{
+                        node.token.literal,
+                        params.items,
+                        body.items,
+                    },
+                );
             },
         };
     }

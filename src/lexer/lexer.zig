@@ -15,7 +15,10 @@ pub const Lexer = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, input: []const u8) Lexer {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        input: []const u8,
+    ) Lexer {
         var lexer = Lexer{
             .input = input,
             .allocator = allocator,
@@ -134,7 +137,10 @@ pub const Lexer = struct {
         return tok;
     }
 
-    fn newToken(self: *Self, tok_type: token.TokenType) token.Token {
+    fn newToken(
+        self: *Self,
+        tok_type: token.TokenType,
+    ) token.Token {
         defer self.readChar();
         return .{
             .type = tok_type,

@@ -17,7 +17,11 @@ pub const Evaluator = struct {
         return .{ .allocator = allocator };
     }
 
-    pub fn eval(self: *Self, node: ast.Node, env: *object.Environment) Error!object.Object {
+    pub fn eval(
+        self: *Self,
+        node: ast.Node,
+        env: *object.Environment,
+    ) Error!object.Object {
         return switch (node) {
             .program => |obj| self.evalProgram(obj, env),
 
@@ -28,7 +32,10 @@ pub const Evaluator = struct {
                 if (isError(o)) {
                     return o;
                 }
-                const val = try object.ReturnValue.init(self.allocator, o);
+                const val = try object.ReturnValue.init(
+                    self.allocator,
+                    o,
+                );
                 break :blk .{ .return_value = val };
             },
 
@@ -57,7 +64,10 @@ pub const Evaluator = struct {
                     return index;
                 }
 
-                break :blk try self.evalIndexExpression(left, index);
+                break :blk try self.evalIndexExpression(
+                    left,
+                    index,
+                );
             },
 
             .call => |obj| blk: {
@@ -65,7 +75,10 @@ pub const Evaluator = struct {
                 if (isError(function)) {
                     return function;
                 }
-                const args = try self.evalExpressions(obj.arguments, env);
+                const args = try self.evalExpressions(
+                    obj.arguments,
+                    env,
+                );
                 if (args.len == 1 and isError(args[0])) {
                     return args[0];
                 }
@@ -81,7 +94,10 @@ pub const Evaluator = struct {
                     return right;
                 }
 
-                break :blk try self.evalUnaryExpression(obj.operator, right);
+                break :blk try self.evalUnaryExpression(
+                    obj.operator,
+                    right,
+                );
             },
 
             .binary_operation => |obj| blk: {
@@ -94,35 +110,61 @@ pub const Evaluator = struct {
                     return right;
                 }
 
-                break :blk try self.evalBinaryExpression(obj.operator, left, right);
+                break :blk try self.evalBinaryExpression(
+                    obj.operator,
+                    left,
+                    right,
+                );
             },
 
             // literals
 
             .identifier => |obj| self.evalIdentifier(obj, env),
 
-            .boolean_literal => |obj| boolToBooleanObject(obj.value),
+            .boolean_literal => |obj| boolToBooleanObject(
+                obj.value,
+            ),
 
             .integer_literal => |obj| blk: {
-                const val = try object.Integer.init(self.allocator, obj.value);
+                const val = try object.Integer.init(
+                    self.allocator,
+                    obj.value,
+                );
                 break :blk .{ .integer = val };
             },
 
             .string_literal => |obj| blk: {
-                const val = try object.String.init(self.allocator, obj.value);
+                const val = try object.String.init(
+                    self.allocator,
+                    obj.value,
+                );
                 break :blk .{ .string = val };
             },
 
             .array_literal => |obj| blk: {
-                const elements = try self.evalExpressions(obj.elements, env);
-                const val = try object.Array.init(self.allocator, elements);
+                const elements = try self.evalExpressions(
+                    obj.elements,
+                    env,
+                );
+                const val = try object.Array.init(
+                    self.allocator,
+                    elements,
+                );
                 break :blk .{ .array = val };
             },
 
-            .hash_literal => |obj| try self.evalHashLiteral(obj, env),
+            .hash_literal => |obj| try self.evalHashLiteral(
+                obj,
+                env,
+            ),
 
             .function_literal => |obj| blk: {
-                const val = try object.Function.init(self.allocator, obj.parameters, obj.body, env);
+                const val = try object.Function.init(
+                    self.allocator,
+                    obj.parameters,
+                    obj.body,
+                    env,
+                );
                 break :blk .{ .function = val };
             },
 
@@ -130,7 +172,11 @@ pub const Evaluator = struct {
         };
     }
 
-    fn evalProgram(self: *Self, node: *ast.Program, env: *object.Environment) !object.Object {
+    fn evalProgram(
+        self: *Self,
+        node: *ast.Program,
+        env: *object.Environment,
+    ) !object.Object {
         var result: object.Object = undefined;
 
         for (node.statements) |stmt| {
@@ -146,7 +192,11 @@ pub const Evaluator = struct {
         return result;
     }
 
-    fn evalBlock(self: *Self, node: ast.Block, env: *object.Environment) !object.Object {
+    fn evalBlock(
+        self: *Self,
+        node: ast.Block,
+        env: *object.Environment,
+    ) !object.Object {
         var result: object.Object = undefined;
 
         for (node.statements) |stmt| {
@@ -164,8 +214,14 @@ pub const Evaluator = struct {
 
     // expressions
 
-    fn evalExpressions(self: *Self, nodes: []ast.Node, env: *object.Environment) ![]object.Object {
-        var result = std.ArrayList(object.Object).init(self.allocator);
+    fn evalExpressions(
+        self: *Self,
+        nodes: []ast.Node,
+        env: *object.Environment,
+    ) ![]object.Object {
+        var result = std.ArrayList(object.Object).init(
+            self.allocator,
+        );
 
         for (nodes) |n| {
             const val = try self.eval(n, env);
@@ -178,15 +234,32 @@ pub const Evaluator = struct {
         return result.items;
     }
 
-    fn evalIndexExpression(self: *Self, left: object.Object, index: object.Object) !object.Object {
+    fn evalIndexExpression(
+        self: *Self,
+        left: object.Object,
+        index: object.Object,
+    ) !object.Object {
         return switch (left) {
-            .array => |obj| self.evalArrayIndexExpression(obj.*, index),
-            .hash => |obj| try self.evalHashIndexExpression(obj.*, index),
-            else => try self.newError("index operator not supported: {s}", .{@tagName(left)}),
+            .array => |obj| self.evalArrayIndexExpression(
+                obj.*,
+                index,
+            ),
+            .hash => |obj| try self.evalHashIndexExpression(
+                obj.*,
+                index,
+            ),
+            else => try self.newError(
+                "index operator not supported: {s}",
+                .{@tagName(left)},
+            ),
         };
     }
 
-    fn evalArrayIndexExpression(_: *Self, array: object.Array, index: object.Object) object.Object {
+    fn evalArrayIndexExpression(
+        _: *Self,
+        array: object.Array,
+        index: object.Object,
+    ) object.Object {
         const idx = index.integer.value;
         const max = array.elements.len - 1;
 
@@ -197,11 +270,18 @@ pub const Evaluator = struct {
         return array.elements[@intCast(idx)];
     }
 
-    fn evalHashIndexExpression(self: *Self, hash: object.Hash, index: object.Object) !object.Object {
+    fn evalHashIndexExpression(
+        self: *Self,
+        hash: object.Hash,
+        index: object.Object,
+    ) !object.Object {
         const hash_key = index.hashKey();
 
         if (hash_key == null) {
-            return try self.newError("unusable as hash key: {s}", .{@tagName(index)});
+            return try self.newError(
+                "unusable as hash key: {s}",
+                .{@tagName(index)},
+            );
         }
 
         const pair = hash.pairs.get(hash_key.?);
@@ -213,7 +293,11 @@ pub const Evaluator = struct {
         return pair.?.value;
     }
 
-    fn evalIfExpression(self: *Self, node: *ast.If, env: *object.Environment) !object.Object {
+    fn evalIfExpression(
+        self: *Self,
+        node: *ast.If,
+        env: *object.Environment,
+    ) !object.Object {
         const condition = try self.eval(node.condition, env);
         if (isError(condition)) {
             return condition;
@@ -228,7 +312,11 @@ pub const Evaluator = struct {
         }
     }
 
-    fn evalUnaryExpression(self: *Self, operator: token.Token, right: object.Object) !object.Object {
+    fn evalUnaryExpression(
+        self: *Self,
+        operator: token.Token,
+        right: object.Object,
+    ) !object.Object {
         const obj: ?object.Object = switch (operator.type) {
             .minus => try self.evalInverseExpression(right),
             .bang => self.evalNegateExpression(right),
@@ -239,25 +327,42 @@ pub const Evaluator = struct {
             return o;
         }
 
-        return try self.newError("unknown operation: {s}{s}", .{ operator.literal, @tagName(right) });
+        return try self.newError(
+            "unknown operation: {s}{s}",
+            .{ operator.literal, @tagName(right) },
+        );
     }
 
-    fn evalInverseExpression(self: *Self, right: object.Object) !?object.Object {
+    fn evalInverseExpression(
+        self: *Self,
+        right: object.Object,
+    ) !?object.Object {
         return switch (right) {
             .integer => |obj| blk: {
-                const val = try object.Integer.init(self.allocator, -obj.value);
+                const val = try object.Integer.init(
+                    self.allocator,
+                    -obj.value,
+                );
                 break :blk .{ .integer = val };
             },
             else => null,
         };
     }
 
-    fn evalNegateExpression(_: *Self, right: object.Object) object.Object {
+    fn evalNegateExpression(
+        _: *Self,
+        right: object.Object,
+    ) object.Object {
         var val = if (isTruthy(right)) @"false" else @"true";
         return .{ .boolean = &val };
     }
 
-    fn evalBinaryExpression(self: *Self, operator: token.Token, left: object.Object, right: object.Object) !object.Object {
+    fn evalBinaryExpression(
+        self: *Self,
+        operator: token.Token,
+        left: object.Object,
+        right: object.Object,
+    ) !object.Object {
         var obj: ?object.Object = null;
 
         if (left == object.ObjectType.integer and right == object.ObjectType.integer) {
@@ -265,7 +370,11 @@ pub const Evaluator = struct {
         }
 
         if (left == object.ObjectType.string and right == object.ObjectType.string) {
-            obj = try self.evalStringBinaryExpression(operator, left.string.*, right.string.*);
+            obj = try self.evalStringBinaryExpression(
+                operator,
+                left.string.*,
+                right.string.*,
+            );
         }
 
         if (obj) |o| {
@@ -279,30 +388,53 @@ pub const Evaluator = struct {
             return boolToBooleanObject(!std.meta.eql(left, right));
         }
         if (@intFromEnum(left) != @intFromEnum(right)) {
-            return try self.newError("type mismatch: {s} {s} {s}", .{ @tagName(left), operator.literal, @tagName(right) });
+            return try self.newError(
+                "type mismatch: {s} {s} {s}",
+                .{ @tagName(left), operator.literal, @tagName(right) },
+            );
         }
-        return try self.newError("unknown operation: {s} {s} {s}", .{ @tagName(left), operator.literal, @tagName(right) });
+        return try self.newError(
+            "unknown operation: {s} {s} {s}",
+            .{ @tagName(left), operator.literal, @tagName(right) },
+        );
     }
 
-    fn evalIntegerBinaryExpression(self: *Self, operator: token.Token, left: object.Integer, right: object.Integer) !?object.Object {
+    fn evalIntegerBinaryExpression(
+        self: *Self,
+        operator: token.Token,
+        left: object.Integer,
+        right: object.Integer,
+    ) !?object.Object {
         const left_val = left.value;
         const right_val = right.value;
 
         return switch (operator.type) {
             .plus => blk: {
-                const val = try object.Integer.init(self.allocator, left_val + right_val);
+                const val = try object.Integer.init(
+                    self.allocator,
+                    left_val + right_val,
+                );
                 break :blk .{ .integer = val };
             },
             .minus => blk: {
-                const val = try object.Integer.init(self.allocator, left_val - right_val);
+                const val = try object.Integer.init(
+                    self.allocator,
+                    left_val - right_val,
+                );
                 break :blk .{ .integer = val };
             },
             .asterisk => blk: {
-                const val = try object.Integer.init(self.allocator, left_val * right_val);
+                const val = try object.Integer.init(
+                    self.allocator,
+                    left_val * right_val,
+                );
                 break :blk .{ .integer = val };
             },
             .slash => blk: {
-                const val = try object.Integer.init(self.allocator, @divTrunc(left_val, right_val));
+                const val = try object.Integer.init(
+                    self.allocator,
+                    @divTrunc(left_val, right_val),
+                );
                 break :blk .{ .integer = val };
             },
 
@@ -315,14 +447,26 @@ pub const Evaluator = struct {
         };
     }
 
-    fn evalStringBinaryExpression(self: *Self, operator: token.Token, left: object.String, right: object.String) !?object.Object {
+    fn evalStringBinaryExpression(
+        self: *Self,
+        operator: token.Token,
+        left: object.String,
+        right: object.String,
+    ) !?object.Object {
         const left_val = left.value;
         const right_val = right.value;
 
         return switch (operator.type) {
             .plus => blk: {
-                const str = try std.fmt.allocPrint(self.allocator, "{s}{s}", .{ left_val, right_val });
-                const val = try object.String.init(self.allocator, str);
+                const str = try std.fmt.allocPrint(
+                    self.allocator,
+                    "{s}{s}",
+                    .{ left_val, right_val },
+                );
+                const val = try object.String.init(
+                    self.allocator,
+                    str,
+                );
                 break :blk .{ .string = val };
             },
 
@@ -332,7 +476,11 @@ pub const Evaluator = struct {
 
     // literals
 
-    fn evalIdentifier(self: *Self, node: *ast.Identifier, env: *object.Environment) !object.Object {
+    fn evalIdentifier(
+        self: *Self,
+        node: *ast.Identifier,
+        env: *object.Environment,
+    ) !object.Object {
         const val = env.get(node.value);
 
         if (val) |v| {
@@ -345,11 +493,21 @@ pub const Evaluator = struct {
             return .{ .builtin = v };
         }
 
-        return try self.newError("identifier not found: {s}", .{node.value});
+        return try self.newError(
+            "identifier not found: {s}",
+            .{node.value},
+        );
     }
 
-    fn evalHashLiteral(self: *Self, node: *ast.HashLiteral, env: *object.Environment) !object.Object {
-        var pairs = std.AutoHashMap(object.HashKey, object.HashPair).init(self.allocator);
+    fn evalHashLiteral(
+        self: *Self,
+        node: *ast.HashLiteral,
+        env: *object.Environment,
+    ) !object.Object {
+        var pairs = std.AutoHashMap(
+            object.HashKey,
+            object.HashPair,
+        ).init(self.allocator);
 
         var iterator = node.pairs.iterator();
         while (iterator.next()) |pair| {
@@ -360,7 +518,10 @@ pub const Evaluator = struct {
 
             const hash_key = key.hashKey();
             if (hash_key == null) {
-                return try self.newError("unusable as hash key: {s}", .{@tagName(key)});
+                return try self.newError(
+                    "unusable as hash key: {s}",
+                    .{@tagName(key)},
+                );
             }
 
             const value = try self.eval(pair.value_ptr.*, env);
@@ -368,7 +529,11 @@ pub const Evaluator = struct {
                 return value;
             }
 
-            const hash_pair = try object.HashPair.init(self.allocator, key, value);
+            const hash_pair = try object.HashPair.init(
+                self.allocator,
+                key,
+                value,
+            );
             _ = try pairs.put(hash_key.?, hash_pair.*);
         }
 
@@ -378,22 +543,42 @@ pub const Evaluator = struct {
 
     // function
 
-    fn applyFunction(self: *Self, function: object.Object, args: []object.Object) !object.Object {
+    fn applyFunction(
+        self: *Self,
+        function: object.Object,
+        args: []object.Object,
+    ) !object.Object {
         return switch (function) {
             .function => |obj| blk: {
-                const extended_env = try self.extendFunctionEnv(obj.*, args);
-                const val = try self.eval(.{ .block = obj.body }, extended_env);
+                const extended_env = try self.extendFunctionEnv(
+                    obj.*,
+                    args,
+                );
+                const val = try self.eval(
+                    .{ .block = obj.body },
+                    extended_env,
+                );
                 break :blk self.unwrapReturnValue(val);
             },
 
             .builtin => |obj| obj.function(self, args),
 
-            else => try self.newError("not a function: {s}", .{@tagName(function)}),
+            else => try self.newError(
+                "not a function: {s}",
+                .{@tagName(function)},
+            ),
         };
     }
 
-    fn extendFunctionEnv(self: *Self, function: object.Function, args: []object.Object) !*object.Environment {
-        var env = try object.Environment.initEnclosed(self.allocator, function.env);
+    fn extendFunctionEnv(
+        self: *Self,
+        function: object.Function,
+        args: []object.Object,
+    ) !*object.Environment {
+        var env = try object.Environment.initEnclosed(
+            self.allocator,
+            function.env,
+        );
 
         for (function.parameters, 0..) |param, i| {
             _ = env.set(param.value, args[i]);
@@ -402,7 +587,10 @@ pub const Evaluator = struct {
         return env;
     }
 
-    fn unwrapReturnValue(_: *Self, obj: object.Object) object.Object {
+    fn unwrapReturnValue(
+        _: *Self,
+        obj: object.Object,
+    ) object.Object {
         return switch (obj) {
             .return_value => |o| o.value,
             else => obj,
@@ -411,8 +599,16 @@ pub const Evaluator = struct {
 
     // helpers
 
-    pub fn newError(self: *Self, comptime format: []const u8, a: anytype) !object.Object {
-        const message = try std.fmt.allocPrint(self.allocator, format, a);
+    pub fn newError(
+        self: *Self,
+        comptime format: []const u8,
+        a: anytype,
+    ) !object.Object {
+        const message = try std.fmt.allocPrint(
+            self.allocator,
+            format,
+            a,
+        );
         const err = try object.Error.init(self.allocator, message);
         return .{ .@"error" = err };
     }

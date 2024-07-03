@@ -5,7 +5,10 @@ pub const Token = struct {
     literal: []const u8,
     pos: Pos,
 
-    pub fn string(self: Token, allocator: std.mem.Allocator) []const u8 {
+    pub fn string(
+        self: Token,
+        allocator: std.mem.Allocator,
+    ) []const u8 {
         return std.fmt.allocPrint(
             allocator,
             "[{s}: '{s}']",
@@ -18,8 +21,15 @@ pub const Pos = struct {
     ln: u32,
     col: u32,
 
-    pub fn string(self: Pos, allocator: std.mem.Allocator) []const u8 {
-        return std.fmt.allocPrint(allocator, "{d}:{d}", .{ self.ln, self.col }) catch |err| @errorName(err);
+    pub fn string(
+        self: Pos,
+        allocator: std.mem.Allocator,
+    ) []const u8 {
+        return std.fmt.allocPrint(
+            allocator,
+            "{d}:{d}",
+            .{ self.ln, self.col },
+        ) catch |err| @errorName(err);
     }
 };
 
@@ -64,7 +74,10 @@ pub const TokenType = enum {
     @"else",
     @"return",
 
-    pub fn string(self: TokenType, allocator: std.mem.Allocator) []const u8 {
+    pub fn string(
+        self: TokenType,
+        allocator: std.mem.Allocator,
+    ) []const u8 {
         return std.fmt.allocPrint(
             allocator,
             "[{s}]",

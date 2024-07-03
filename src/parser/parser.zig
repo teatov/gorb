@@ -14,7 +14,10 @@ pub const Parser = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator, l: *lexer.Lexer) Parser {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        l: *lexer.Lexer,
+    ) Parser {
         var parser = Parser{
             .lexer = l,
             .errors = std.ArrayList([]const u8).init(allocator),
@@ -29,7 +32,9 @@ pub const Parser = struct {
 
     pub fn parseProgram(self: *Self) !ast.Node {
         const program = try ast.Program.init(self.allocator);
-        var statements = std.ArrayList(ast.Node).init(self.allocator);
+        var statements = std.ArrayList(ast.Node).init(
+            self.allocator,
+        );
 
         while (!self.curTokenIs(.eof)) {
             const stmt = try self.parseStatement();
@@ -104,7 +109,9 @@ pub const Parser = struct {
 
     fn parseBlockStatement(self: *Self) !ast.Node {
         const block = try ast.Block.init(self.allocator);
-        var statements = std.ArrayList(ast.Node).init(self.allocator);
+        var statements = std.ArrayList(ast.Node).init(
+            self.allocator,
+        );
 
         self.nextToken();
 
@@ -121,7 +128,10 @@ pub const Parser = struct {
 
     // expressions
 
-    fn parseExpression(self: *Self, precedence: Precedence) Error!ast.Node {
+    fn parseExpression(
+        self: *Self,
+        precedence: Precedence,
+    ) Error!ast.Node {
         var expr: ast.Node = switch (self.cur_token.type) {
             .paren_open => try self.parseGroupedExpression(),
             .@"if" => try self.parseIfExpression(),
@@ -185,7 +195,10 @@ pub const Parser = struct {
         return .{ .index = expr };
     }
 
-    fn parseCallExpression(self: *Self, function: ast.Node) !ast.Node {
+    fn parseCallExpression(
+        self: *Self,
+        function: ast.Node,
+    ) !ast.Node {
         const expr = try ast.Call.init(self.allocator);
         expr.token = self.cur_token;
         expr.function = function;
@@ -234,7 +247,10 @@ pub const Parser = struct {
         return .{ .unary_operation = expr };
     }
 
-    fn parseBinaryExpression(self: *Self, left: ast.Node) !ast.Node {
+    fn parseBinaryExpression(
+        self: *Self,
+        left: ast.Node,
+    ) !ast.Node {
         const expr = try ast.BinaryOperation.init(self.allocator);
         expr.token = self.cur_token;
         expr.operator = self.cur_token;
@@ -247,7 +263,10 @@ pub const Parser = struct {
         return .{ .binary_operation = expr };
     }
 
-    fn parseExpressionList(self: *Self, end: token.TokenType) ![]ast.Node {
+    fn parseExpressionList(
+        self: *Self,
+        end: token.TokenType,
+    ) ![]ast.Node {
         var list = std.ArrayList(ast.Node).init(self.allocator);
 
         if (self.peekTokenIs(end)) {
@@ -288,7 +307,11 @@ pub const Parser = struct {
     fn parseIntegerLiteral(self: *Self) !ast.Node {
         const integer = try ast.IntegerLiteral.init(self.allocator);
         integer.token = self.cur_token;
-        integer.value = try std.fmt.parseInt(i32, self.cur_token.literal, 10);
+        integer.value = try std.fmt.parseInt(
+            i32,
+            self.cur_token.literal,
+            10,
+        );
         return .{ .integer_literal = integer };
     }
 
@@ -302,14 +325,18 @@ pub const Parser = struct {
     fn parseArrayLiteral(self: *Self) !ast.Node {
         const array = try ast.ArrayLiteral.init(self.allocator);
         array.token = self.cur_token;
-        array.elements = try self.parseExpressionList(.bracket_close);
+        array.elements = try self.parseExpressionList(
+            .bracket_close,
+        );
         return .{ .array_literal = array };
     }
 
     fn parseHashLiteral(self: *Self) !ast.Node {
         const hash = try ast.HashLiteral.init(self.allocator);
         hash.token = self.cur_token;
-        var pairs = std.AutoHashMap(ast.Node, ast.Node).init(self.allocator);
+        var pairs = std.AutoHashMap(ast.Node, ast.Node).init(
+            self.allocator,
+        );
 
         while (!self.peekTokenIs(.brace_close)) {
             self.nextToken();
@@ -334,7 +361,9 @@ pub const Parser = struct {
     }
 
     fn parseFunctionLiteral(self: *Self) !ast.Node {
-        const function = try ast.FunctionLiteral.init(self.allocator);
+        const function = try ast.FunctionLiteral.init(
+            self.allocator,
+        );
         function.token = self.cur_token;
 
         try self.expectPeek(.paren_open);
@@ -349,7 +378,9 @@ pub const Parser = struct {
     }
 
     fn parseFunctionParameters(self: *Self) ![]*ast.Identifier {
-        var identifiers = std.ArrayList(*ast.Identifier).init(self.allocator);
+        var identifiers = std.ArrayList(*ast.Identifier).init(
+            self.allocator,
+        );
 
         if (self.peekTokenIs(.paren_close)) {
             self.nextToken();
@@ -447,7 +478,12 @@ pub const Parser = struct {
         InvalidCharacter,
     };
 
-    fn newError(self: *Self, message: []const u8, error_name: []const u8, tok: token.Token) void {
+    fn newError(
+        self: *Self,
+        message: []const u8,
+        error_name: []const u8,
+        tok: token.Token,
+    ) void {
         var lines = std.mem.splitScalar(u8, self.lexer.input, '\n');
         var line: ?[]const u8 = null;
         var i: u32 = 1;
@@ -488,13 +524,22 @@ pub const Parser = struct {
                 pointer.items,
             },
         ) catch |err| {
-            std.debug.print("{s} {s}", .{ error_name, @errorName(err) });
+            std.debug.print(
+                "{s} {s}",
+                .{ error_name, @errorName(err) },
+            );
             return;
         };
-        self.errors.append(msg) catch |err| std.debug.print("{s} {s}", .{ error_name, @errorName(err) });
+        self.errors.append(msg) catch |err| std.debug.print(
+            "{s} {s}",
+            .{ error_name, @errorName(err) },
+        );
     }
 
-    fn expectPeekError(self: *Self, tok_type: token.TokenType) void {
+    fn expectPeekError(
+        self: *Self,
+        tok_type: token.TokenType,
+    ) void {
         const msg = std.fmt.allocPrint(
             self.allocator,
             "expected {s}, got {s}",
@@ -503,7 +548,10 @@ pub const Parser = struct {
                 self.peek_token.string(self.allocator),
             },
         ) catch |err| {
-            std.debug.print("expectPeekError {s}", .{@errorName(err)});
+            std.debug.print(
+                "expectPeekError {s}",
+                .{@errorName(err)},
+            );
             return;
         };
         self.newError(msg, "expectPeekError", self.peek_token);
@@ -517,7 +565,10 @@ pub const Parser = struct {
                 tok.string(self.allocator),
             },
         ) catch |err| {
-            std.debug.print("noUnaryParseFnError {s}", .{@errorName(err)});
+            std.debug.print(
+                "noUnaryParseFnError {s}",
+                .{@errorName(err)},
+            );
             return;
         };
         self.newError(msg, "noUnaryParseFnError", tok);

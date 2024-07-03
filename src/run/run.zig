@@ -5,12 +5,21 @@ const ast = @import("../ast/ast.zig");
 const object = @import("../object/object.zig");
 const evaluator = @import("../evaluator/evaluator.zig");
 
-pub fn startRepl(allocator: std.mem.Allocator, in: std.fs.File.Reader, out: std.fs.File.Writer, env: ?*object.Environment) !void {
+pub fn startRepl(
+    allocator: std.mem.Allocator,
+    in: std.fs.File.Reader,
+    out: std.fs.File.Writer,
+    env: ?*object.Environment,
+) !void {
     const environment = if (env) |e| e else try object.Environment.init(allocator);
 
     while (true) {
         _ = try out.write("> ");
-        const input = try in.readUntilDelimiterOrEofAlloc(allocator, '\n', 8192);
+        const input = try in.readUntilDelimiterOrEofAlloc(
+            allocator,
+            '\n',
+            8192,
+        );
 
         if (input) |line_raw| {
             const line = std.mem.trim(u8, line_raw, "\r");
@@ -32,7 +41,12 @@ pub fn startRepl(allocator: std.mem.Allocator, in: std.fs.File.Reader, out: std.
     _ = try out.write("\n");
 }
 
-fn run(allocator: std.mem.Allocator, out: std.fs.File.Writer, input: []const u8, env: *object.Environment) !?object.Object {
+fn run(
+    allocator: std.mem.Allocator,
+    out: std.fs.File.Writer,
+    input: []const u8,
+    env: *object.Environment,
+) !?object.Object {
     var l = lexer.Lexer.init(allocator, input);
     _ = try out.write("TOKENS: ");
     while (l.next()) |tok| {

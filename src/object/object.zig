@@ -16,7 +16,10 @@ pub const Environment = struct {
         return env;
     }
 
-    pub fn initEnclosed(allocator: std.mem.Allocator, outer_env: *Environment) !*Environment {
+    pub fn initEnclosed(
+        allocator: std.mem.Allocator,
+        outer_env: *Environment,
+    ) !*Environment {
         var env = try Environment.init(allocator);
         env.outer = outer_env;
         return env;
@@ -32,8 +35,15 @@ pub const Environment = struct {
         return obj;
     }
 
-    pub fn set(self: *Self, name: []const u8, value: Object) Object {
-        _ = self.store.put(name, value) catch |err| std.debug.print("{s}", .{@errorName(err)});
+    pub fn set(
+        self: *Self,
+        name: []const u8,
+        value: Object,
+    ) Object {
+        _ = self.store.put(name, value) catch |err| std.debug.print(
+            "{s}",
+            .{@errorName(err)},
+        );
         return value;
     }
 };
@@ -63,13 +73,18 @@ pub const Object = union(ObjectType) {
     return_value: *ReturnValue,
     @"error": *Error,
 
-    pub fn inspect(self: Object, allocator: std.mem.Allocator) ![]const u8 {
+    pub fn inspect(
+        self: Object,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
         return switch (self) {
             .function => |obj| blk: {
                 var params = std.ArrayList(u8).init(allocator);
                 for (obj.parameters, 0..) |param, i| {
                     try params.appendSlice(
-                        try (ast.Node{ .identifier = param }).string(allocator),
+                        try (ast.Node{
+                            .identifier = param,
+                        }).string(allocator),
                     );
                     if (i < obj.parameters.len - 1) {
                         try params.appendSlice(", ");
@@ -77,12 +92,15 @@ pub const Object = union(ObjectType) {
                 }
                 var body = std.ArrayList(u8).init(allocator);
                 for (obj.body.statements) |node| {
-                    try body.appendSlice(try node.string(allocator));
+                    try body.appendSlice(
+                        try node.string(allocator),
+                    );
                 }
-                break :blk try std.fmt.allocPrint(allocator, "fn({s}){{{s}}}", .{
-                    params.items,
-                    body.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "fn({s}){{{s}}}",
+                    .{ params.items, body.items },
+                );
             },
 
             .builtin => "builtin function",
@@ -91,7 +109,11 @@ pub const Object = union(ObjectType) {
 
             .boolean => |obj| if (obj.value) "true" else "false",
 
-            .integer => |obj| try std.fmt.allocPrint(allocator, "{d}", .{obj.value}),
+            .integer => |obj| try std.fmt.allocPrint(
+                allocator,
+                "{d}",
+                .{obj.value},
+            ),
 
             .string => |obj| obj.value,
 
@@ -105,9 +127,11 @@ pub const Object = union(ObjectType) {
                         try elements.appendSlice(", ");
                     }
                 }
-                break :blk try std.fmt.allocPrint(allocator, "[{s}]", .{
-                    elements.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "[{s}]",
+                    .{elements.items},
+                );
             },
 
             .hash => |obj| blk: {
@@ -127,9 +151,11 @@ pub const Object = union(ObjectType) {
                         try pairs.appendSlice(", ");
                     }
                 }
-                break :blk try std.fmt.allocPrint(allocator, "{{{s}}}", .{
-                    pairs.items,
-                });
+                break :blk try std.fmt.allocPrint(
+                    allocator,
+                    "{{{s}}}",
+                    .{pairs.items},
+                );
             },
 
             .return_value => |obj| obj.value.inspect(allocator),
@@ -162,7 +188,12 @@ pub const Function = struct {
     body: *ast.Block = undefined,
     env: *Environment = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, parameters: []*ast.Identifier, body: *ast.Block, env: *Environment) !*Function {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        parameters: []*ast.Identifier,
+        body: *ast.Block,
+        env: *Environment,
+    ) !*Function {
         var obj = try allocator.create(Function);
         obj.parameters = parameters;
         obj.body = body;
@@ -171,12 +202,18 @@ pub const Function = struct {
     }
 };
 
-pub const BuiltinFunction = fn (*evaluator.Evaluator, []Object) evaluator.Evaluator.Error!Object;
+pub const BuiltinFunction = fn (
+    *evaluator.Evaluator,
+    []Object,
+) evaluator.Evaluator.Error!Object;
 
 pub const Builtin = struct {
     function: *const BuiltinFunction = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, function: *const BuiltinFunction) !*Builtin {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        function: *const BuiltinFunction,
+    ) !*Builtin {
         var obj = try allocator.create(Builtin);
         obj.function = function;
         return obj;
@@ -192,7 +229,10 @@ pub const Null = struct {
 pub const Boolean = struct {
     value: bool = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, value: bool) !*Boolean {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        value: bool,
+    ) !*Boolean {
         var obj = try allocator.create(Boolean);
         obj.value = value;
         return obj;
@@ -202,7 +242,10 @@ pub const Boolean = struct {
 pub const Integer = struct {
     value: i32 = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, value: i32) !*Integer {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        value: i32,
+    ) !*Integer {
         var obj = try allocator.create(Integer);
         obj.value = value;
         return obj;
@@ -212,7 +255,10 @@ pub const Integer = struct {
 pub const String = struct {
     value: []const u8 = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, value: []const u8) !*String {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        value: []const u8,
+    ) !*String {
         var obj = try allocator.create(String);
         obj.value = value;
         return obj;
@@ -222,7 +268,10 @@ pub const String = struct {
 pub const Array = struct {
     elements: []Object = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, elements: []Object) !*Array {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        elements: []Object,
+    ) !*Array {
         var obj = try allocator.create(Array);
         obj.elements = elements;
         return obj;
@@ -233,7 +282,11 @@ pub const HashKey = struct {
     type: ObjectType = undefined,
     value: u64 = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, @"type": ObjectType, value: u64) !*HashKey {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        @"type": ObjectType,
+        value: u64,
+    ) !*HashKey {
         var obj = try allocator.create(HashKey);
         obj.type = @"type";
         obj.value = value;
@@ -245,7 +298,11 @@ pub const HashPair = struct {
     key: Object = undefined,
     value: Object = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, key: Object, value: Object) !*HashPair {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        key: Object,
+        value: Object,
+    ) !*HashPair {
         var obj = try allocator.create(HashPair);
         obj.key = key;
         obj.value = value;
@@ -256,7 +313,10 @@ pub const HashPair = struct {
 pub const Hash = struct {
     pairs: std.AutoHashMap(HashKey, HashPair) = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, pairs: std.AutoHashMap(HashKey, HashPair)) !*Hash {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        pairs: std.AutoHashMap(HashKey, HashPair),
+    ) !*Hash {
         var obj = try allocator.create(Hash);
         obj.pairs = pairs;
         return obj;
@@ -266,7 +326,10 @@ pub const Hash = struct {
 pub const ReturnValue = struct {
     value: Object = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, value: Object) !*ReturnValue {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        value: Object,
+    ) !*ReturnValue {
         var obj = try allocator.create(ReturnValue);
         obj.value = value;
         return obj;
@@ -276,7 +339,10 @@ pub const ReturnValue = struct {
 pub const Error = struct {
     message: []const u8 = undefined,
 
-    pub fn init(allocator: std.mem.Allocator, message: []const u8) !*Error {
+    pub fn init(
+        allocator: std.mem.Allocator,
+        message: []const u8,
+    ) !*Error {
         var obj = try allocator.create(Error);
         obj.message = message;
         return obj;
