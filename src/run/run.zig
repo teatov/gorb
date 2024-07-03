@@ -49,7 +49,7 @@ fn run(
     input: []const u8,
     env: *object.Environment,
 ) !?object.Object {
-    var l = lexer.Lexer.init(allocator, input);
+    var l = try lexer.Lexer.init(allocator, input);
     _ = try out.write("TOKENS: ");
     while (l.next()) |tok| {
         const tok_string = tok.string(allocator);

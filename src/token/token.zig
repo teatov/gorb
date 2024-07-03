@@ -66,13 +66,13 @@ pub const TokenType = enum {
     bracket_close,
 
     // keywords
-    function,
-    declaration,
-    true,
-    false,
-    @"if",
-    @"else",
-    @"return",
+    kw_function,
+    kw_declaration,
+    kw_true,
+    kw_false,
+    kw_if,
+    kw_else,
+    kw_return,
 
     pub fn string(
         self: TokenType,
@@ -86,28 +86,12 @@ pub const TokenType = enum {
     }
 };
 
-const Keyword = enum {
-    @"fn",
-    let,
-    true,
-    false,
-    @"if",
-    @"else",
-    @"return",
+pub const keywords = [_]struct { []const u8, TokenType }{
+    .{ "fn", .kw_function },
+    .{ "let", .kw_declaration },
+    .{ "true", .kw_true },
+    .{ "false", .kw_false },
+    .{ "if", .kw_if },
+    .{ "else", .kw_else },
+    .{ "return", .kw_return },
 };
-
-pub fn lookupIdentifier(identifier: []const u8) TokenType {
-    if (std.meta.stringToEnum(Keyword, identifier)) |keyword| {
-        return switch (keyword) {
-            .@"fn" => .function,
-            .let => .declaration,
-            .true => .true,
-            .false => .false,
-            .@"if" => .@"if",
-            .@"else" => .@"else",
-            .@"return" => .@"return",
-        };
-    } else {
-        return .identifier;
-    }
-}

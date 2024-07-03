@@ -65,7 +65,7 @@ fn testBinaryOperation(node: ast.Node, left: PossibleValue, operator: []const u8
 }
 
 fn init(allocator: std.mem.Allocator, input: []const u8) !ast.Node {
-    var l = lexer.Lexer.init(allocator, input);
+    var l = try lexer.Lexer.init(allocator, input);
     var p = parser.Parser.init(allocator, &l);
     const program = (try p.parseProgram()).program;
     try checkParserErrors(&p);

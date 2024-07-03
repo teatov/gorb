@@ -51,8 +51,8 @@ pub const Parser = struct {
 
     fn parseStatement(self: *Self) !ast.Node {
         return switch (self.cur_token.type) {
-            .@"return" => try self.parseReturnStatement(),
-            .declaration => try self.parseDeclarationStatement(),
+            .kw_return => try self.parseReturnStatement(),
+            .kw_declaration => try self.parseDeclarationStatement(),
             else => try self.parseExpressionStatement(),
         };
     }
@@ -134,13 +134,13 @@ pub const Parser = struct {
     ) Error!ast.Node {
         var expr: ast.Node = switch (self.cur_token.type) {
             .paren_open => try self.parseGroupedExpression(),
-            .@"if" => try self.parseIfExpression(),
+            .kw_if => try self.parseIfExpression(),
             .bang => try self.parseUnaryExpression(),
             .minus => try self.parseUnaryExpression(),
-            .function => try self.parseFunctionLiteral(),
+            .kw_function => try self.parseFunctionLiteral(),
             .identifier => try self.parseIdentifier(),
-            .true => try self.parseBooleanLiteral(),
-            .false => try self.parseBooleanLiteral(),
+            .kw_true => try self.parseBooleanLiteral(),
+            .kw_false => try self.parseBooleanLiteral(),
             .integer => try self.parseIntegerLiteral(),
             .string => try self.parseStringLiteral(),
             .bracket_open => try self.parseArrayLiteral(),
@@ -222,7 +222,7 @@ pub const Parser = struct {
 
         expr.consequence = (try self.parseBlockStatement()).block;
 
-        if (self.peekTokenIs(.@"else")) {
+        if (self.peekTokenIs(.kw_else)) {
             self.nextToken();
 
             try self.expectPeek(.brace_open);
@@ -300,7 +300,7 @@ pub const Parser = struct {
     fn parseBooleanLiteral(self: *Self) !ast.Node {
         const boolean = try ast.BooleanLiteral.init(self.allocator);
         boolean.token = self.cur_token;
-        boolean.value = self.curTokenIs(token.TokenType.true);
+        boolean.value = self.curTokenIs(token.TokenType.kw_true);
         return .{ .boolean_literal = boolean };
     }
 

@@ -9,6 +9,8 @@ pub const Lexer = struct {
     ch: u8 = 0,
     pos: token.Pos = .{ .ln = 1, .col = 0 },
 
+    keywords: std.StaticStringMap(token.TokenType),
+
     finished: bool = false,
 
     allocator: std.mem.Allocator,
@@ -18,10 +20,14 @@ pub const Lexer = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         input: []const u8,
-    ) Lexer {
+    ) !Lexer {
         var lexer = Lexer{
             .input = input,
             .allocator = allocator,
+            .keywords = try std.StaticStringMap(token.TokenType).init(
+                token.keywords,
+                allocator,
+            ),
         };
         lexer.readChar();
         return lexer;
@@ -112,26 +118,25 @@ pub const Lexer = struct {
                     .pos = pos,
                 };
             },
-            0 => self.newToken(.eof),
-            else => blk: {
+            '_', 'a'...'z', 'A'...'Z' => blk: {
                 const pos = self.pos;
-                if (std.ascii.isAlphabetic(self.ch)) {
-                    const literal = self.readIdentifier();
-                    break :blk .{
-                        .type = token.lookupIdentifier(literal),
-                        .literal = literal,
-                        .pos = pos,
-                    };
-                } else if (std.ascii.isDigit(self.ch)) {
-                    break :blk .{
-                        .type = .integer,
-                        .literal = self.readNumber(),
-                        .pos = pos,
-                    };
-                } else {
-                    break :blk self.newToken(.illegal);
-                }
+                const literal = self.readIdentifier();
+                break :blk .{
+                    .type = self.lookupIdentifier(literal),
+                    .literal = literal,
+                    .pos = pos,
+                };
             },
+            '0'...'9' => blk: {
+                const pos = self.pos;
+                break :blk .{
+                    .type = .integer,
+                    .literal = self.readNumber(),
+                    .pos = pos,
+                };
+            },
+            0 => self.newToken(.eof),
+            else => self.newToken(.illegal),
         };
 
         return tok;
@@ -232,6 +237,14 @@ pub const Lexer = struct {
             self.readChar();
         }
         return self.input[start_offset..self.offset];
+    }
+
+    fn lookupIdentifier(self: *Self, identifier: []const u8) token.TokenType {
+        if (self.keywords.get(identifier)) |keyword| {
+            return keyword;
+        } else {
+            return .identifier;
+        }
     }
 };
 
