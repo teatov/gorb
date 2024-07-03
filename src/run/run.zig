@@ -5,8 +5,55 @@ const ast = @import("../ast/ast.zig");
 const object = @import("../object/object.zig");
 const evaluator = @import("../evaluator/evaluator.zig");
 
+pub const Options = struct {
+    debug_tokents: bool = false,
+    debug_ast: bool = false,
+    interactive: bool = false,
+
+    pub fn trySet(self: *Options, arg: []const u8) bool {
+        if (std.mem.eql(u8, arg, "--tokens")) {
+            self.debug_tokents = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--ast")) {
+            self.debug_ast = true;
+            return true;
+        }
+        if (std.mem.eql(u8, arg, "--interactive")) {
+            self.interactive = true;
+            return true;
+        }
+        return false;
+    }
+};
+
+pub fn runFile(
+    allocator: std.mem.Allocator,
+    options: Options,
+    file: std.fs.File,
+    in: std.fs.File.Reader,
+    out: std.fs.File.Writer,
+) !void {
+    const environment = try object.Environment.init(allocator);
+
+    const input = try file.readToEndAlloc(
+        allocator,
+        std.math.maxInt(usize),
+    );
+
+    const val = try run(allocator, options, out, input, environment);
+
+    if (@intFromEnum(val) == @intFromEnum(object.ObjectType.@"error")) {
+        _ = try out.write(try val.inspect(allocator));
+        _ = try out.write("\n");
+    } else if (options.interactive) {
+        try startRepl(allocator, options, in, out, environment);
+    }
+}
+
 pub fn startRepl(
     allocator: std.mem.Allocator,
+    options: Options,
     in: std.fs.File.Reader,
     out: std.fs.File.Writer,
     env: ?*object.Environment,
@@ -20,7 +67,7 @@ pub fn startRepl(
         const input = try in.readUntilDelimiterOrEofAlloc(
             allocator,
             '\n',
-            8192,
+            std.math.maxInt(usize),
         );
 
         if (input) |line_raw| {
@@ -30,34 +77,35 @@ pub fn startRepl(
                 break;
             }
 
-            const val = try run(allocator, out, line, environment);
+            const val = try run(allocator, options, out, line, environment);
 
-            if (val) |v| {
-                _ = try out.write(try v.inspect(allocator));
-                _ = try out.write("\n");
-            }
+            _ = try out.write(try val.inspect(allocator));
         } else {
             break;
         }
+        _ = try out.write("\n");
     }
-    _ = try out.write("\n");
 }
 
 fn run(
     allocator: std.mem.Allocator,
+    options: Options,
     out: std.fs.File.Writer,
     input: []const u8,
     env: *object.Environment,
-) !?object.Object {
+) !object.Object {
     var l = try lexer.Lexer.init(allocator, input);
-    _ = try out.write("TOKENS: ");
-    while (l.next()) |tok| {
-        const tok_string = tok.string(allocator);
-        _ = try out.write(tok_string);
-        _ = try out.write(" ");
+
+    if (options.debug_tokents) {
+        _ = try out.write("TOKENS: ");
+        while (l.next()) |tok| {
+            const tok_string = tok.string(allocator);
+            _ = try out.write(tok_string);
+            _ = try out.write(" ");
+        }
+        _ = try out.write("\n");
+        l.reset();
     }
-    _ = try out.write("\n");
-    l.reset();
 
     var p = parser.Parser.init(allocator, &l);
 
@@ -69,14 +117,16 @@ fn run(
                 _ = try out.write(parse_err);
                 _ = try out.write("\n");
             }
-            return null;
+            return err;
         }
     };
 
-    _ = try out.write("AST: ");
-    const program_string = try program.string(allocator);
-    _ = try out.write(program_string);
-    _ = try out.write("\n");
+    if (options.debug_ast) {
+        _ = try out.write("AST: ");
+        const program_string = try program.string(allocator);
+        _ = try out.write(program_string);
+        _ = try out.write("\n");
+    }
 
     var e = evaluator.Evaluator.init(allocator);
 
