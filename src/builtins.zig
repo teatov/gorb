@@ -3,30 +3,19 @@ const object = @import("./object.zig");
 const token = @import("./token.zig");
 const evaluator = @import("./evaluator.zig");
 
-const BuiltinTypes = enum {
-    len,
-    first,
-    last,
-    rest,
-    push,
-    puts,
-};
-
-pub fn getBuiltin(name: []const u8) ?*const object.BuiltinFunction {
-    const builtin_name = std.meta.stringToEnum(BuiltinTypes, name);
-
-    if (builtin_name) |builtin| {
-        return switch (builtin) {
-            .len => &len,
-            .first => &first,
-            .last => &last,
-            .rest => &rest,
-            .push => &push,
-            .puts => &puts,
-        };
-    } else {
-        return null;
-    }
+pub fn getBuiltin(allocator: std.mem.Allocator, name: []const u8) !?*const object.BuiltinFunction {
+    const builtins = try std.StaticStringMap(*const object.BuiltinFunction).init(
+        [_]struct { []const u8, *const object.BuiltinFunction }{
+            .{ "len", &len },
+            .{ "first", &first },
+            .{ "last", &last },
+            .{ "rest", &rest },
+            .{ "push", &push },
+            .{ "puts", &puts },
+        },
+        allocator,
+    );
+    return builtins.get(name);
 }
 
 fn len(

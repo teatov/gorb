@@ -1,6 +1,6 @@
 const std = @import("std");
-const token = @import("./token.zig");
-const lexer = @import("./lexer.zig");
+const token = @import("../token.zig");
+const lexer = @import("../lexer.zig");
 
 pub fn hack() void {}
 
@@ -33,20 +33,20 @@ test "next token is correct" {
     ;
 
     const tests = [_]struct { type: token.TokenType, literal: []const u8 }{
-        .{ .type = .declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "let" },
         .{ .type = .identifier, .literal = "five" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .integer, .literal = "5" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "let" },
         .{ .type = .identifier, .literal = "ten" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .integer, .literal = "10" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "let" },
         .{ .type = .identifier, .literal = "add" },
         .{ .type = .assign, .literal = "=" },
-        .{ .type = .function, .literal = "fn" },
+        .{ .type = .kw_function, .literal = "fn" },
         .{ .type = .paren_open, .literal = "(" },
         .{ .type = .identifier, .literal = "x" },
         .{ .type = .comma, .literal = "," },
@@ -59,7 +59,7 @@ test "next token is correct" {
         .{ .type = .semicolon, .literal = ";" },
         .{ .type = .brace_close, .literal = "}" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "let" },
         .{ .type = .identifier, .literal = "result" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .identifier, .literal = "add" },
@@ -81,21 +81,21 @@ test "next token is correct" {
         .{ .type = .greater_than, .literal = ">" },
         .{ .type = .integer, .literal = "5" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .@"if", .literal = "if" },
+        .{ .type = .kw_if, .literal = "if" },
         .{ .type = .paren_open, .literal = "(" },
         .{ .type = .integer, .literal = "5" },
         .{ .type = .less_than, .literal = "<" },
         .{ .type = .integer, .literal = "10" },
         .{ .type = .paren_close, .literal = ")" },
         .{ .type = .brace_open, .literal = "{" },
-        .{ .type = .@"return", .literal = "return" },
-        .{ .type = .true, .literal = "true" },
+        .{ .type = .kw_return, .literal = "return" },
+        .{ .type = .kw_true, .literal = "true" },
         .{ .type = .semicolon, .literal = ";" },
         .{ .type = .brace_close, .literal = "}" },
-        .{ .type = .@"else", .literal = "else" },
+        .{ .type = .kw_else, .literal = "else" },
         .{ .type = .brace_open, .literal = "{" },
-        .{ .type = .@"return", .literal = "return" },
-        .{ .type = .false, .literal = "false" },
+        .{ .type = .kw_return, .literal = "return" },
+        .{ .type = .kw_false, .literal = "false" },
         .{ .type = .semicolon, .literal = ";" },
         .{ .type = .brace_close, .literal = "}" },
         .{ .type = .integer, .literal = "10" },

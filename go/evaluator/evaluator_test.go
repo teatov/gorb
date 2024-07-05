@@ -186,19 +186,19 @@ func TestHashIndexExpressions(t *testing.T) {
 		expected interface{}
 	}{
 		{
-			`{"foo": 5}["foo"]`,
+			`{\"foo\": 5}[\"foo\"]`,
 			5,
 		},
 		{
-			`{"foo": 5}["bar"]`,
+			`{\"foo\": 5}[\"bar\"]`,
 			nil,
 		},
 		{
-			`let key = "foo"; {"foo": 5}[key]`,
+			`let key = \"foo\"; {\"foo\": 5}[key]`,
 			5,
 		},
 		{
-			`{}["foo"]`,
+			`{}[\"foo\"]`,
 			nil,
 		},
 		{

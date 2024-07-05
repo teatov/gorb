@@ -30,7 +30,7 @@ pub fn newError(
 
     const msg = std.fmt.allocPrint(
         allocator,
-        "{s}: {s}\n{s}\n{s}\n",
+        "{s}: {s}\n{s}\n{s}",
         .{
             tok.pos.string(allocator),
             message,

@@ -53,11 +53,12 @@ pub fn startRepl(
             const val = try run(allocator, options, out, line, environment);
 
             _ = try out.write(try val.inspect(allocator));
+            _ = try out.write("\n");
         } else {
             break;
         }
-        _ = try out.write("\n");
     }
+    _ = try out.write("\n");
 }
 
 fn run(
@@ -90,7 +91,7 @@ fn run(
                 _ = try out.write(parse_err);
                 _ = try out.write("\n");
             }
-            return err;
+            return .{ .null = try object.Null.init(allocator) };
         }
     };
 

@@ -325,8 +325,8 @@ pub const Evaluator = struct {
         right: object.Object,
     ) !object.Object {
         const obj: ?object.Object = switch (operator.type) {
-            .minus => try self.evalInverseExpression(right),
-            .bang => self.evalNegateExpression(right),
+            .minus => try self.evalNegateExpression(right),
+            .bang => self.evalBooleanNotExpression(right),
             else => null,
         };
 
@@ -341,7 +341,7 @@ pub const Evaluator = struct {
         );
     }
 
-    fn evalInverseExpression(
+    fn evalNegateExpression(
         self: *Self,
         right: object.Object,
     ) !?object.Object {
@@ -357,7 +357,7 @@ pub const Evaluator = struct {
         };
     }
 
-    fn evalNegateExpression(
+    fn evalBooleanNotExpression(
         _: *Self,
         right: object.Object,
     ) object.Object {
@@ -509,7 +509,7 @@ pub const Evaluator = struct {
             return v;
         }
 
-        const builtin = builtins.getBuiltin(node.value);
+        const builtin = try builtins.getBuiltin(self.allocator, node.value);
         if (builtin) |b| {
             const v = try object.Builtin.init(self.allocator, b);
             return .{ .builtin = v };
@@ -694,7 +694,7 @@ pub const Evaluator = struct {
     };
 };
 
-const evaluator_test = @import("./evaluator_test.zig");
+const evaluator_test = @import("./tests/evaluator_test.zig");
 
 test {
     evaluator_test.hack();
