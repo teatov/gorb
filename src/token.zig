@@ -5,6 +5,7 @@ pub const Token = struct {
     literal: []const u8,
     pos: Pos,
     line: []const u8,
+    file: ?[]const u8,
 
     pub fn string(
         self: Token,

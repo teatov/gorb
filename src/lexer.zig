@@ -9,6 +9,7 @@ pub const Lexer = struct {
     ch: u8 = 0,
     pos: token.Pos = .{ .ln = 1, .col = 0 },
     lines_it: std.mem.SplitIterator(u8, .scalar),
+    file: ?[]const u8,
 
     keywords: std.StaticStringMap(token.TokenType),
 
@@ -21,6 +22,7 @@ pub const Lexer = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         input: []const u8,
+        file_name: ?[]const u8,
     ) !Lexer {
         var lexer = Lexer{
             .input = input,
@@ -30,6 +32,7 @@ pub const Lexer = struct {
                 allocator,
             ),
             .lines_it = std.mem.splitScalar(u8, input, '\n'),
+            .file = file_name,
         };
         lexer.readChar();
         return lexer;
@@ -73,6 +76,7 @@ pub const Lexer = struct {
                         .literal = self.input[start_offset..self.offset],
                         .pos = pos,
                         .line = self.nthLine(pos.ln),
+                        .file = self.file,
                     };
                 } else {
                     break :blk self.newToken(.assign);
@@ -91,6 +95,7 @@ pub const Lexer = struct {
                         .literal = self.input[start_offset..self.offset],
                         .pos = pos,
                         .line = self.nthLine(pos.ln),
+                        .file = self.file,
                     };
                 } else {
                     break :blk self.newToken(.bang);
@@ -121,6 +126,7 @@ pub const Lexer = struct {
                     .literal = literal,
                     .pos = pos,
                     .line = self.nthLine(pos.ln),
+                    .file = self.file,
                 };
             },
             '_', 'a'...'z', 'A'...'Z' => blk: {
@@ -131,6 +137,7 @@ pub const Lexer = struct {
                     .literal = literal,
                     .pos = pos,
                     .line = self.nthLine(pos.ln),
+                    .file = self.file,
                 };
             },
             '0'...'9' => blk: {
@@ -140,6 +147,7 @@ pub const Lexer = struct {
                     .literal = self.readNumber(),
                     .pos = pos,
                     .line = self.nthLine(pos.ln),
+                    .file = self.file,
                 };
             },
             0 => self.newToken(.eof),
@@ -159,6 +167,7 @@ pub const Lexer = struct {
             .literal = self.input[self.offset..self.read_offset],
             .pos = self.pos,
             .line = self.nthLine(self.pos.ln),
+            .file = self.file,
         };
     }
 

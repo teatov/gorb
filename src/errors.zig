@@ -30,8 +30,9 @@ pub fn newError(
 
     const msg = std.fmt.allocPrint(
         allocator,
-        "{s}: {s}\n{s}\n{s}",
+        "{s}:{s}: {s}\n{s}\n{s}",
         .{
+            tok.file orelse "",
             tok.pos.string(allocator),
             message,
             tok.line,

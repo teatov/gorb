@@ -58,7 +58,7 @@ pub fn main() !void {
             return err;
         };
 
-        try run.runFile(allocator, options, input, stdin, stdout);
+        try run.runFile(allocator, options, input, f, stdin, stdout);
     } else {
         _ = try stdout.write("welcome to gorb.\n");
         try run.startRepl(allocator, options, stdin, stdout, null);

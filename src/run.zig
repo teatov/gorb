@@ -9,12 +9,13 @@ pub fn runFile(
     allocator: std.mem.Allocator,
     options: Options,
     input: []const u8,
+    file: []const u8,
     in: std.fs.File.Reader,
     out: std.fs.File.Writer,
 ) !void {
     const environment = try object.Environment.init(allocator);
 
-    const val = try run(allocator, options, out, input, environment);
+    const val = try run(allocator, options, out, input, file, environment);
 
     if (@intFromEnum(val) == @intFromEnum(object.ObjectType.@"error")) {
         _ = try out.write(try val.inspect(allocator));
@@ -50,7 +51,7 @@ pub fn startRepl(
                 break;
             }
 
-            const val = try run(allocator, options, out, line, environment);
+            const val = try run(allocator, options, out, line, null, environment);
 
             _ = try out.write(try val.inspect(allocator));
             _ = try out.write("\n");
@@ -66,9 +67,10 @@ fn run(
     options: Options,
     out: std.fs.File.Writer,
     input: []const u8,
+    file: ?[]const u8,
     env: *object.Environment,
 ) !object.Object {
-    var l = try lexer.Lexer.init(allocator, input);
+    var l = try lexer.Lexer.init(allocator, input, file);
 
     if (options.debug_tokents) {
         _ = try out.write("TOKENS: ");
