@@ -2,6 +2,7 @@ const std = @import("std");
 const ast = @import("./ast.zig");
 const token = @import("./token.zig");
 const evaluator = @import("./evaluator.zig");
+const errors = @import("./errors.zig");
 
 pub const Environment = struct {
     store: std.StringHashMap(Object),
@@ -172,7 +173,7 @@ pub const Object = union(ObjectType) {
 
             .return_value => |obj| obj.value.inspect(allocator),
 
-            .@"error" => |obj| obj.message,
+            .@"error" => |obj| errors.formatError(allocator, obj.message, obj.tok),
         };
     }
 
@@ -351,13 +352,16 @@ pub const ReturnValue = struct {
 
 pub const Error = struct {
     message: []const u8 = undefined,
+    tok: token.Token = undefined,
 
     pub fn init(
         allocator: std.mem.Allocator,
         message: []const u8,
+        tok: token.Token,
     ) !*Error {
         var obj = try allocator.create(Error);
         obj.message = message;
+        obj.tok = tok;
         return obj;
     }
 };

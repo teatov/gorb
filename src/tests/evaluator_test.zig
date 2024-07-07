@@ -9,7 +9,7 @@ const evaluator = @import("../evaluator.zig");
 pub fn hack() void {}
 
 fn init(allocator: std.mem.Allocator, input: []const u8) !object.Object {
-    var l = try lexer.Lexer.init(allocator, input);
+    var l = try lexer.Lexer.init(allocator, input, null);
     var p = parser.Parser.init(allocator, &l);
     const program = try p.parseProgram();
     var e = evaluator.Evaluator.init(allocator);
@@ -251,7 +251,6 @@ test "bang operator" {
     }
 }
 
-
 test "if else expressions" {
     const tests = [_]struct { input: []const u8, value: ?i32 }{
         .{ .input = "if (true) { 10 }", .value = 10 },
@@ -270,6 +269,257 @@ test "if else expressions" {
         const obj = try init(arena.allocator(), expect.input);
         if (expect.value) |val| {
             try testIntegerObject(obj, val);
+        } else {
+            try testNullObject(obj);
+        }
+    }
+}
+
+test "return statements" {
+    const tests = [_]struct { input: []const u8, value: i32 }{
+        .{ .input = "return 10;", .value = 10 },
+        .{ .input = "return 10; 9;", .value = 10 },
+        .{ .input = "return 2 * 5; 9;", .value = 10 },
+        .{ .input = "9; return 2 * 5; 9;", .value = 10 },
+        .{ .input = "if (10 > 1) { return 10; }", .value = 10 },
+        .{ .input = 
+        \\if (10 > 1) {
+        \\  if (10 > 1) {
+        \\    return 10;
+        \\  }
+        \\  return 1;
+        \\}
+        , .value = 10 },
+        .{ .input = 
+        \\let f = fn(x) {
+        \\  return x;
+        \\  x + 10;
+        \\};
+        \\f(10);
+        , .value = 10 },
+        .{ .input = 
+        \\let f = fn(x) {
+        \\   let result = x + 10;
+        \\   return result;
+        \\   return 10;
+        \\};
+        \\f(10);
+        , .value = 20 },
+    };
+
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    for (tests) |expect| {
+        const obj = try init(arena.allocator(), expect.input);
+        try testIntegerObject(obj, expect.value);
+    }
+}
+
+test "error handling" {
+    const tests = [_]struct {
+        input: []const u8,
+        msg: []const u8,
+    }{
+        .{
+            .input = "5 + true;",
+            .msg = "type mismatch: [integer] + [boolean]",
+        },
+        .{
+            .input = "5 + true; 5;",
+            .msg = "type mismatch: [integer] + [boolean]",
+        },
+        .{
+            .input = "-true",
+            .msg = "unknown operation: -[boolean]",
+        },
+        .{
+            .input = "true + false;",
+            .msg = "unknown operation: [boolean] + [boolean]",
+        },
+        .{
+            .input = "true + false + true + false;",
+            .msg = "unknown operation: [boolean] + [boolean]",
+        },
+        .{
+            .input = "5; true + false; 5",
+            .msg = "unknown operation: [boolean] + [boolean]",
+        },
+        .{
+            .input = "if (10 > 1) { true + false; }",
+            .msg = "unknown operation: [boolean] + [boolean]",
+        },
+        .{
+            .input = "\"Hello\" - \"World\"",
+            .msg = "unknown operation: [string] - [string]",
+        },
+        .{
+            .input = "if (10 > 1) {  if (10 > 1) {    return true + false;  }  return 1;}",
+            .msg = "unknown operation: [boolean] + [boolean]",
+        },
+        .{
+            .input = "foobar",
+            .msg = "identifier 'foobar' not found",
+        },
+        .{
+            .input = "{\"name\": \"Monkey\"}[fn(x) { x }];",
+            .msg = "[function] is unusable as hash key",
+        },
+        .{
+            .input = "999[1]",
+            .msg = "index operator is not supported on [integer]",
+        },
+    };
+
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    for (tests) |expect| {
+        const obj = try init(arena.allocator(), expect.input);
+        const val = obj.@"error";
+
+        try std.testing.expectEqualStrings(expect.msg, val.message);
+    }
+}
+
+test "let statements" {
+    const tests = [_]struct { input: []const u8, value: i32 }{
+        .{ .input = "let a = 5; a;", .value = 5 },
+        .{ .input = "let a = 5 * 5; a;", .value = 25 },
+        .{ .input = "let a = 5; let b = a; b;", .value = 5 },
+        .{ .input = "let a = 5; let b = a; let c = a + b + 5; c;", .value = 15 },
+    };
+
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    for (tests) |expect| {
+        const obj = try init(arena.allocator(), expect.input);
+        try testIntegerObject(obj, expect.value);
+    }
+}
+
+test "function object" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const input = "fn(x) { x + 2; };";
+
+    const obj = try init(arena.allocator(), input);
+    const val = obj.function;
+
+    try std.testing.expectEqual(1, val.parameters.len);
+    try std.testing.expectEqualStrings("x", val.parameters[0].value);
+    try std.testing.expectEqualStrings("(x + 2)", try ast.Node.string(.{ .block = val.body }, arena.allocator()));
+}
+
+test "function calling" {
+    const tests = [_]struct { input: []const u8, value: i32 }{
+        .{ .input = "let identity = fn(x) { x; }; identity(5);", .value = 5 },
+        .{ .input = "let identity = fn(x) { return x; }; identity(5);", .value = 5 },
+        .{ .input = "let double = fn(x) { x * 2; }; double(5);", .value = 10 },
+        .{ .input = "let add = fn(x, y) { x + y; }; add(5, 5);", .value = 10 },
+        .{ .input = "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", .value = 20 },
+        .{ .input = "fn(x) { x; }(5)", .value = 5 },
+    };
+
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    for (tests) |expect| {
+        const obj = try init(arena.allocator(), expect.input);
+        try testIntegerObject(obj, expect.value);
+    }
+}
+
+test "enclosing environments" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const input =
+        \\let first = 10;
+        \\let second = 10;
+        \\let third = 10;
+        \\
+        \\let ourFunction = fn(first) {
+        \\  let second = 20;
+        \\  first + second + third;
+        \\};
+        \\
+        \\ourFunction(20) + first + second;
+    ;
+
+    const obj = try init(arena.allocator(), input);
+
+    try testIntegerObject(obj, 70);
+}
+
+test "closures" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    const input =
+        \\let newAdder = fn(x) {
+        \\	fn(y) {x + y};
+        \\};
+        \\
+        \\let addTwo = newAdder(2);
+        \\addTwo(2);
+    ;
+
+    const obj = try init(arena.allocator(), input);
+
+    try testIntegerObject(obj, 4);
+}
+
+const PossibleValues = union(enum) {
+    integer: i32,
+    string: []const u8,
+    array: []i32,
+};
+
+test "builtin functions" {
+    var rest1 = [_]i32{ 2, 3 };
+    var rest2 = [_]i32{1};
+    const tests = [_]struct { input: []const u8, value: ?PossibleValues }{
+        .{ .input = "len(\"\")", .value = .{ .integer = 0 } },
+        .{ .input = "len(\"four\")", .value = .{ .integer = 4 } },
+        .{ .input = "len(\"hello world\")", .value = .{ .integer = 11 } },
+        .{ .input = "len(1)", .value = .{ .string = "'len' does not support [integer]" } },
+        .{ .input = "len(\"one\", \"two\")", .value = .{ .string = "expected 1 argument, got 2" } },
+        .{ .input = "len([1, 2, 3])", .value = .{ .integer = 3 } },
+        .{ .input = "len(\"∑\")", .value = .{ .integer = 3 } },
+        .{ .input = "len(\"йцукен\")", .value = .{ .integer = 12 } },
+        .{ .input = "len([])", .value = .{ .integer = 0 } },
+        .{ .input = "first([1, 2, 3])", .value = .{ .integer = 1 } },
+        .{ .input = "first([])", .value = null },
+        .{ .input = "first(1)", .value = .{ .string = "'first' does not support [integer]" } },
+        .{ .input = "last([1, 2, 3])", .value = .{ .integer = 3 } },
+        .{ .input = "last([])", .value = null },
+        .{ .input = "last(1)", .value = .{ .string = "'last' does not support [integer]" } },
+        .{ .input = "rest([1, 2, 3])", .value = .{ .array = &rest1 } },
+        .{ .input = "rest([])", .value = null },
+        .{ .input = "push([], 1)", .value = .{ .array = &rest2 } },
+        .{ .input = "push(1, 1)", .value = .{ .string = "'push' does not support [integer]" } },
+        .{ .input = "puts(\"hello\", \"world!\")", .value = null },
+    };
+
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+
+    for (tests) |expect| {
+        const obj = try init(arena.allocator(), expect.input);
+        if (expect.value) |val| {
+            switch (val) {
+                .integer => |v| try testIntegerObject(obj, v),
+                .string => |v| try std.testing.expectEqualStrings(v, obj.@"error".message),
+                .array => |v| {
+                    try std.testing.expectEqual(v.len, obj.array.elements.len);
+                    for (v, 0..) |msg, i| {
+                        try testIntegerObject(obj.array.elements[i], msg);
+                    }
+                },
+            }
         } else {
             try testNullObject(obj);
         }

@@ -129,7 +129,7 @@ test "next token is correct" {
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
-    var l = try lexer.Lexer.init(arena.allocator(), input);
+    var l = try lexer.Lexer.init(arena.allocator(), input, null);
 
     for (tests) |expected| {
         const tok = l.nextToken();

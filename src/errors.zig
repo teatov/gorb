@@ -3,7 +3,7 @@ const lexer = @import("./lexer.zig");
 const token = @import("./token.zig");
 const ast = @import("./ast.zig");
 
-pub fn newError(
+pub fn formatError(
     allocator: std.mem.Allocator,
     message: []const u8,
     tok: token.Token,

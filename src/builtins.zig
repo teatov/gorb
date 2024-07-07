@@ -105,7 +105,7 @@ fn last(
             break :blk obj.elements[obj.elements.len - 1];
         },
         else => try eval.newError(
-            "'first' does not support {s}",
+            "'last' does not support {s}",
             .{args[0].stringify(eval.allocator)},
             tok,
         ),
@@ -183,13 +183,11 @@ fn puts(
     args: []object.Object,
     _: token.Token,
 ) evaluator.Evaluator.Error!object.Object {
-    const writer = std.io.getStdOut();
+    // const writer = std.io.getStdOut();
     for (args) |arg| {
         const text = try arg.inspect(eval.allocator);
-        _ = writer.write(text) catch std.debug.print(
-            "{s}",
-            .{text},
-        );
+        std.debug.print("{s}", .{text});
+        // _ = try writer.write(text);
     }
 
     return .{ .null = &evaluator.null };

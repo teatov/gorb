@@ -646,7 +646,8 @@ pub const Evaluator = struct {
         );
         const err = try object.Error.init(
             self.allocator,
-            errors.newError(self.allocator, msg, tok),
+            msg,
+            tok,
         );
         return .{ .@"error" = err };
     }
@@ -691,6 +692,21 @@ pub const Evaluator = struct {
 
     pub const Error = error{
         OutOfMemory,
+        InputOutput,
+        SystemResources,
+        OperationAborted,
+        BrokenPipe,
+        ConnectionResetByPeer,
+        WouldBlock,
+        AccessDenied,
+        Unexpected,
+        DiskQuota,
+        FileTooBig,
+        NoSpaceLeft,
+        DeviceBusy,
+        InvalidArgument,
+        NotOpenForWriting,
+        LockViolation,
     };
 };
 

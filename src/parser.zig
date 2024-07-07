@@ -479,8 +479,16 @@ pub const Parser = struct {
         InvalidCharacter,
     };
 
-    fn newError(self: *Self, msg: []const u8) void {
-        self.errors.append(msg) catch |err| std.debug.print(
+    fn newError(
+        self: *Self,
+        msg: []const u8,
+        tok: token.Token,
+    ) void {
+        self.errors.append(errors.formatError(
+            self.allocator,
+            msg,
+            tok,
+        )) catch |err| std.debug.print(
             "{s}",
             .{@errorName(err)},
         );
@@ -504,7 +512,7 @@ pub const Parser = struct {
             );
             return;
         };
-        self.newError(errors.newError(self.allocator, msg, self.peek_token));
+        self.newError(msg, self.peek_token);
     }
 
     fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
@@ -521,7 +529,7 @@ pub const Parser = struct {
             );
             return;
         };
-        self.newError(errors.newError(self.allocator, msg, tok));
+        self.newError(msg, tok);
     }
 };
 
