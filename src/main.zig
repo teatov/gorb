@@ -4,7 +4,6 @@ const run = @import("./run.zig");
 const version = "0.0.1";
 
 pub fn main() !void {
-    const stdin = std.io.getStdIn().reader();
     const stdout = std.io.getStdOut().writer();
 
     var arena = std.heap.ArenaAllocator.init(
@@ -58,10 +57,10 @@ pub fn main() !void {
             return err;
         };
 
-        try run.runFile(allocator, options, input, f, stdin, stdout);
+        try run.runFile(allocator, options, input, f, stdout);
     } else {
         _ = try stdout.write("welcome to gorb.\n");
-        try run.startRepl(allocator, options, stdin, stdout, null);
+        try run.startRepl(allocator, options, stdout, null);
     }
 }
 

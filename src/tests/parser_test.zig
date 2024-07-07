@@ -4,8 +4,6 @@ const lexer = @import("../lexer.zig");
 const ast = @import("../ast.zig");
 const parser = @import("../parser.zig");
 
-pub fn hack() void {}
-
 fn checkParserErrors(p: *parser.Parser) !void {
     const errors = p.errors.items;
     if (errors.len == 0) {

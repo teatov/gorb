@@ -533,8 +533,6 @@ pub const Parser = struct {
     }
 };
 
-const parser_test = @import("./tests/parser_test.zig");
-
 test {
-    parser_test.hack();
+    _ = @import("./tests/parser_test.zig");
 }

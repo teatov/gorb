@@ -4,13 +4,13 @@ const parser = @import("./parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const evaluator = @import("./evaluator.zig");
+const linenoise = @import("./linenoize/main.zig");
 
 pub fn runFile(
     allocator: std.mem.Allocator,
     options: Options,
     input: []const u8,
     file: []const u8,
-    in: std.fs.File.Reader,
     out: std.fs.File.Writer,
 ) !void {
     const environment = try object.Environment.init(allocator);
@@ -21,14 +21,13 @@ pub fn runFile(
         _ = try out.write(try val.inspect(allocator));
         _ = try out.write("\n");
     } else if (options.interactive) {
-        try startRepl(allocator, options, in, out, environment);
+        try startRepl(allocator, options, out, environment);
     }
 }
 
 pub fn startRepl(
     allocator: std.mem.Allocator,
     options: Options,
-    in: std.fs.File.Reader,
     out: std.fs.File.Writer,
     env: ?*object.Environment,
 ) !void {
@@ -36,28 +35,19 @@ pub fn startRepl(
         allocator,
     );
 
-    while (true) {
-        _ = try out.write("> ");
-        const input = try in.readUntilDelimiterOrEofAlloc(
-            allocator,
-            '\n',
-            std.math.maxInt(usize),
-        );
+    var ln = linenoise.Linenoise.init(allocator);
+    defer ln.deinit();
 
-        if (input) |line_raw| {
-            const line = std.mem.trim(u8, line_raw, "\r");
-
-            if (std.mem.eql(u8, line, "exit")) {
-                break;
-            }
-
-            const val = try run(allocator, options, out, line, null, environment);
-
-            _ = try out.write(try val.inspect(allocator));
-            _ = try out.write("\n");
-        } else {
+    while (try ln.linenoise("> ")) |line| {
+        if (std.mem.eql(u8, line, "exit")) {
             break;
         }
+
+        const val = try run(allocator, options, out, line, null, environment);
+
+        _ = try out.write(try val.inspect(allocator));
+        _ = try out.write("\n");
+        try ln.history.add(line);
     }
     _ = try out.write("\n");
 }

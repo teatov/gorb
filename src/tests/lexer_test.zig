@@ -2,8 +2,6 @@ const std = @import("std");
 const token = @import("../token.zig");
 const lexer = @import("../lexer.zig");
 
-pub fn hack() void {}
-
 test "next token is correct" {
     const input =
         \\so five = 5;

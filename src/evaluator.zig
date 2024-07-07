@@ -710,8 +710,6 @@ pub const Evaluator = struct {
     };
 };
 
-const evaluator_test = @import("./tests/evaluator_test.zig");
-
 test {
-    evaluator_test.hack();
+    _ = @import("./tests/evaluator_test.zig");
 }

@@ -6,8 +6,6 @@ const parser = @import("../parser.zig");
 const object = @import("../object.zig");
 const evaluator = @import("../evaluator.zig");
 
-pub fn hack() void {}
-
 fn init(allocator: std.mem.Allocator, input: []const u8) !object.Object {
     var l = try lexer.Lexer.init(allocator, input, null);
     var p = parser.Parser.init(allocator, &l);

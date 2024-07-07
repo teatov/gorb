@@ -277,8 +277,6 @@ pub const Lexer = struct {
     }
 };
 
-const lexer_test = @import("./tests/lexer_test.zig");
-
 test {
-    lexer_test.hack();
+    _ = @import("./tests/lexer_test.zig");
 }
