@@ -14,6 +14,12 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
+    const linenoise = b.dependency("linenoise", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    exe.root_module.addImport("linenoise", linenoise.module("linenoise"));
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);

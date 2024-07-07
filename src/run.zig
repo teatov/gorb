@@ -4,7 +4,7 @@ const parser = @import("./parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const evaluator = @import("./evaluator.zig");
-const linenoise = @import("./linenoize/main.zig");
+const Linenoise = @import("linenoise").Linenoise;
 
 pub fn runFile(
     allocator: std.mem.Allocator,
@@ -35,10 +35,10 @@ pub fn startRepl(
         allocator,
     );
 
-    var ln = linenoise.Linenoise.init(allocator);
+    var ln = Linenoise.init(allocator);
     defer ln.deinit();
 
-    while (try ln.linenoise("> ")) |line| {
+    while (ln.linenoise("> ") catch |err| if (err == error.CtrlC) null else return err) |line| {
         if (std.mem.eql(u8, line, "exit")) {
             break;
         }

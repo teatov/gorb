@@ -1,9 +1,16 @@
 .{
     .name = "gorb",
     .version = "0.0.1",
-    .dependencies = .{},
+    .dependencies = .{
+        .linenoise = .{
+            .url = "https://github.com/joachimschmidt557/linenoize/archive/c50994f8c8212e9f5f7ada596429b08d09438d08.tar.gz",
+            .hash = "122075450cd035e917b80e15c39025a5035a8260a1d25117c169445b39205348fd2d",
+        },
+    },
     .paths = .{
         "build.zig",
         "build.zig.zon",
+        "src/",
+        "examples/",
     },
 }
