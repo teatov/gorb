@@ -1,5 +1,5 @@
-let reduce = fn(arr, initial, f) {
-  let iter = fn(arr, result) {
+so reduce = fn(arr, initial, f) {
+  so iter = fn(arr, result) {
     if (len(arr) == 0) {
       result
     } else {
@@ -9,11 +9,11 @@ let reduce = fn(arr, initial, f) {
   iter(arr, initial);
 };
 
-let sum = fn(arr) {
+so sum = fn(arr) {
   reduce(arr, 0, fn(initial, el) { initial + el });
 };
 
-let a = [1, 2, 3, 4, 5];
+so a = [1, 2, 3, 4, 5];
 puts(a, "\n");
 
 puts(sum(a), "\n");

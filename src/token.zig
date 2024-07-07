@@ -90,7 +90,7 @@ pub const TokenType = enum {
 
 pub const keywords = [_]struct { []const u8, TokenType }{
     .{ "fn", .kw_function },
-    .{ "let", .kw_declaration },
+    .{ "so", .kw_declaration },
     .{ "true", .kw_true },
     .{ "false", .kw_false },
     .{ "if", .kw_if },

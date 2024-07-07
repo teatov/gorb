@@ -6,14 +6,14 @@ pub fn hack() void {}
 
 test "next token is correct" {
     const input =
-        \\let five = 5;
-        \\let ten = 10;
+        \\so five = 5;
+        \\so ten = 10;
         \\
-        \\let add = fn(x, y) {
+        \\so add = fn(x, y) {
         \\  x + y;
         \\};
         \\
-        \\let result = add(five, ten);
+        \\so result = add(five, ten);
         \\!-/*5;
         \\5 < 10 > 5;
         \\
@@ -33,17 +33,17 @@ test "next token is correct" {
     ;
 
     const tests = [_]struct { type: token.TokenType, literal: []const u8 }{
-        .{ .type = .kw_declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "so" },
         .{ .type = .identifier, .literal = "five" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .integer, .literal = "5" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .kw_declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "so" },
         .{ .type = .identifier, .literal = "ten" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .integer, .literal = "10" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .kw_declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "so" },
         .{ .type = .identifier, .literal = "add" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .kw_function, .literal = "fn" },
@@ -59,7 +59,7 @@ test "next token is correct" {
         .{ .type = .semicolon, .literal = ";" },
         .{ .type = .brace_close, .literal = "}" },
         .{ .type = .semicolon, .literal = ";" },
-        .{ .type = .kw_declaration, .literal = "let" },
+        .{ .type = .kw_declaration, .literal = "so" },
         .{ .type = .identifier, .literal = "result" },
         .{ .type = .assign, .literal = "=" },
         .{ .type = .identifier, .literal = "add" },

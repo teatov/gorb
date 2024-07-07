@@ -1,4 +1,4 @@
-let fib = fn(x) {
+so fib = fn(x) {
   if (x < 2) {
     return x
   }

@@ -76,11 +76,11 @@ fn init(allocator: std.mem.Allocator, input: []const u8) !ast.Node {
     return node;
 }
 
-test "let statements" {
+test "so statements" {
     const tests = [_]struct { input: []const u8, ident: []const u8, value: PossibleValue }{
-        .{ .input = "let x = 5;", .ident = "x", .value = .{ .integer = 5 } },
-        .{ .input = "let y = true;", .ident = "y", .value = .{ .boolean = true } },
-        .{ .input = "let foobar = y;", .ident = "foobar", .value = .{ .string = "y" } },
+        .{ .input = "so x = 5;", .ident = "x", .value = .{ .integer = 5 } },
+        .{ .input = "so y = true;", .ident = "y", .value = .{ .boolean = true } },
+        .{ .input = "so foobar = y;", .ident = "foobar", .value = .{ .string = "y" } },
     };
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -90,7 +90,7 @@ test "let statements" {
         const node = try init(arena.allocator(), expect.input);
         const expr = node.declaration;
 
-        try std.testing.expectEqualStrings("let", expr.token.literal);
+        try std.testing.expectEqualStrings("so", expr.token.literal);
         try std.testing.expectEqualStrings(expect.ident, expr.name.value);
         try std.testing.expectEqualStrings(expect.ident, expr.name.token.literal);
 

@@ -103,7 +103,7 @@ test "hash literal" {
     const allocator = arena.allocator();
 
     const input =
-        \\let two = "two";
+        \\so two = "two";
         \\{
         \\  "one": 10 - 9,
         \\  two: 1 + 1,
@@ -141,11 +141,11 @@ test "array index expression" {
         .{ .input = "[1, 2, 3][0]", .value = 1 },
         .{ .input = "[1, 2, 3][1]", .value = 2 },
         .{ .input = "[1, 2, 3][2]", .value = 3 },
-        .{ .input = "let i = 0; [1][i];", .value = 1 },
+        .{ .input = "so i = 0; [1][i];", .value = 1 },
         .{ .input = "[1, 2, 3][1 + 1];", .value = 3 },
-        .{ .input = "let myArray = [1, 2, 3]; myArray[2];", .value = 3 },
-        .{ .input = "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];", .value = 6 },
-        .{ .input = "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", .value = 2 },
+        .{ .input = "so myArray = [1, 2, 3]; myArray[2];", .value = 3 },
+        .{ .input = "so myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];", .value = 6 },
+        .{ .input = "so myArray = [1, 2, 3]; so i = myArray[0]; myArray[i]", .value = 2 },
         .{ .input = "[1, 2, 3][3]", .value = null },
         .{ .input = "[1, 2, 3][-1]", .value = null },
     };
@@ -167,7 +167,7 @@ test "hash index expression" {
     const tests = [_]struct { input: []const u8, value: ?i32 }{
         .{ .input = "{\"foo\": 5}[\"foo\"]", .value = 5 },
         .{ .input = "{\"foo\": 5}[\"bar\"]", .value = null },
-        .{ .input = "let key = \"foo\"; {\"foo\": 5}[key]", .value = 5 },
+        .{ .input = "so key = \"foo\"; {\"foo\": 5}[key]", .value = 5 },
         .{ .input = "{}[\"foo\"]", .value = null },
         .{ .input = "{5: 5}[5]", .value = 5 },
         .{ .input = "{true: 5}[true]", .value = 5 },
@@ -291,15 +291,15 @@ test "return statements" {
         \\}
         , .value = 10 },
         .{ .input = 
-        \\let f = fn(x) {
+        \\so f = fn(x) {
         \\  return x;
         \\  x + 10;
         \\};
         \\f(10);
         , .value = 10 },
         .{ .input = 
-        \\let f = fn(x) {
-        \\   let result = x + 10;
+        \\so f = fn(x) {
+        \\   so result = x + 10;
         \\   return result;
         \\   return 10;
         \\};
@@ -382,12 +382,12 @@ test "error handling" {
     }
 }
 
-test "let statements" {
+test "so statements" {
     const tests = [_]struct { input: []const u8, value: i32 }{
-        .{ .input = "let a = 5; a;", .value = 5 },
-        .{ .input = "let a = 5 * 5; a;", .value = 25 },
-        .{ .input = "let a = 5; let b = a; b;", .value = 5 },
-        .{ .input = "let a = 5; let b = a; let c = a + b + 5; c;", .value = 15 },
+        .{ .input = "so a = 5; a;", .value = 5 },
+        .{ .input = "so a = 5 * 5; a;", .value = 25 },
+        .{ .input = "so a = 5; so b = a; b;", .value = 5 },
+        .{ .input = "so a = 5; so b = a; so c = a + b + 5; c;", .value = 15 },
     };
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -415,11 +415,11 @@ test "function object" {
 
 test "function calling" {
     const tests = [_]struct { input: []const u8, value: i32 }{
-        .{ .input = "let identity = fn(x) { x; }; identity(5);", .value = 5 },
-        .{ .input = "let identity = fn(x) { return x; }; identity(5);", .value = 5 },
-        .{ .input = "let double = fn(x) { x * 2; }; double(5);", .value = 10 },
-        .{ .input = "let add = fn(x, y) { x + y; }; add(5, 5);", .value = 10 },
-        .{ .input = "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", .value = 20 },
+        .{ .input = "so identity = fn(x) { x; }; identity(5);", .value = 5 },
+        .{ .input = "so identity = fn(x) { return x; }; identity(5);", .value = 5 },
+        .{ .input = "so double = fn(x) { x * 2; }; double(5);", .value = 10 },
+        .{ .input = "so add = fn(x, y) { x + y; }; add(5, 5);", .value = 10 },
+        .{ .input = "so add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));", .value = 20 },
         .{ .input = "fn(x) { x; }(5)", .value = 5 },
     };
 
@@ -437,12 +437,12 @@ test "enclosing environments" {
     defer arena.deinit();
 
     const input =
-        \\let first = 10;
-        \\let second = 10;
-        \\let third = 10;
+        \\so first = 10;
+        \\so second = 10;
+        \\so third = 10;
         \\
-        \\let ourFunction = fn(first) {
-        \\  let second = 20;
+        \\so ourFunction = fn(first) {
+        \\  so second = 20;
         \\  first + second + third;
         \\};
         \\
@@ -459,11 +459,11 @@ test "closures" {
     defer arena.deinit();
 
     const input =
-        \\let newAdder = fn(x) {
+        \\so newAdder = fn(x) {
         \\	fn(y) {x + y};
         \\};
         \\
-        \\let addTwo = newAdder(2);
+        \\so addTwo = newAdder(2);
         \\addTwo(2);
     ;
 
