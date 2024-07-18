@@ -99,11 +99,12 @@ pub const Program = struct {
     ) ![]const u8 {
         var node_string = std.ArrayList(u8).init(allocator);
         for (self.statements) |stmt| {
-            try node_string.appendSlice(
-                try stmt.print(allocator),
-            );
+            const stmt_string = try stmt.print(allocator);
+            try node_string.appendSlice(stmt_string);
+            allocator.free(stmt_string);
         }
-        return node_string.items;
+
+        return try node_string.toOwnedSlice();
     }
 };
 
@@ -132,11 +133,12 @@ pub const Block = struct {
     ) ![]const u8 {
         var node_string = std.ArrayList(u8).init(allocator);
         for (self.statements) |stmt| {
-            try node_string.appendSlice(
-                try stmt.print(allocator),
-            );
+            const stmt_string = try stmt.print(allocator);
+            try node_string.appendSlice(stmt_string);
+            allocator.free(stmt_string);
         }
-        return node_string.items;
+
+        return try node_string.toOwnedSlice();
     }
 };
 
@@ -163,6 +165,8 @@ pub const Return = struct {
         const return_value: []const u8 = try self.return_value.print(
             allocator,
         );
+
+        defer allocator.free(return_value);
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s};",
@@ -196,6 +200,8 @@ pub const Declaration = struct {
         const value: []const u8 = try self.value.print(
             allocator,
         );
+
+        defer allocator.free(value);
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s} = {s};",
@@ -232,6 +238,9 @@ pub const Index = struct {
         const index: []const u8 = try self.index.print(
             allocator,
         );
+
+        defer allocator.free(left);
+        defer allocator.free(index);
         return try std.fmt.allocPrint(
             allocator,
             "({s}[{s}])",
@@ -270,13 +279,16 @@ pub const Call = struct {
         );
         var args = std.ArrayList(u8).init(allocator);
         for (self.arguments, 0..) |arg, i| {
-            try args.appendSlice(
-                try arg.print(allocator),
-            );
+            const arg_string = try arg.print(allocator);
+            try args.appendSlice(arg_string);
+            allocator.free(arg_string);
             if (i < self.arguments.len - 1) {
                 try args.appendSlice(", ");
             }
         }
+
+        defer allocator.free(function);
+        defer args.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{s}({s})",
@@ -317,20 +329,22 @@ pub const If = struct {
 
         var body = std.ArrayList(u8).init(allocator);
         for (self.consequence.statements) |stmt| {
-            try body.appendSlice(
-                try stmt.print(allocator),
-            );
+            const stmt_string = try stmt.print(allocator);
+            try body.appendSlice(stmt_string);
+            allocator.free(stmt_string);
         }
 
         if (self.alternative) |alternative| {
             try body.appendSlice(" else ");
             for (alternative.statements) |stmt| {
-                try body.appendSlice(
-                    try stmt.print(allocator),
-                );
+                const stmt_string = try stmt.print(allocator);
+                try body.appendSlice(stmt_string);
+                allocator.free(stmt_string);
             }
         }
 
+        defer body.deinit();
+        defer allocator.free(condition);
         return try std.fmt.allocPrint(
             allocator,
             "if {s} {s}",
@@ -364,6 +378,8 @@ pub const UnaryOperation = struct {
         const right: []const u8 = try self.right.print(
             allocator,
         );
+
+        defer allocator.free(right);
         return try std.fmt.allocPrint(
             allocator,
             "({s}{s})",
@@ -402,6 +418,9 @@ pub const BinaryOperation = struct {
         const right: []const u8 = try self.right.print(
             allocator,
         );
+
+        defer allocator.free(left);
+        defer allocator.free(right);
         return try std.fmt.allocPrint(
             allocator,
             "({s} {s} {s})",
@@ -545,13 +564,15 @@ pub const ArrayLiteral = struct {
     ) ![]const u8 {
         var elements = std.ArrayList(u8).init(allocator);
         for (self.elements, 0..) |element, i| {
-            try elements.appendSlice(
-                try element.print(allocator),
-            );
+            const element_string = try element.print(allocator);
+            try elements.appendSlice(element_string);
+            allocator.free(element_string);
             if (i < self.elements.len - 1) {
                 try elements.appendSlice(", ");
             }
         }
+
+        defer elements.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "[{s}]",
@@ -602,6 +623,8 @@ pub const HashLiteral = struct {
             }
             i += 1;
         }
+
+        defer pairs.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{{{s}}}",
@@ -645,11 +668,13 @@ pub const FunctionLiteral = struct {
 
         var body = std.ArrayList(u8).init(allocator);
         for (self.body.statements) |stmt| {
-            try body.appendSlice(
-                try stmt.print(allocator),
-            );
+            const stmt_string = try stmt.print(allocator);
+            try body.appendSlice(stmt_string);
+            allocator.free(stmt_string);
         }
 
+        defer params.deinit();
+        defer body.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{s}({s}){s}",

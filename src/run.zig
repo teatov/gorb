@@ -100,6 +100,7 @@ fn run(
     }
 
     // var e = evaluator.Evaluator.init(allocator);
+    _ = evaluator.Evaluator.init(allocator);
 
     // return try e.eval(program, env);
     return object.Object.null;
