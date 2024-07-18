@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/zig-out/bin/gorb",
-      "args": [],
+      "args": ["${workspaceFolder}/examples/leaks.gorb", "-ta"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",
       "environment": [],

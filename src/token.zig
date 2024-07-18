@@ -19,12 +19,6 @@ pub const Token = struct {
             .{ @tagName(self.type), self.literal },
         ) catch |err| @errorName(err);
     }
-
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
-        if (self.type == TokenType.string) {
-            allocator.free(self.literal);
-        }
-    }
 };
 
 pub const Pos = struct {

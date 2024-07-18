@@ -12,31 +12,37 @@ pub fn runFile(
     input: []const u8,
     file_path: []const u8,
     out: std.fs.File.Writer,
+    errout: std.fs.File.Writer,
 ) !void {
     const env = try object.Environment.init(allocator);
 
-    const val = try run(allocator, options, out, input, file_path, env);
+    const val = try run(allocator, options, errout, input, file_path, env);
 
-    if (@intFromEnum(val) == @intFromEnum(object.ObjectType.@"error")) {
-        _ = try out.write(try val.inspect(allocator));
-        _ = try out.write("\n");
+    if (@intFromEnum(val.obj) == @intFromEnum(object.ObjectType.@"error")) {
+        const error_message = try val.obj.inspect(allocator);
+        _ = try errout.write(error_message);
+        _ = try errout.write("\n");
+        allocator.free(error_message);
     } else if (options.interactive) {
-        try startRepl(allocator, options, out, env);
+        try startRepl(allocator, options, out, errout, env);
         return;
     }
-    env.deinit();
+    val.obj.deref(allocator);
+    env.deref();
+    val.program.deinit(allocator, true);
 }
 
 pub fn startRepl(
     allocator: std.mem.Allocator,
     options: Options,
     out: std.fs.File.Writer,
+    errout: std.fs.File.Writer,
     environment: ?*object.Environment,
 ) !void {
     const env = if (environment) |e| e else try object.Environment.init(
         allocator,
     );
-    defer env.deinit();
+    defer env.deref();
 
     var ln = linenoise.Linenoise.init(allocator);
     defer ln.deinit();
@@ -48,10 +54,12 @@ pub fn startRepl(
             break;
         }
 
-        const val = try run(allocator, options, out, line, null, env);
+        const val = try run(allocator, options, errout, line, null, env);
 
-        _ = try out.write(try val.inspect(allocator));
+        const val_string = try val.obj.inspect(allocator);
+        _ = try out.write(val_string);
         _ = try out.write("\n");
+        allocator.free(val_string);
         try ln.history.add(line);
     }
 
@@ -60,20 +68,19 @@ pub fn startRepl(
     _ = try out.write("\n");
 }
 
+const RunResult = struct {
+    obj: object.Object,
+    program: ast.Node,
+};
+
 fn run(
-    // allocator: std.mem.Allocator,
-    // options: Options,
-    // out: std.fs.File.Writer,
-    // input: []const u8,
-    // file_path: ?[]const u8,
-    // env: *object.Environment,
     allocator: std.mem.Allocator,
     options: Options,
-    out: std.fs.File.Writer,
+    errout: std.fs.File.Writer,
     input: []const u8,
     file_path: ?[]const u8,
-    _: *object.Environment,
-) !object.Object {
+    env: *object.Environment,
+) !RunResult {
     var l = try lexer.Lexer.init(allocator, input, file_path);
 
     var p = parser.Parser.init(allocator, &l);
@@ -83,27 +90,25 @@ fn run(
             return err;
         } else {
             for (p.errors.items) |parse_err| {
-                _ = try out.write(parse_err);
-                _ = try out.write("\n");
+                _ = try errout.write(parse_err);
+                _ = try errout.write("\n");
             }
-            return .null;
+            return error.ParserError;
         }
     };
-    defer program.deinit(allocator);
 
     if (options.debug_ast) {
-        _ = try out.write("AST: ");
+        std.debug.print("AST: ", .{});
         const program_string = try program.print(allocator);
-        _ = try out.write(program_string);
-        _ = try out.write("\n");
+        std.debug.print("{s}", .{program_string});
+        std.debug.print("\n", .{});
         allocator.free(program_string);
     }
 
-    // var e = evaluator.Evaluator.init(allocator);
-    _ = evaluator.Evaluator.init(allocator);
+    var e = evaluator.Evaluator.init(allocator);
 
-    // return try e.eval(program, env);
-    return object.Object.null;
+    const obj = try e.eval(program, env);
+    return .{ .obj = obj, .program = program };
 }
 
 pub const Options = struct {

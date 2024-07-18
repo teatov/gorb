@@ -22,7 +22,11 @@ pub const Environment = struct {
         return env;
     }
 
-    pub fn deinit(self: *Self) void {
+    pub fn deref(self: *Self) void {
+        var iterator = self.store.iterator();
+        while (iterator.next()) |value| {
+            value.value_ptr.deref(self.allocator);
+        }
         self.store.deinit();
         self.allocator.destroy(self);
     }
@@ -87,6 +91,35 @@ pub const Object = union(ObjectType) {
     return_value: *Object,
     @"error": *Error,
 
+    const Self = @This();
+
+    pub fn ref(self: Self) void {
+        _ = switch (self) {
+            .function => |obj| obj.counter.ref(),
+            .builtin => |obj| obj.counter.ref(),
+            .array => |obj| obj.counter.ref(),
+            .hash => |obj| obj.counter.ref(),
+            .return_value => |obj| obj.ref(),
+            .@"error" => |obj| obj.counter.ref(),
+            else => null,
+        };
+    }
+
+    pub fn deref(
+        self: Self,
+        allocator: std.mem.Allocator,
+    ) void {
+        _ = switch (self) {
+            .function => |obj| obj.counter.deref(allocator, obj),
+            .builtin => |obj| obj.counter.deref(allocator, obj),
+            .array => |obj| obj.counter.deref(allocator, obj),
+            .hash => |obj| obj.counter.deref(allocator, obj),
+            .return_value => |obj| obj.deref(allocator),
+            .@"error" => |obj| obj.counter.deref(allocator, obj),
+            else => null,
+        };
+    }
+
     pub fn stringify(
         self: Object,
         allocator: std.mem.Allocator,
@@ -105,10 +138,14 @@ pub const Object = union(ObjectType) {
         return switch (self) {
             .function => |obj| obj.inspect(allocator),
             .builtin => |obj| obj.inspect(allocator),
-            .null => "null",
-            .boolean => |obj| if (obj) "true" else "false",
+            .null => try std.fmt.allocPrint(allocator, "null", .{}),
+            .boolean => |obj| try std.fmt.allocPrint(
+                allocator,
+                "{s}",
+                .{if (obj) "true" else "false"},
+            ),
             .integer => |obj| try std.fmt.allocPrint(allocator, "{d}", .{obj}),
-            .string => |obj| obj,
+            .string => |obj| try std.fmt.allocPrint(allocator, "{s}", .{obj}),
             .array => |obj| obj.inspect(allocator),
             .hash => |obj| obj.inspect(allocator),
             .return_value => |obj| obj.inspect(allocator),
@@ -135,7 +172,43 @@ pub const Object = union(ObjectType) {
     }
 };
 
+pub fn RefCounter(ObjType: type) type {
+    return struct {
+        refs: i32 = undefined,
+        deinit_fn: *const fn (*ObjType, std.mem.Allocator) void = undefined,
+
+        const Self = @This();
+
+        pub fn init(
+            allocator: std.mem.Allocator,
+            deinit_fn: *const fn (*ObjType, std.mem.Allocator) void,
+        ) !*Self {
+            const counter = try allocator.create(Self);
+            counter.refs = 1;
+            counter.deinit_fn = deinit_fn;
+            return counter;
+        }
+
+        pub fn ref(self: *Self) void {
+            self.refs += 1;
+        }
+
+        pub fn deref(
+            self: *Self,
+            allocator: std.mem.Allocator,
+            obj: *ObjType,
+        ) void {
+            self.refs -= 1;
+            if (self.refs == 0) {
+                self.deinit_fn(obj, allocator);
+                allocator.destroy(self);
+            }
+        }
+    };
+}
+
 pub const Function = struct {
+    counter: *RefCounter(Self) = undefined,
     parameters: []*ast.Identifier = undefined,
     body: *ast.Block = undefined,
     env: *Environment = undefined,
@@ -147,12 +220,23 @@ pub const Function = struct {
         parameters: []*ast.Identifier,
         body: *ast.Block,
         env: *Environment,
-    ) !*Function {
-        var obj = try allocator.create(Function);
+    ) !*Self {
+        var obj = try allocator.create(Self);
+        obj.counter = try RefCounter(Self).init(allocator, &Self.deinit);
         obj.parameters = parameters;
         obj.body = body;
         obj.env = env;
         return obj;
+    }
+
+    fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        // self.env.deinit();
+        // self.body.deinit(allocator, false);
+        // for (self.parameters) |param| {
+        //     param.deinit(allocator, false);
+        // }
+        // allocator.free(self.parameters);
+        allocator.destroy(self);
     }
 
     pub fn inspect(
@@ -161,21 +245,23 @@ pub const Function = struct {
     ) ![]const u8 {
         var params = std.ArrayList(u8).init(allocator);
         for (self.parameters, 0..) |param, i| {
-            try params.appendSlice(
-                try (ast.Node{
-                    .identifier = param,
-                }).print(allocator),
-            );
+            const param_string = try (ast.Node{
+                .identifier = param,
+            }).print(allocator);
+            try params.appendSlice(param_string);
+            allocator.free(param_string);
             if (i < self.parameters.len - 1) {
                 try params.appendSlice(", ");
             }
         }
         var body = std.ArrayList(u8).init(allocator);
         for (self.body.statements) |node| {
-            try body.appendSlice(
-                try node.print(allocator),
-            );
+            const node_string = try node.print(allocator);
+            try body.appendSlice(node_string);
+            allocator.free(node_string);
         }
+        defer params.deinit();
+        defer body.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "fn({s}){{{s}}}",
@@ -191,6 +277,7 @@ pub const BuiltinFunction = fn (
 ) evaluator.Evaluator.Error!Object;
 
 pub const Builtin = struct {
+    counter: *RefCounter(Self) = undefined,
     function: *const BuiltinFunction = undefined,
 
     const Self = @This();
@@ -198,21 +285,27 @@ pub const Builtin = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         function: *const BuiltinFunction,
-    ) !*Builtin {
-        var obj = try allocator.create(Builtin);
+    ) !*Self {
+        var obj = try allocator.create(Self);
+        obj.counter = try RefCounter(Self).init(allocator, &Self.deinit);
         obj.function = function;
         return obj;
     }
 
+    fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        allocator.destroy(self);
+    }
+
     pub fn inspect(
         _: Self,
-        _: std.mem.Allocator,
+        allocator: std.mem.Allocator,
     ) ![]const u8 {
-        return "builtin function";
+        return try std.fmt.allocPrint(allocator, "builtin function", .{});
     }
 };
 
 pub const Array = struct {
+    counter: *RefCounter(Self) = undefined,
     elements: []Object = undefined,
 
     const Self = @This();
@@ -220,10 +313,19 @@ pub const Array = struct {
     pub fn init(
         allocator: std.mem.Allocator,
         elements: []Object,
-    ) !*Array {
-        var obj = try allocator.create(Array);
+    ) !*Self {
+        var obj = try allocator.create(Self);
+        obj.counter = try RefCounter(Self).init(allocator, &Self.deinit);
         obj.elements = elements;
         return obj;
+    }
+
+    fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        for (self.elements) |element| {
+            element.deref(allocator);
+        }
+        allocator.free(self.elements);
+        allocator.destroy(self);
     }
 
     pub fn inspect(
@@ -232,13 +334,14 @@ pub const Array = struct {
     ) ![]const u8 {
         var elements = std.ArrayList(u8).init(allocator);
         for (self.elements, 0..) |element, i| {
-            try elements.appendSlice(
-                try element.inspect(allocator),
-            );
+            const element_string = try element.inspect(allocator);
+            try elements.appendSlice(element_string);
+            allocator.free(element_string);
             if (i < self.elements.len - 1) {
                 try elements.appendSlice(", ");
             }
         }
+        defer elements.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "[{s}]",
@@ -284,17 +387,32 @@ pub const HashPair = struct {
 };
 
 pub const Hash = struct {
-    pairs: std.AutoHashMap(HashKey, HashPair) = undefined,
+    counter: *RefCounter(Self) = undefined,
+    pairs: std.AutoHashMap(HashKey, *HashPair) = undefined,
 
     const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
-        pairs: std.AutoHashMap(HashKey, HashPair),
-    ) !*Hash {
-        var obj = try allocator.create(Hash);
+        pairs: std.AutoHashMap(HashKey, *HashPair),
+    ) !*Self {
+        var obj = try allocator.create(Self);
+        obj.counter = try RefCounter(Self).init(allocator, &Self.deinit);
         obj.pairs = pairs;
         return obj;
+    }
+
+    fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        var iterator = self.pairs.iterator();
+        while (iterator.next()) |hash_pair| {
+            const pair = hash_pair.value_ptr.*;
+            pair.key.deref(allocator);
+            pair.value.deref(allocator);
+            // allocator.destroy(hash_pair.key_ptr);
+            allocator.destroy(pair);
+        }
+        self.pairs.deinit();
+        allocator.destroy(self);
     }
 
     pub fn inspect(
@@ -306,17 +424,18 @@ pub const Hash = struct {
         var iterator = self.pairs.iterator();
         while (iterator.next()) |hash_pair| : (i += 1) {
             const pair = hash_pair.value_ptr.*;
-            try pairs.appendSlice(
-                try pair.key.inspect(allocator),
-            );
+            const key_string = try pair.key.inspect(allocator);
+            try pairs.appendSlice(key_string);
+            allocator.free(key_string);
             try pairs.appendSlice(": ");
-            try pairs.appendSlice(
-                try pair.value.inspect(allocator),
-            );
+            const value_string = try pair.value.inspect(allocator);
+            try pairs.appendSlice(value_string);
+            allocator.free(value_string);
             if (i < self.pairs.count() - 1) {
                 try pairs.appendSlice(", ");
             }
         }
+        defer pairs.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{{{s}}}",
@@ -326,6 +445,7 @@ pub const Hash = struct {
 };
 
 pub const Error = struct {
+    counter: *RefCounter(Self) = undefined,
     message: []const u8 = undefined,
     tok: token.Token = undefined,
 
@@ -335,11 +455,17 @@ pub const Error = struct {
         allocator: std.mem.Allocator,
         message: []const u8,
         tok: token.Token,
-    ) !*Error {
-        var obj = try allocator.create(Error);
+    ) !*Self {
+        var obj = try allocator.create(Self);
+        obj.counter = try RefCounter(Self).init(allocator, &Self.deinit);
         obj.message = message;
         obj.tok = tok;
         return obj;
+    }
+
+    fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        allocator.free(self.message);
+        allocator.destroy(self);
     }
 
     pub fn inspect(

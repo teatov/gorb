@@ -28,12 +28,13 @@ pub fn formatError(
     }
     _ = pointer.appendSlice(" here") catch null;
 
+    const tok_string = tok.pos.print(allocator);
     const msg = std.fmt.allocPrint(
         allocator,
         "{s}:{s}: {s}\n{s}\n{s}",
         .{
             tok.file_path orelse "",
-            tok.pos.print(allocator),
+            tok_string,
             message,
             tok.line,
             pointer.items,
@@ -41,5 +42,7 @@ pub fn formatError(
     ) catch |err| {
         return @errorName(err);
     };
+    pointer.deinit();
+    allocator.free(tok_string);
     return msg;
 }

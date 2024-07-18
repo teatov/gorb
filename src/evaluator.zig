@@ -20,7 +20,7 @@ pub const Evaluator = struct {
         env: *object.Environment,
     ) Error!object.Object {
         return switch (node) {
-            .program => |obj| self.evalProgram(obj, env),
+            .block => |obj| try self.evalBlock(obj.*, env),
 
             //statements
 
@@ -42,8 +42,6 @@ pub const Evaluator = struct {
 
                 break :blk .null;
             },
-
-            .block => |obj| try self.evalBlock(obj.*, env),
 
             // expressions
 
@@ -75,6 +73,17 @@ pub const Evaluator = struct {
                 );
                 if (args.len == 1 and isError(args[0])) {
                     return args[0];
+                }
+
+                for (args) |arg| {
+                    arg.ref();
+                }
+
+                defer {
+                    for (args) |arg| {
+                        arg.deref(self.allocator);
+                    }
+                    self.allocator.free(args);
                 }
 
                 break :blk try self.applyFunction(function, args, obj.token);
@@ -151,29 +160,7 @@ pub const Evaluator = struct {
                 );
                 break :blk .{ .function = val };
             },
-
-            else => .null,
         };
-    }
-
-    fn evalProgram(
-        self: *Self,
-        node: *ast.Program,
-        env: *object.Environment,
-    ) !object.Object {
-        var result: object.Object = undefined;
-
-        for (node.statements) |stmt| {
-            result = try self.eval(stmt, env);
-
-            _ = switch (result) {
-                .return_value => |obj| return obj.*,
-                .@"error" => |obj| return .{ .@"error" = obj },
-                else => void,
-            };
-        }
-
-        return result;
     }
 
     fn evalBlock(
@@ -215,7 +202,7 @@ pub const Evaluator = struct {
             }
         }
 
-        return result.items;
+        return try result.toOwnedSlice();
     }
 
     fn evalIndexExpression(
@@ -480,7 +467,7 @@ pub const Evaluator = struct {
     ) !object.Object {
         var pairs = std.AutoHashMap(
             object.HashKey,
-            object.HashPair,
+            *object.HashPair,
         ).init(self.allocator);
 
         var iterator = node.pairs.iterator();
@@ -509,7 +496,7 @@ pub const Evaluator = struct {
                 key,
                 value,
             );
-            _ = try pairs.put(hash_key.?, hash_pair.*);
+            _ = try pairs.put(hash_key.?, hash_pair);
         }
 
         const val = try object.Hash.init(self.allocator, pairs);
@@ -545,13 +532,20 @@ pub const Evaluator = struct {
                 break :blk self.unwrapReturnValue(val);
             },
 
-            .builtin => |obj| obj.function(self, args, tok),
+            .builtin => |obj| blk: {
+                defer function.deref(self.allocator);
+                break :blk obj.function(self, args, tok);
+            },
 
-            else => try self.newError(
-                "{s} is not a function",
-                .{function.stringify(self.allocator)},
-                tok,
-            ),
+            else => blk: {
+                const fn_string = function.stringify(self.allocator);
+                defer self.allocator.free(fn_string);
+                break :blk try self.newError(
+                    "{s} is not a function",
+                    .{fn_string},
+                    tok,
+                );
+            },
         };
     }
 

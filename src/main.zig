@@ -5,6 +5,7 @@ const version = "0.0.1";
 
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
+    const stderr = std.io.getStdErr().writer();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -38,7 +39,7 @@ pub fn main() !void {
     if (file_path) |f| {
         const file = std.fs.cwd().openFile(f, .{}) catch |err| {
             if (err == std.fs.File.OpenError.FileNotFound) {
-                try stdout.print("file '{s}' not found\n", .{f});
+                try stderr.print("file '{s}' not found\n", .{f});
                 return;
             }
             return err;
@@ -50,17 +51,17 @@ pub fn main() !void {
             std.math.maxInt(usize),
         ) catch |err| {
             if (err == std.fs.File.OpenError.IsDir) {
-                try stdout.print("'{s}' is a directory and not a file\n", .{f});
+                try stderr.print("'{s}' is a directory and not a file\n", .{f});
                 return;
             }
             return err;
         };
         defer allocator.free(input);
 
-        try run.runFile(allocator, options, input, f, stdout);
+        try run.runFile(allocator, options, input, f, stdout, stderr);
     } else {
         _ = try stdout.write("welcome to gorb.\n");
-        try run.startRepl(allocator, options, stdout, null);
+        try run.startRepl(allocator, options, stdout, stderr, null);
     }
 }
 

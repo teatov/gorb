@@ -3,7 +3,7 @@ so map = fn(arr, f) {
     if (len(arr) == 0) {
       accumulated
     } else {
-      iter(rest(arr), ass(accumulated, f(first(arr))));
+      iter(rest(arr), f(accumulated, f(first(arr))));
     }
   };
   iter(arr, []);
@@ -11,6 +11,7 @@ so map = fn(arr, f) {
 
 so a = [1, 2, 3, 4];
 puts(a, "\n");
+so a = "ass blast";
 
 so double = fn(x) { x * 2 };
 puts(map(a, double), "\n");

@@ -43,7 +43,7 @@ pub const Parser = struct {
         if (debug_tokens) {
             std.debug.print("TOKENS: ", .{});
         }
-        const program = try ast.Program.init(self.allocator);
+        const program = try ast.Block.init(self.allocator);
         var statements = std.ArrayList(ast.Node).init(
             self.allocator,
         );
@@ -59,7 +59,7 @@ pub const Parser = struct {
 
         program.statements = try statements.toOwnedSlice();
 
-        return .{ .program = program };
+        return .{ .block = program };
     }
 
     // statements
@@ -130,7 +130,7 @@ pub const Parser = struct {
 
         self.nextToken();
 
-        while (!self.curTokenIs(.brace_close) and !self.curTokenIs(.eof)) {
+        while (!self.curTokenIs(.brace_close)) {
             const stmt = try self.parseStatement();
             try statements.append(stmt);
             self.nextToken();
