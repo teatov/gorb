@@ -3,8 +3,8 @@
     .version = "0.0.1",
     .dependencies = .{
         .linenoise = .{
-            .url = "https://github.com/joachimschmidt557/linenoize/archive/c50994f8c8212e9f5f7ada596429b08d09438d08.tar.gz",
-            .hash = "122075450cd035e917b80e15c39025a5035a8260a1d25117c169445b39205348fd2d",
+            .url = "https://github.com/joachimschmidt557/linenoize/archive/77ab2ebed0ed6c796805258d4d9c604ab9d4b85d.tar.gz",
+            .hash = "12206268336e49800cb4732e1bed590a2abe8ab9757562aa236bc35b221f0c3a8ac5",
         },
     },
     .paths = .{
