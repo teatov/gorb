@@ -408,7 +408,7 @@ test "operator precedence" {
     for (tests) |expect| {
         const node = try init(arena.allocator(), expect.input);
 
-        const string = try node.string(arena.allocator());
+        const string = try node.print(arena.allocator());
         try std.testing.expectEqualStrings(expect.expected, string);
     }
 }
@@ -557,7 +557,7 @@ test "call expression parameters" {
         try std.testing.expectEqual(expect.args.len, expr.arguments.len);
 
         for (expect.args, 0..) |arg, i| {
-            try std.testing.expectEqualStrings(arg, try expr.arguments[i].string(arena.allocator()));
+            try std.testing.expectEqualStrings(arg, try expr.arguments[i].print(arena.allocator()));
         }
     }
 }

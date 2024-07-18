@@ -23,7 +23,7 @@ pub const Node = union(enum) {
     hash_literal: *HashLiteral,
     function_literal: *FunctionLiteral,
 
-    pub fn string(
+    pub fn print(
         self: Node,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -34,7 +34,7 @@ pub const Node = union(enum) {
                 var node_string = std.ArrayList(u8).init(allocator);
                 for (node.statements) |statement| {
                     try node_string.appendSlice(
-                        try statement.string(allocator),
+                        try statement.print(allocator),
                     );
                 }
                 break :blk node_string.items;
@@ -44,14 +44,14 @@ pub const Node = union(enum) {
                 var node_string = std.ArrayList(u8).init(allocator);
                 for (node.statements) |statement| {
                     try node_string.appendSlice(
-                        try statement.string(allocator),
+                        try statement.print(allocator),
                     );
                 }
                 break :blk node_string.items;
             },
 
             .@"return" => |node| blk: {
-                const return_value: []const u8 = try node.return_value.string(
+                const return_value: []const u8 = try node.return_value.print(
                     allocator,
                 );
                 break :blk try std.fmt.allocPrint(
@@ -62,7 +62,7 @@ pub const Node = union(enum) {
             },
 
             .declaration => |node| blk: {
-                const value: []const u8 = try node.value.string(
+                const value: []const u8 = try node.value.print(
                     allocator,
                 );
                 break :blk try std.fmt.allocPrint(
@@ -73,10 +73,10 @@ pub const Node = union(enum) {
             },
 
             .index => |node| blk: {
-                const left: []const u8 = try node.left.string(
+                const left: []const u8 = try node.left.print(
                     allocator,
                 );
-                const index: []const u8 = try node.index.string(
+                const index: []const u8 = try node.index.print(
                     allocator,
                 );
                 break :blk try std.fmt.allocPrint(
@@ -87,13 +87,13 @@ pub const Node = union(enum) {
             },
 
             .call => |node| blk: {
-                const function: []const u8 = try node.function.string(
+                const function: []const u8 = try node.function.print(
                     allocator,
                 );
                 var args = std.ArrayList(u8).init(allocator);
                 for (node.arguments, 0..) |argument, i| {
                     try args.appendSlice(
-                        try argument.string(allocator),
+                        try argument.print(allocator),
                     );
                     if (i < node.arguments.len - 1) {
                         try args.appendSlice(", ");
@@ -107,14 +107,14 @@ pub const Node = union(enum) {
             },
 
             .@"if" => |node| blk: {
-                const condition: []const u8 = try node.condition.string(
+                const condition: []const u8 = try node.condition.print(
                     allocator,
                 );
 
                 var body = std.ArrayList(u8).init(allocator);
                 for (node.consequence.statements) |statement| {
                     try body.appendSlice(
-                        try statement.string(allocator),
+                        try statement.print(allocator),
                     );
                 }
 
@@ -122,7 +122,7 @@ pub const Node = union(enum) {
                     try body.appendSlice(" else ");
                     for (alternative.statements) |statement| {
                         try body.appendSlice(
-                            try statement.string(allocator),
+                            try statement.print(allocator),
                         );
                     }
                 }
@@ -135,7 +135,7 @@ pub const Node = union(enum) {
             },
 
             .unary_operation => |node| blk: {
-                const right: []const u8 = try node.right.string(
+                const right: []const u8 = try node.right.print(
                     allocator,
                 );
                 break :blk try std.fmt.allocPrint(
@@ -146,10 +146,10 @@ pub const Node = union(enum) {
             },
 
             .binary_operation => |node| blk: {
-                const left: []const u8 = try node.left.string(
+                const left: []const u8 = try node.left.print(
                     allocator,
                 );
-                const right: []const u8 = try node.right.string(
+                const right: []const u8 = try node.right.print(
                     allocator,
                 );
                 break :blk try std.fmt.allocPrint(
@@ -195,7 +195,7 @@ pub const Node = union(enum) {
                 var elements = std.ArrayList(u8).init(allocator);
                 for (node.elements, 0..) |element, i| {
                     try elements.appendSlice(
-                        try element.string(allocator),
+                        try element.print(allocator),
                     );
                     if (i < node.elements.len - 1) {
                         try elements.appendSlice(", ");
@@ -214,11 +214,11 @@ pub const Node = union(enum) {
                 var i: u32 = 0;
                 while (iterator.next()) |key| {
                     try pairs.appendSlice(
-                        try key.string(allocator),
+                        try key.print(allocator),
                     );
                     try pairs.appendSlice(":");
                     try pairs.appendSlice(
-                        try node.pairs.get(key.*).?.string(
+                        try node.pairs.get(key.*).?.print(
                             allocator,
                         ),
                     );
@@ -246,7 +246,7 @@ pub const Node = union(enum) {
                 var body = std.ArrayList(u8).init(allocator);
                 for (node.body.statements) |statement| {
                     try body.appendSlice(
-                        try statement.string(allocator),
+                        try statement.print(allocator),
                     );
                 }
 

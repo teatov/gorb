@@ -503,8 +503,8 @@ pub const Parser = struct {
             self.allocator,
             "expected {s}, got {s}",
             .{
-                tok_type.string(self.allocator),
-                self.peek_token.string(self.allocator),
+                tok_type.print(self.allocator),
+                self.peek_token.print(self.allocator),
             },
         ) catch |err| {
             std.debug.print(
@@ -521,7 +521,7 @@ pub const Parser = struct {
             self.allocator,
             "no unary parse function for {s} found",
             .{
-                tok.string(self.allocator),
+                tok.print(self.allocator),
             },
         ) catch |err| {
             std.debug.print(

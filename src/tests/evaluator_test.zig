@@ -408,7 +408,7 @@ test "function object" {
 
     try std.testing.expectEqual(1, val.parameters.len);
     try std.testing.expectEqualStrings("x", val.parameters[0].value);
-    try std.testing.expectEqualStrings("(x + 2)", try ast.Node.string(.{ .block = val.body }, arena.allocator()));
+    try std.testing.expectEqualStrings("(x + 2)", try ast.Node.print(.{ .block = val.body }, arena.allocator()));
 }
 
 test "function calling" {

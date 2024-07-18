@@ -100,7 +100,7 @@ pub const Object = union(ObjectType) {
                     try params.appendSlice(
                         try (ast.Node{
                             .identifier = param,
-                        }).string(allocator),
+                        }).print(allocator),
                     );
                     if (i < obj.parameters.len - 1) {
                         try params.appendSlice(", ");
@@ -109,7 +109,7 @@ pub const Object = union(ObjectType) {
                 var body = std.ArrayList(u8).init(allocator);
                 for (obj.body.statements) |node| {
                     try body.appendSlice(
-                        try node.string(allocator),
+                        try node.print(allocator),
                     );
                 }
                 break :blk try std.fmt.allocPrint(
