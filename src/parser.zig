@@ -12,6 +12,8 @@ pub const Parser = struct {
     cur_token: token.Token = undefined,
     peek_token: token.Token = undefined,
 
+    debug_tokents: bool = false,
+
     allocator: std.mem.Allocator,
 
     const Self = @This();
@@ -32,7 +34,15 @@ pub const Parser = struct {
         return parser;
     }
 
-    pub fn parseProgram(self: *Self) !ast.Node {
+    pub fn deinit(self: *Self) void {
+        self.errors.deinit();
+    }
+
+    pub fn parseProgram(self: *Self, debug_tokens: bool) !ast.Node {
+        self.debug_tokents = debug_tokens;
+        if (debug_tokens) {
+            std.debug.print("TOKENS: ", .{});
+        }
         const program = try ast.Program.init(self.allocator);
         var statements = std.ArrayList(ast.Node).init(
             self.allocator,
@@ -43,8 +53,11 @@ pub const Parser = struct {
             try statements.append(stmt);
             self.nextToken();
         }
+        if (self.debug_tokents) {
+            std.debug.print("\n", .{});
+        }
 
-        program.statements = statements.items;
+        program.statements = try statements.toOwnedSlice();
 
         return .{ .program = program };
     }
@@ -123,7 +136,7 @@ pub const Parser = struct {
             self.nextToken();
         }
 
-        block.statements = statements.items;
+        block.statements = try statements.toOwnedSlice();
 
         return .{ .block = block };
     }
@@ -273,7 +286,7 @@ pub const Parser = struct {
 
         if (self.peekTokenIs(end)) {
             self.nextToken();
-            return list.items;
+            return try list.toOwnedSlice();
         }
 
         self.nextToken();
@@ -287,7 +300,7 @@ pub const Parser = struct {
 
         try self.expectPeek(end);
 
-        return list.items;
+        return try list.toOwnedSlice();
     }
 
     // literals
@@ -386,7 +399,7 @@ pub const Parser = struct {
 
         if (self.peekTokenIs(.paren_close)) {
             self.nextToken();
-            return identifiers.items;
+            return try identifiers.toOwnedSlice();
         }
 
         self.nextToken();
@@ -408,7 +421,7 @@ pub const Parser = struct {
 
         try self.expectPeek(.paren_close);
 
-        return identifiers.items;
+        return try identifiers.toOwnedSlice();
     }
 
     // helpers
@@ -416,6 +429,12 @@ pub const Parser = struct {
     fn nextToken(self: *Self) void {
         self.cur_token = self.peek_token;
         self.peek_token = self.lexer.nextToken();
+        if (self.debug_tokents) {
+            const tok_string = self.cur_token.print(self.allocator);
+            std.debug.print("{s}", .{tok_string});
+            std.debug.print(" ", .{});
+            self.allocator.free(tok_string);
+        }
     }
 
     fn curTokenIs(self: *Self, tok_type: token.TokenType) bool {

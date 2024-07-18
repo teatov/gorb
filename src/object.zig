@@ -4,18 +4,27 @@ const token = @import("./token.zig");
 const evaluator = @import("./evaluator.zig");
 const errors = @import("./errors.zig");
 
+pub const InspectError = error{OutOfMemory};
+
 pub const Environment = struct {
     store: std.StringHashMap(Object),
     outer: ?*Environment,
+
+    allocator: std.mem.Allocator,
 
     const Self = @This();
 
     pub fn init(allocator: std.mem.Allocator) !*Environment {
         var env = try allocator.create(Environment);
-        const s = std.StringHashMap(Object).init(allocator);
-        env.store = s;
+        env.store = std.StringHashMap(Object).init(allocator);
         env.outer = null;
+        env.allocator = allocator;
         return env;
+    }
+
+    pub fn deinit(self: *Self) void {
+        self.store.deinit();
+        self.allocator.destroy(self);
     }
 
     pub fn initEnclosed(
@@ -92,91 +101,18 @@ pub const Object = union(ObjectType) {
     pub fn inspect(
         self: Object,
         allocator: std.mem.Allocator,
-    ) ![]const u8 {
+    ) InspectError![]const u8 {
         return switch (self) {
-            .function => |obj| blk: {
-                var params = std.ArrayList(u8).init(allocator);
-                for (obj.parameters, 0..) |param, i| {
-                    try params.appendSlice(
-                        try (ast.Node{
-                            .identifier = param,
-                        }).print(allocator),
-                    );
-                    if (i < obj.parameters.len - 1) {
-                        try params.appendSlice(", ");
-                    }
-                }
-                var body = std.ArrayList(u8).init(allocator);
-                for (obj.body.statements) |node| {
-                    try body.appendSlice(
-                        try node.print(allocator),
-                    );
-                }
-                break :blk try std.fmt.allocPrint(
-                    allocator,
-                    "fn({s}){{{s}}}",
-                    .{ params.items, body.items },
-                );
-            },
-
-            .builtin => "builtin function",
-
+            .function => |obj| obj.inspect(allocator),
+            .builtin => |obj| obj.inspect(allocator),
             .null => "null",
-
             .boolean => |obj| if (obj) "true" else "false",
-
-            .integer => |obj| try std.fmt.allocPrint(
-                allocator,
-                "{d}",
-                .{obj},
-            ),
-
+            .integer => |obj| try std.fmt.allocPrint(allocator, "{d}", .{obj}),
             .string => |obj| obj,
-
-            .array => |obj| blk: {
-                var elements = std.ArrayList(u8).init(allocator);
-                for (obj.elements, 0..) |element, i| {
-                    try elements.appendSlice(
-                        try element.inspect(allocator),
-                    );
-                    if (i < obj.elements.len - 1) {
-                        try elements.appendSlice(", ");
-                    }
-                }
-                break :blk try std.fmt.allocPrint(
-                    allocator,
-                    "[{s}]",
-                    .{elements.items},
-                );
-            },
-
-            .hash => |obj| blk: {
-                var pairs = std.ArrayList(u8).init(allocator);
-                var i: u32 = 0;
-                var iterator = obj.pairs.iterator();
-                while (iterator.next()) |hash_pair| : (i += 1) {
-                    const pair = hash_pair.value_ptr.*;
-                    try pairs.appendSlice(
-                        try pair.key.inspect(allocator),
-                    );
-                    try pairs.appendSlice(": ");
-                    try pairs.appendSlice(
-                        try pair.value.inspect(allocator),
-                    );
-                    if (i < obj.pairs.count() - 1) {
-                        try pairs.appendSlice(", ");
-                    }
-                }
-                break :blk try std.fmt.allocPrint(
-                    allocator,
-                    "{{{s}}}",
-                    .{pairs.items},
-                );
-            },
-
+            .array => |obj| obj.inspect(allocator),
+            .hash => |obj| obj.inspect(allocator),
             .return_value => |obj| obj.inspect(allocator),
-
-            .@"error" => |obj| errors.formatError(allocator, obj.message, obj.tok),
+            .@"error" => |obj| obj.inspect(allocator),
         };
     }
 
@@ -204,6 +140,8 @@ pub const Function = struct {
     body: *ast.Block = undefined,
     env: *Environment = undefined,
 
+    const Self = @This();
+
     pub fn init(
         allocator: std.mem.Allocator,
         parameters: []*ast.Identifier,
@@ -216,6 +154,34 @@ pub const Function = struct {
         obj.env = env;
         return obj;
     }
+
+    pub fn inspect(
+        self: Self,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
+        var params = std.ArrayList(u8).init(allocator);
+        for (self.parameters, 0..) |param, i| {
+            try params.appendSlice(
+                try (ast.Node{
+                    .identifier = param,
+                }).print(allocator),
+            );
+            if (i < self.parameters.len - 1) {
+                try params.appendSlice(", ");
+            }
+        }
+        var body = std.ArrayList(u8).init(allocator);
+        for (self.body.statements) |node| {
+            try body.appendSlice(
+                try node.print(allocator),
+            );
+        }
+        return try std.fmt.allocPrint(
+            allocator,
+            "fn({s}){{{s}}}",
+            .{ params.items, body.items },
+        );
+    }
 };
 
 pub const BuiltinFunction = fn (
@@ -227,6 +193,8 @@ pub const BuiltinFunction = fn (
 pub const Builtin = struct {
     function: *const BuiltinFunction = undefined,
 
+    const Self = @This();
+
     pub fn init(
         allocator: std.mem.Allocator,
         function: *const BuiltinFunction,
@@ -235,10 +203,19 @@ pub const Builtin = struct {
         obj.function = function;
         return obj;
     }
+
+    pub fn inspect(
+        _: Self,
+        _: std.mem.Allocator,
+    ) ![]const u8 {
+        return "builtin function";
+    }
 };
 
 pub const Array = struct {
     elements: []Object = undefined,
+
+    const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -248,11 +225,33 @@ pub const Array = struct {
         obj.elements = elements;
         return obj;
     }
+
+    pub fn inspect(
+        self: Self,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
+        var elements = std.ArrayList(u8).init(allocator);
+        for (self.elements, 0..) |element, i| {
+            try elements.appendSlice(
+                try element.inspect(allocator),
+            );
+            if (i < self.elements.len - 1) {
+                try elements.appendSlice(", ");
+            }
+        }
+        return try std.fmt.allocPrint(
+            allocator,
+            "[{s}]",
+            .{elements.items},
+        );
+    }
 };
 
 pub const HashKey = struct {
     type: ObjectType = undefined,
     value: u64 = undefined,
+
+    const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -270,6 +269,8 @@ pub const HashPair = struct {
     key: Object = undefined,
     value: Object = undefined,
 
+    const Self = @This();
+
     pub fn init(
         allocator: std.mem.Allocator,
         key: Object,
@@ -285,6 +286,8 @@ pub const HashPair = struct {
 pub const Hash = struct {
     pairs: std.AutoHashMap(HashKey, HashPair) = undefined,
 
+    const Self = @This();
+
     pub fn init(
         allocator: std.mem.Allocator,
         pairs: std.AutoHashMap(HashKey, HashPair),
@@ -293,11 +296,40 @@ pub const Hash = struct {
         obj.pairs = pairs;
         return obj;
     }
+
+    pub fn inspect(
+        self: Self,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
+        var pairs = std.ArrayList(u8).init(allocator);
+        var i: u32 = 0;
+        var iterator = self.pairs.iterator();
+        while (iterator.next()) |hash_pair| : (i += 1) {
+            const pair = hash_pair.value_ptr.*;
+            try pairs.appendSlice(
+                try pair.key.inspect(allocator),
+            );
+            try pairs.appendSlice(": ");
+            try pairs.appendSlice(
+                try pair.value.inspect(allocator),
+            );
+            if (i < self.pairs.count() - 1) {
+                try pairs.appendSlice(", ");
+            }
+        }
+        return try std.fmt.allocPrint(
+            allocator,
+            "{{{s}}}",
+            .{pairs.items},
+        );
+    }
 };
 
 pub const Error = struct {
     message: []const u8 = undefined,
     tok: token.Token = undefined,
+
+    const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
@@ -308,5 +340,12 @@ pub const Error = struct {
         obj.message = message;
         obj.tok = tok;
         return obj;
+    }
+
+    pub fn inspect(
+        self: Self,
+        allocator: std.mem.Allocator,
+    ) ![]const u8 {
+        return errors.formatError(allocator, self.message, self.tok);
     }
 };

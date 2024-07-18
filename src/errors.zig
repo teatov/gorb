@@ -32,7 +32,7 @@ pub fn formatError(
         allocator,
         "{s}:{s}: {s}\n{s}\n{s}",
         .{
-            tok.file orelse "",
+            tok.file_path orelse "",
             tok.pos.print(allocator),
             message,
             tok.line,

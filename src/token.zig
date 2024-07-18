@@ -5,9 +5,11 @@ pub const Token = struct {
     literal: []const u8,
     pos: Pos,
     line: []const u8,
-    file: ?[]const u8,
+    file_path: ?[]const u8,
 
-    pub fn string(
+    const Self = @This();
+
+    pub fn print(
         self: Token,
         allocator: std.mem.Allocator,
     ) []const u8 {
@@ -17,13 +19,19 @@ pub const Token = struct {
             .{ @tagName(self.type), self.literal },
         ) catch |err| @errorName(err);
     }
+
+    pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
+        if (self.type == TokenType.string) {
+            allocator.free(self.literal);
+        }
+    }
 };
 
 pub const Pos = struct {
     ln: u32,
     col: u32,
 
-    pub fn string(
+    pub fn print(
         self: Pos,
         allocator: std.mem.Allocator,
     ) []const u8 {
@@ -37,6 +45,7 @@ pub const Pos = struct {
 
 pub const TokenType = enum {
     illegal,
+    out_of_memory,
     eof,
 
     // identifiers and literals
@@ -76,7 +85,7 @@ pub const TokenType = enum {
     kw_else,
     kw_return,
 
-    pub fn string(
+    pub fn print(
         self: TokenType,
         allocator: std.mem.Allocator,
     ) []const u8 {
@@ -88,12 +97,14 @@ pub const TokenType = enum {
     }
 };
 
-pub const keywords = [_]struct { []const u8, TokenType }{
-    .{ "fn", .kw_function },
-    .{ "so", .kw_declaration },
-    .{ "true", .kw_true },
-    .{ "false", .kw_false },
-    .{ "if", .kw_if },
-    .{ "else", .kw_else },
-    .{ "return", .kw_return },
-};
+pub const keywords = std.StaticStringMap(TokenType).initComptime(
+    .{
+        .{ "fn", .kw_function },
+        .{ "so", .kw_declaration },
+        .{ "true", .kw_true },
+        .{ "false", .kw_false },
+        .{ "if", .kw_if },
+        .{ "else", .kw_else },
+        .{ "return", .kw_return },
+    },
+);

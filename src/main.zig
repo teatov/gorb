@@ -6,20 +6,19 @@ const version = "0.0.1";
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
 
-    var arena = std.heap.ArenaAllocator.init(
-        std.heap.page_allocator,
-    );
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     var options = run.Options{};
 
     var arg_it = try std.process.argsWithAllocator(allocator);
+    defer arg_it.deinit();
     _ = arg_it.next() orelse unreachable;
-    var file_name: ?[]const u8 = null;
+    var file_path: ?[]const u8 = null;
     while (arg_it.next()) |arg| {
         if (!options.trySet(arg) and arg[0] != '-') {
-            file_name = arg;
+            file_path = arg;
         }
     }
 
@@ -36,7 +35,7 @@ pub fn main() !void {
         return;
     }
 
-    if (file_name) |f| {
+    if (file_path) |f| {
         const file = std.fs.cwd().openFile(f, .{}) catch |err| {
             if (err == std.fs.File.OpenError.FileNotFound) {
                 try stdout.print("file '{s}' not found\n", .{f});
@@ -56,6 +55,7 @@ pub fn main() !void {
             }
             return err;
         };
+        defer allocator.free(input);
 
         try run.runFile(allocator, options, input, f, stdout);
     } else {

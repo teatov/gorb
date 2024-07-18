@@ -9,7 +9,7 @@ const evaluator = @import("../evaluator.zig");
 fn init(allocator: std.mem.Allocator, input: []const u8) !object.Object {
     var l = try lexer.Lexer.init(allocator, input, null);
     var p = parser.Parser.init(allocator, &l);
-    const program = try p.parseProgram();
+    const program = try p.parseProgram(false);
     var e = evaluator.Evaluator.init(allocator);
     const env = try object.Environment.init(allocator);
     return try e.eval(program, env);
