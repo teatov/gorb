@@ -83,7 +83,7 @@ fn run(
                 _ = try out.write(parse_err);
                 _ = try out.write("\n");
             }
-            return .{ .null = try object.Null.init(allocator) };
+            return .null;
         }
     };
 

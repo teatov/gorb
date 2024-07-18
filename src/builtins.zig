@@ -33,18 +33,10 @@ fn len(
 
     return switch (args[0]) {
         .string => |obj| blk: {
-            const val = try object.Integer.init(
-                eval.allocator,
-                @intCast(obj.value.len),
-            );
-            break :blk .{ .integer = val };
+            break :blk .{ .integer = @intCast(obj.len) };
         },
         .array => |obj| blk: {
-            const val = try object.Integer.init(
-                eval.allocator,
-                @intCast(obj.elements.len),
-            );
-            break :blk .{ .integer = val };
+            break :blk .{ .integer = @intCast(obj.elements.len) };
         },
         else => try eval.newError(
             "'len' does not support {s}",
@@ -70,7 +62,7 @@ fn first(
     return switch (args[0]) {
         .array => |obj| blk: {
             if (obj.elements.len == 0) {
-                break :blk .{ .null = &evaluator.null };
+                break :blk .null;
             }
 
             break :blk obj.elements[0];
@@ -99,7 +91,7 @@ fn last(
     return switch (args[0]) {
         .array => |obj| blk: {
             if (obj.elements.len == 0) {
-                break :blk .{ .null = &evaluator.null };
+                break :blk .null;
             }
 
             break :blk obj.elements[obj.elements.len - 1];
@@ -128,7 +120,7 @@ fn rest(
     return switch (args[0]) {
         .array => |obj| blk: {
             if (obj.elements.len == 0) {
-                break :blk .{ .null = &evaluator.null };
+                break :blk .null;
             }
 
             const val = try object.Array.init(
@@ -190,5 +182,5 @@ fn puts(
         // _ = try writer.write(text);
     }
 
-    return .{ .null = &evaluator.null };
+    return .null;
 }

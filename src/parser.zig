@@ -3,6 +3,7 @@ const lexer = @import("./lexer.zig");
 const token = @import("./token.zig");
 const ast = @import("./ast.zig");
 const errors = @import("./errors.zig");
+const object = @import("./object.zig");
 
 pub const Parser = struct {
     lexer: *lexer.Lexer,
@@ -309,7 +310,7 @@ pub const Parser = struct {
         const integer = try ast.IntegerLiteral.init(self.allocator);
         integer.token = self.cur_token;
         integer.value = try std.fmt.parseInt(
-            i32,
+            object.Integer,
             self.cur_token.literal,
             10,
         );

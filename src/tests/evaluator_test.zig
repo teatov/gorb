@@ -17,12 +17,12 @@ fn init(allocator: std.mem.Allocator, input: []const u8) !object.Object {
 
 fn testIntegerObject(obj: object.Object, expected: i32) !void {
     const val = obj.integer;
-    try std.testing.expectEqual(expected, val.value);
+    try std.testing.expectEqual(expected, val);
 }
 
 fn testBooleanObject(obj: object.Object, expected: bool) !void {
     const val = obj.boolean;
-    try std.testing.expectEqual(expected, val.value);
+    try std.testing.expectEqual(expected, val);
 }
 
 fn testNullObject(obj: object.Object) !void {
@@ -65,7 +65,7 @@ test "string literal" {
     const obj = try init(arena.allocator(), input);
     const val = obj.string;
 
-    try std.testing.expectEqualStrings("Hello World!", val.value);
+    try std.testing.expectEqualStrings("Hello World!", val);
 }
 
 test "string concatenation" {
@@ -77,7 +77,7 @@ test "string concatenation" {
     const obj = try init(arena.allocator(), input);
     const val = obj.string;
 
-    try std.testing.expectEqualStrings("Hello World!", val.value);
+    try std.testing.expectEqualStrings("Hello World!", val);
 }
 
 test "array literal" {
@@ -113,12 +113,12 @@ test "hash literal" {
     ;
 
     const tests = [_]struct { key: object.HashKey, value: i32 }{
-        .{ .key = (object.Object{ .string = try object.String.init(allocator, "one") }).hashKey().?, .value = 1 },
-        .{ .key = (object.Object{ .string = try object.String.init(allocator, "two") }).hashKey().?, .value = 2 },
-        .{ .key = (object.Object{ .string = try object.String.init(allocator, "three") }).hashKey().?, .value = 3 },
-        .{ .key = (object.Object{ .integer = try object.Integer.init(allocator, 4) }).hashKey().?, .value = 4 },
-        .{ .key = (object.Object{ .boolean = try object.Boolean.init(allocator, true) }).hashKey().?, .value = 5 },
-        .{ .key = (object.Object{ .boolean = try object.Boolean.init(allocator, false) }).hashKey().?, .value = 6 },
+        .{ .key = (object.Object{ .string = "one" }).hashKey().?, .value = 1 },
+        .{ .key = (object.Object{ .string = "two" }).hashKey().?, .value = 2 },
+        .{ .key = (object.Object{ .string = "three" }).hashKey().?, .value = 3 },
+        .{ .key = (object.Object{ .integer = 4 }).hashKey().?, .value = 4 },
+        .{ .key = (object.Object{ .boolean = true }).hashKey().?, .value = 5 },
+        .{ .key = (object.Object{ .boolean = false }).hashKey().?, .value = 6 },
     };
 
     const obj = try init(allocator, input);

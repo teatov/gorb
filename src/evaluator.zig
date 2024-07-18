@@ -5,10 +5,6 @@ const token = @import("./token.zig");
 const builtins = @import("./builtins.zig");
 const errors = @import("./errors.zig");
 
-pub var @"null" = object.Null{};
-pub var @"true" = object.Boolean{ .value = true };
-pub var @"false" = object.Boolean{ .value = false };
-
 pub const Evaluator = struct {
     allocator: std.mem.Allocator,
 
@@ -29,15 +25,11 @@ pub const Evaluator = struct {
             //statements
 
             .@"return" => |obj| blk: {
-                const o = try self.eval(obj.return_value, env);
+                var o = try self.eval(obj.return_value, env);
                 if (isError(o)) {
                     return o;
                 }
-                const val = try object.ReturnValue.init(
-                    self.allocator,
-                    o,
-                );
-                break :blk .{ .return_value = val };
+                break :blk .{ .return_value = &o };
             },
 
             .declaration => |obj| blk: {
@@ -48,7 +40,7 @@ pub const Evaluator = struct {
 
                 _ = env.set(obj.name.value, val);
 
-                break :blk .{ .null = &@"null" };
+                break :blk .null;
             },
 
             .block => |obj| try self.evalBlock(obj.*, env),
@@ -123,24 +115,14 @@ pub const Evaluator = struct {
 
             .identifier => |obj| self.evalIdentifier(obj, env),
 
-            .boolean_literal => |obj| boolToBooleanObject(
-                obj.value,
-            ),
+            .boolean_literal => |obj| .{ .boolean = obj.value },
 
             .integer_literal => |obj| blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    obj.value,
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = obj.value };
             },
 
             .string_literal => |obj| blk: {
-                const val = try object.String.init(
-                    self.allocator,
-                    obj.value,
-                );
-                break :blk .{ .string = val };
+                break :blk .{ .string = obj.value };
             },
 
             .array_literal => |obj| blk: {
@@ -170,7 +152,7 @@ pub const Evaluator = struct {
                 break :blk .{ .function = val };
             },
 
-            else => .{ .null = &@"null" },
+            else => .null,
         };
     }
 
@@ -185,7 +167,7 @@ pub const Evaluator = struct {
             result = try self.eval(stmt, env);
 
             _ = switch (result) {
-                .return_value => |obj| return obj.value,
+                .return_value => |obj| return obj.*,
                 .@"error" => |obj| return .{ .@"error" = obj },
                 else => void,
             };
@@ -265,11 +247,11 @@ pub const Evaluator = struct {
         array: object.Array,
         index: object.Object,
     ) object.Object {
-        const idx = index.integer.value;
+        const idx = index.integer;
         const max = array.elements.len - 1;
 
         if (idx < 0 or idx > max) {
-            return .{ .null = &@"null" };
+            return .null;
         }
 
         return array.elements[@intCast(idx)];
@@ -294,7 +276,7 @@ pub const Evaluator = struct {
         const pair = hash.pairs.get(hash_key.?);
 
         if (pair == null) {
-            return .{ .null = &@"null" };
+            return .null;
         }
 
         return pair.?.value;
@@ -315,7 +297,7 @@ pub const Evaluator = struct {
         } else if (node.alternative) |alt| {
             return self.eval(.{ .block = alt }, env);
         } else {
-            return .{ .null = &@"null" };
+            return .null;
         }
     }
 
@@ -342,16 +324,12 @@ pub const Evaluator = struct {
     }
 
     fn evalNegateExpression(
-        self: *Self,
+        _: *Self,
         right: object.Object,
     ) !?object.Object {
         return switch (right) {
             .integer => |obj| blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    -obj.value,
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = -obj };
             },
             else => null,
         };
@@ -361,8 +339,7 @@ pub const Evaluator = struct {
         _: *Self,
         right: object.Object,
     ) object.Object {
-        var val = if (isTruthy(right)) @"false" else @"true";
-        return .{ .boolean = &val };
+        return .{ .boolean = isTruthy(right) };
     }
 
     fn evalBinaryExpression(
@@ -376,16 +353,16 @@ pub const Evaluator = struct {
         if (left == object.ObjectType.integer and right == object.ObjectType.integer) {
             obj = try self.evalIntegerBinaryExpression(
                 operator,
-                left.integer.*,
-                right.integer.*,
+                left.integer,
+                right.integer,
             );
         }
 
         if (left == object.ObjectType.string and right == object.ObjectType.string) {
             obj = try self.evalStringBinaryExpression(
                 operator,
-                left.string.*,
-                right.string.*,
+                left.string,
+                right.string,
             );
         }
 
@@ -394,10 +371,10 @@ pub const Evaluator = struct {
         }
 
         if (operator.type == token.TokenType.equals) {
-            return boolToBooleanObject(std.meta.eql(left, right));
+            return .{ .boolean = std.meta.eql(left, right) };
         }
         if (operator.type == token.TokenType.not_equals) {
-            return boolToBooleanObject(!std.meta.eql(left, right));
+            return .{ .boolean = !std.meta.eql(left, right) };
         }
         if (@intFromEnum(left) != @intFromEnum(right)) {
             return try self.newError(
@@ -422,48 +399,29 @@ pub const Evaluator = struct {
     }
 
     fn evalIntegerBinaryExpression(
-        self: *Self,
+        _: *Self,
         operator: token.Token,
         left: object.Integer,
         right: object.Integer,
     ) !?object.Object {
-        const left_val = left.value;
-        const right_val = right.value;
-
         return switch (operator.type) {
             .plus => blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    left_val + right_val,
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = left + right };
             },
             .minus => blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    left_val - right_val,
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = left - right };
             },
             .asterisk => blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    left_val * right_val,
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = left * right };
             },
             .slash => blk: {
-                const val = try object.Integer.init(
-                    self.allocator,
-                    @divTrunc(left_val, right_val),
-                );
-                break :blk .{ .integer = val };
+                break :blk .{ .integer = @divTrunc(left, right) };
             },
 
-            .less_than => boolToBooleanObject(left_val < right_val),
-            .greater_than => boolToBooleanObject(left_val > right_val),
-            .equals => boolToBooleanObject(left_val == right_val),
-            .not_equals => boolToBooleanObject(left_val != right_val),
+            .less_than => .{ .boolean = left < right },
+            .greater_than => .{ .boolean = left > right },
+            .equals => .{ .boolean = left == right },
+            .not_equals => .{ .boolean = left != right },
 
             else => null,
         };
@@ -475,21 +433,14 @@ pub const Evaluator = struct {
         left: object.String,
         right: object.String,
     ) !?object.Object {
-        const left_val = left.value;
-        const right_val = right.value;
-
         return switch (operator.type) {
             .plus => blk: {
                 const str = try std.fmt.allocPrint(
                     self.allocator,
                     "{s}{s}",
-                    .{ left_val, right_val },
+                    .{ left, right },
                 );
-                const val = try object.String.init(
-                    self.allocator,
-                    str,
-                );
-                break :blk .{ .string = val };
+                break :blk .{ .string = str };
             },
 
             else => null,
@@ -626,7 +577,7 @@ pub const Evaluator = struct {
         obj: object.Object,
     ) object.Object {
         return switch (obj) {
-            .return_value => |o| o.value,
+            .return_value => |o| o.*,
             else => obj,
         };
     }
@@ -678,13 +629,9 @@ pub const Evaluator = struct {
         };
     }
 
-    fn boolToBooleanObject(input: bool) object.Object {
-        return .{ .boolean = if (input) &@"true" else &@"false" };
-    }
-
     fn isTruthy(obj: object.Object) bool {
         return switch (obj) {
-            .boolean => |o| o.value,
+            .boolean => |o| o,
             .null => false,
             else => true,
         };

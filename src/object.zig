@@ -63,16 +63,19 @@ pub const ObjectType = enum {
     @"error",
 };
 
+pub const Integer = i32;
+pub const String = []const u8;
+
 pub const Object = union(ObjectType) {
     function: *Function,
     builtin: *Builtin,
-    null: *Null,
-    boolean: *Boolean,
-    integer: *Integer,
-    string: *String,
+    null: void,
+    boolean: bool,
+    integer: Integer,
+    string: String,
     array: *Array,
     hash: *Hash,
-    return_value: *ReturnValue,
+    return_value: *Object,
     @"error": *Error,
 
     pub fn stringify(
@@ -120,15 +123,15 @@ pub const Object = union(ObjectType) {
 
             .null => "null",
 
-            .boolean => |obj| if (obj.value) "true" else "false",
+            .boolean => |obj| if (obj) "true" else "false",
 
             .integer => |obj| try std.fmt.allocPrint(
                 allocator,
                 "{d}",
-                .{obj.value},
+                .{obj},
             ),
 
-            .string => |obj| obj.value,
+            .string => |obj| obj,
 
             .array => |obj| blk: {
                 var elements = std.ArrayList(u8).init(allocator);
@@ -171,7 +174,7 @@ pub const Object = union(ObjectType) {
                 );
             },
 
-            .return_value => |obj| obj.value.inspect(allocator),
+            .return_value => |obj| obj.inspect(allocator),
 
             .@"error" => |obj| errors.formatError(allocator, obj.message, obj.tok),
         };
@@ -181,15 +184,15 @@ pub const Object = union(ObjectType) {
         return switch (self) {
             .boolean => |obj| .{
                 .type = .boolean,
-                .value = @intFromBool(obj.value),
+                .value = @intFromBool(obj),
             },
             .integer => |obj| .{
                 .type = .integer,
-                .value = @intCast(obj.value),
+                .value = @intCast(obj),
             },
             .string => |obj| .{
                 .type = .string,
-                .value = std.hash.Fnv1a_64.hash(obj.value),
+                .value = std.hash.Fnv1a_64.hash(obj),
             },
             else => null,
         };
@@ -230,51 +233,6 @@ pub const Builtin = struct {
     ) !*Builtin {
         var obj = try allocator.create(Builtin);
         obj.function = function;
-        return obj;
-    }
-};
-
-pub const Null = struct {
-    pub fn init(allocator: std.mem.Allocator) !*Null {
-        return try allocator.create(Null);
-    }
-};
-
-pub const Boolean = struct {
-    value: bool = undefined,
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        value: bool,
-    ) !*Boolean {
-        var obj = try allocator.create(Boolean);
-        obj.value = value;
-        return obj;
-    }
-};
-
-pub const Integer = struct {
-    value: i32 = undefined,
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        value: i32,
-    ) !*Integer {
-        var obj = try allocator.create(Integer);
-        obj.value = value;
-        return obj;
-    }
-};
-
-pub const String = struct {
-    value: []const u8 = undefined,
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        value: []const u8,
-    ) !*String {
-        var obj = try allocator.create(String);
-        obj.value = value;
         return obj;
     }
 };
@@ -333,19 +291,6 @@ pub const Hash = struct {
     ) !*Hash {
         var obj = try allocator.create(Hash);
         obj.pairs = pairs;
-        return obj;
-    }
-};
-
-pub const ReturnValue = struct {
-    value: Object = undefined,
-
-    pub fn init(
-        allocator: std.mem.Allocator,
-        value: Object,
-    ) !*ReturnValue {
-        var obj = try allocator.create(ReturnValue);
-        obj.value = value;
         return obj;
     }
 };

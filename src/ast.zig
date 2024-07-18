@@ -1,5 +1,6 @@
 const std = @import("std");
 const token = @import("./token.zig");
+const object = @import("./object.zig");
 
 pub const Node = union(enum) {
     nothing: void,
@@ -373,7 +374,7 @@ pub const BooleanLiteral = struct {
 
 pub const IntegerLiteral = struct {
     token: token.Token = undefined,
-    value: i32 = undefined,
+    value: object.Integer = undefined,
 
     pub fn init(allocator: std.mem.Allocator) !*IntegerLiteral {
         return try allocator.create(IntegerLiteral);
