@@ -3,20 +3,18 @@ const object = @import("./object.zig");
 const token = @import("./token.zig");
 const evaluator = @import("./evaluator.zig");
 
-pub fn getBuiltin(allocator: std.mem.Allocator, name: []const u8) !?*const object.BuiltinFunction {
-    const builtins = try std.StaticStringMap(*const object.BuiltinFunction).init(
-        [_]struct { []const u8, *const object.BuiltinFunction }{
-            .{ "len", &len },
-            .{ "first", &first },
-            .{ "last", &last },
-            .{ "rest", &rest },
-            .{ "push", &push },
-            .{ "puts", &puts },
-        },
-        allocator,
-    );
-    return builtins.get(name);
-}
+pub const builtins = std.StaticStringMap(
+    *const object.BuiltinFunction,
+).initComptime(
+    .{
+        .{ "len", &len },
+        .{ "first", &first },
+        .{ "last", &last },
+        .{ "rest", &rest },
+        .{ "push", &push },
+        .{ "puts", &puts },
+    },
+);
 
 fn len(
     eval: *evaluator.Evaluator,

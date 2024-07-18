@@ -2,7 +2,7 @@ const std = @import("std");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const token = @import("./token.zig");
-const builtins = @import("./builtins.zig");
+const builtin = @import("./builtin.zig");
 const errors = @import("./errors.zig");
 
 pub const Evaluator = struct {
@@ -460,8 +460,8 @@ pub const Evaluator = struct {
             return v;
         }
 
-        const builtin = try builtins.getBuiltin(self.allocator, node.value);
-        if (builtin) |b| {
+        const builtin_fn = builtin.builtins.get(node.value);
+        if (builtin_fn) |b| {
             const v = try object.Builtin.init(self.allocator, b);
             return .{ .builtin = v };
         }
