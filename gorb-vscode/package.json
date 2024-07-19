@@ -1,0 +1,37 @@
+{
+  "name": "gorb-vscode",
+  "displayName": "gorb",
+  "description": "Language support for gorb.",
+  "publisher": "Teatov",
+  "repository": "https://github.com/teatov/gorb",
+  "license": "MIT",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "gorb",
+        "aliases": [
+          "Gorb",
+          "gorb"
+        ],
+        "extensions": [
+          ".gorb"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gorb",
+        "scopeName": "source.gorb",
+        "path": "./syntaxes/gorb.tmLanguage.json"
+      }
+    ]
+  }
+}

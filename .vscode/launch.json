@@ -20,6 +20,15 @@
           "ignoreFailures": true
         }
       ]
+    },
+    {
+      "name": "Gorb Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}/gorb-vscode",
+        "${workspaceFolder}/examples"
+      ]
     }
   ]
 }
