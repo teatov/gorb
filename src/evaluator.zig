@@ -4,14 +4,19 @@ const object = @import("./object.zig");
 const token = @import("./token.zig");
 const builtin = @import("./builtin.zig");
 const errors = @import("./errors.zig");
+const debug = @import("./debug.zig");
 
 pub const Evaluator = struct {
     allocator: std.mem.Allocator,
+    debugger: debug.Debugger,
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) Evaluator {
-        return .{ .allocator = allocator };
+    pub fn init(
+        allocator: std.mem.Allocator,
+        debugger: debug.Debugger,
+    ) Evaluator {
+        return .{ .allocator = allocator, .debugger = debugger };
     }
 
     pub fn eval(
@@ -19,7 +24,9 @@ pub const Evaluator = struct {
         node: ast.Node,
         env: *object.Environment,
     ) Error!object.Object {
-        const value_string = try node.print(self.allocator);
+        self.debugger.printEnvironment(self.allocator, env) catch unreachable;
+        self.debugger.awaitInput() catch unreachable;
+        const value_string = try node.fmt(self.allocator);
         defer self.allocator.free(value_string);
         std.debug.print("EVAL {s} - {s}\n", .{ @tagName(node), value_string });
         return switch (node) {
@@ -515,9 +522,9 @@ pub const Evaluator = struct {
                     );
                 }
 
-                for (args) |arg| {
-                    arg.ref();
-                }
+                // for (args) |arg| {
+                //     arg.ref();
+                // }
 
                 defer {
                     for (args) |arg| {
@@ -535,7 +542,7 @@ pub const Evaluator = struct {
                     extended_env,
                 );
 
-                defer extended_env.deref();
+                // defer extended_env.close();
                 break :blk self.unwrapReturnValue(val);
             },
 
@@ -576,7 +583,8 @@ pub const Evaluator = struct {
     fn unwrapReturnValue(
         _: *Self,
         obj: object.Object,
-    ) object.Object {
+    ) !object.Object {
+        obj.ref();
         return switch (obj) {
             .return_value => |o| o.*,
             else => obj,

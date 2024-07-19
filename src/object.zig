@@ -23,21 +23,6 @@ pub const Environment = struct {
         return env;
     }
 
-    pub fn deref(self: *Self) void {
-        std.debug.print("  ENV DEREF {*}\n", .{self});
-        var iterator = self.store.iterator();
-        var refs: i32 = 0;
-        while (iterator.next()) |value| {
-            refs += value.value_ptr.deref(self.allocator);
-        }
-        std.debug.print("  ENV {d} REFS IN {*}\n", .{ refs, self });
-        if (refs <= 0) {
-            std.debug.print("  ENV DESTROY {*}\n", .{self});
-            self.store.deinit();
-            self.allocator.destroy(self);
-        }
-    }
-
     pub fn initEnclosed(
         allocator: std.mem.Allocator,
         outer_env: *Environment,
@@ -46,6 +31,17 @@ pub const Environment = struct {
         env.outer = outer_env;
         std.debug.print("    ENV ENCLOSE WITH {*}\n", .{outer_env});
         return env;
+    }
+
+    pub fn close(self: *Self) void {
+        std.debug.print("  ENV DEREF {*}\n", .{self});
+        var iterator = self.store.iterator();
+        while (iterator.next()) |value| {
+            value.value_ptr.deref(self.allocator);
+        }
+        std.debug.print("  ENV DESTROY {*}\n", .{self});
+        self.store.deinit();
+        self.allocator.destroy(self);
     }
 
     pub fn get(self: *Self, name: []const u8) ?Object {
@@ -127,21 +123,21 @@ pub const Object = union(ObjectType) {
     pub fn deref(
         self: Self,
         allocator: std.mem.Allocator,
-    ) i32 {
+    ) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
         std.debug.print(
-            "    DEREF {s} - {s}\n",
-            .{ @tagName(self), value_string },
+            "    DEREF {s} - {s} {*}\n",
+            .{ @tagName(self), value_string, &self },
         );
-        return switch (self) {
+        _ = switch (self) {
             .function => |obj| obj.ref_counter.deref(allocator, obj),
             .builtin => |obj| obj.ref_counter.deref(allocator, obj),
             .array => |obj| obj.ref_counter.deref(allocator, obj),
             .hash => |obj| obj.ref_counter.deref(allocator, obj),
             // .return_value => |obj| obj.deref(allocator),
             .@"error" => |obj| obj.ref_counter.deref(allocator, obj),
-            else => 0,
+            else => null,
         };
     }
 
@@ -215,7 +211,7 @@ pub fn RefCounter(ObjType: type) type {
         }
 
         pub fn ref(self: *Self) void {
-            std.debug.print("COUNTER REF {s} - {d}", .{ @typeName(ObjType), self.refs });
+            std.debug.print("       COUNTER REF {s} - {d}", .{ @typeName(ObjType), self.refs });
             self.refs += 1;
             std.debug.print(" -> {d}\n", .{self.refs});
         }
@@ -224,15 +220,14 @@ pub fn RefCounter(ObjType: type) type {
             self: *Self,
             allocator: std.mem.Allocator,
             obj: *ObjType,
-        ) i32 {
-            std.debug.print("COUNTER -DEREF- {s} - {d}", .{ @typeName(ObjType), self.refs });
+        ) void {
+            std.debug.print("       COUNTER -DEREF- {s} - {d}", .{ @typeName(ObjType), self.refs });
             self.refs -= 1;
-            std.debug.print("-> {d}\n", .{self.refs});
+            std.debug.print(" -> {d}\n", .{self.refs});
             if (self.refs == 0) {
                 self.deinit_fn(obj, allocator);
                 allocator.destroy(self);
             }
-            return self.refs;
         }
     };
 }
@@ -280,7 +275,7 @@ pub const Function = struct {
         for (self.parameters, 0..) |param, i| {
             const param_string = try (ast.Node{
                 .identifier = param,
-            }).print(allocator);
+            }).fmt(allocator);
             try params.appendSlice(param_string);
             allocator.free(param_string);
             if (i < self.parameters.len - 1) {
@@ -289,7 +284,7 @@ pub const Function = struct {
         }
         var body = std.ArrayList(u8).init(allocator);
         for (self.body.statements) |node| {
-            const node_string = try node.print(allocator);
+            const node_string = try node.fmt(allocator);
             try body.appendSlice(node_string);
             allocator.free(node_string);
         }

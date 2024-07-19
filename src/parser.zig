@@ -430,7 +430,7 @@ pub const Parser = struct {
         self.cur_token = self.peek_token;
         self.peek_token = self.lexer.nextToken();
         if (self.debug_tokents) {
-            const tok_string = self.cur_token.print(self.allocator);
+            const tok_string = self.cur_token.fmt(self.allocator);
             std.debug.print("{s}", .{tok_string});
             std.debug.print(" ", .{});
             self.allocator.free(tok_string);
@@ -518,8 +518,8 @@ pub const Parser = struct {
         self: *Self,
         tok_type: token.TokenType,
     ) void {
-        const tok_text = tok_type.print(self.allocator);
-        const peek_tok_text = self.peek_token.print(self.allocator);
+        const tok_text = tok_type.fmt(self.allocator);
+        const peek_tok_text = self.peek_token.fmt(self.allocator);
         defer self.allocator.free(tok_text);
         defer self.allocator.free(peek_tok_text);
         const msg = std.fmt.allocPrint(
@@ -540,7 +540,7 @@ pub const Parser = struct {
     }
 
     fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
-        const tok_text = tok.print(self.allocator);
+        const tok_text = tok.fmt(self.allocator);
         defer self.allocator.free(tok_text);
         const msg = std.fmt.allocPrint(
             self.allocator,

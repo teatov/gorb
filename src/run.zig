@@ -4,6 +4,7 @@ const parser = @import("./parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const evaluator = @import("./evaluator.zig");
+const debug = @import("./debug.zig");
 const linenoise = @import("linenoise");
 
 pub fn runFile(
@@ -28,7 +29,7 @@ pub fn runFile(
         return;
     }
     _ = val.obj.deref(allocator);
-    env.deref();
+    env.close();
     val.program.deinit(allocator, true);
 }
 
@@ -42,7 +43,7 @@ pub fn startRepl(
     const env = if (environment) |e| e else try object.Environment.init(
         allocator,
     );
-    defer env.deref();
+    defer env.close();
 
     var ln = linenoise.Linenoise.init(allocator);
     defer ln.deinit();
@@ -100,13 +101,15 @@ fn run(
 
     if (options.debug_ast) {
         std.debug.print("AST: ", .{});
-        const program_string = try program.print(allocator);
+        const program_string = try program.fmt(allocator);
         std.debug.print("{s}", .{program_string});
         std.debug.print("\n", .{});
         allocator.free(program_string);
     }
 
-    var e = evaluator.Evaluator.init(allocator);
+    const debugger = debug.Debugger.init();
+
+    var e = evaluator.Evaluator.init(allocator, debugger);
 
     const obj = try e.eval(program, env);
     return .{ .obj = obj, .program = program };

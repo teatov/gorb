@@ -49,26 +49,26 @@ pub const Node = union(enum) {
         };
     }
 
-    pub fn print(
+    pub fn fmt(
         self: Node,
         allocator: std.mem.Allocator,
     ) PrintError![]const u8 {
         return switch (self) {
-            .block => |node| try node.print(allocator),
-            .@"return" => |node| try node.print(allocator),
-            .declaration => |node| try node.print(allocator),
-            .index => |node| try node.print(allocator),
-            .call => |node| try node.print(allocator),
-            .@"if" => |node| try node.print(allocator),
-            .unary_operation => |node| try node.print(allocator),
-            .binary_operation => |node| try node.print(allocator),
-            .identifier => |node| try node.print(allocator),
-            .boolean_literal => |node| try node.print(allocator),
-            .integer_literal => |node| try node.print(allocator),
-            .string_literal => |node| try node.print(allocator),
-            .array_literal => |node| try node.print(allocator),
-            .hash_literal => |node| try node.print(allocator),
-            .function_literal => |node| try node.print(allocator),
+            .block => |node| try node.fmt(allocator),
+            .@"return" => |node| try node.fmt(allocator),
+            .declaration => |node| try node.fmt(allocator),
+            .index => |node| try node.fmt(allocator),
+            .call => |node| try node.fmt(allocator),
+            .@"if" => |node| try node.fmt(allocator),
+            .unary_operation => |node| try node.fmt(allocator),
+            .binary_operation => |node| try node.fmt(allocator),
+            .identifier => |node| try node.fmt(allocator),
+            .boolean_literal => |node| try node.fmt(allocator),
+            .integer_literal => |node| try node.fmt(allocator),
+            .string_literal => |node| try node.fmt(allocator),
+            .array_literal => |node| try node.fmt(allocator),
+            .hash_literal => |node| try node.fmt(allocator),
+            .function_literal => |node| try node.fmt(allocator),
         };
     }
 };
@@ -91,13 +91,13 @@ pub const Block = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
         var node_string = std.ArrayList(u8).init(allocator);
         for (self.statements) |stmt| {
-            const stmt_string = try stmt.print(allocator);
+            const stmt_string = try stmt.fmt(allocator);
             try node_string.appendSlice(stmt_string);
             allocator.free(stmt_string);
         }
@@ -121,11 +121,11 @@ pub const Return = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const return_value: []const u8 = try self.return_value.print(
+        const return_value: []const u8 = try self.return_value.fmt(
             allocator,
         );
 
@@ -155,11 +155,11 @@ pub const Declaration = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const value: []const u8 = try self.value.print(
+        const value: []const u8 = try self.value.fmt(
             allocator,
         );
 
@@ -189,14 +189,14 @@ pub const Index = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const left: []const u8 = try self.left.print(
+        const left: []const u8 = try self.left.fmt(
             allocator,
         );
-        const index: []const u8 = try self.index.print(
+        const index: []const u8 = try self.index.fmt(
             allocator,
         );
 
@@ -230,16 +230,16 @@ pub const Call = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const function: []const u8 = try self.function.print(
+        const function: []const u8 = try self.function.fmt(
             allocator,
         );
         var args = std.ArrayList(u8).init(allocator);
         for (self.arguments, 0..) |arg, i| {
-            const arg_string = try arg.print(allocator);
+            const arg_string = try arg.fmt(allocator);
             try args.appendSlice(arg_string);
             allocator.free(arg_string);
             if (i < self.arguments.len - 1) {
@@ -278,17 +278,17 @@ pub const If = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const condition: []const u8 = try self.condition.print(
+        const condition: []const u8 = try self.condition.fmt(
             allocator,
         );
 
         var body = std.ArrayList(u8).init(allocator);
         for (self.consequence.statements) |stmt| {
-            const stmt_string = try stmt.print(allocator);
+            const stmt_string = try stmt.fmt(allocator);
             try body.appendSlice(stmt_string);
             allocator.free(stmt_string);
         }
@@ -296,7 +296,7 @@ pub const If = struct {
         if (self.alternative) |alternative| {
             try body.appendSlice(" else ");
             for (alternative.statements) |stmt| {
-                const stmt_string = try stmt.print(allocator);
+                const stmt_string = try stmt.fmt(allocator);
                 try body.appendSlice(stmt_string);
                 allocator.free(stmt_string);
             }
@@ -328,11 +328,11 @@ pub const UnaryOperation = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const right: []const u8 = try self.right.print(
+        const right: []const u8 = try self.right.fmt(
             allocator,
         );
 
@@ -363,14 +363,14 @@ pub const BinaryOperation = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
-        const left: []const u8 = try self.left.print(
+        const left: []const u8 = try self.left.fmt(
             allocator,
         );
-        const right: []const u8 = try self.right.print(
+        const right: []const u8 = try self.right.fmt(
             allocator,
         );
 
@@ -400,7 +400,7 @@ pub const Identifier = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -426,7 +426,7 @@ pub const BooleanLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -452,7 +452,7 @@ pub const IntegerLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -485,7 +485,7 @@ pub const StringLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -515,13 +515,13 @@ pub const ArrayLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
         var elements = std.ArrayList(u8).init(allocator);
         for (self.elements, 0..) |element, i| {
-            const element_string = try element.print(allocator);
+            const element_string = try element.fmt(allocator);
             try elements.appendSlice(element_string);
             allocator.free(element_string);
             if (i < self.elements.len - 1) {
@@ -558,7 +558,7 @@ pub const HashLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -566,11 +566,11 @@ pub const HashLiteral = struct {
         var iterator = self.pairs.keyIterator();
         var i: u32 = 0;
         while (iterator.next()) |key| {
-            const key_string = try key.print(allocator);
+            const key_string = try key.fmt(allocator);
             try pairs.appendSlice(key_string);
             allocator.free(key_string);
             try pairs.appendSlice(":");
-            const value_string = try self.pairs.get(key.*).?.print(
+            const value_string = try self.pairs.get(key.*).?.fmt(
                 allocator,
             );
             try pairs.appendSlice(value_string);
@@ -610,7 +610,7 @@ pub const FunctionLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn print(
+    pub fn fml(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -624,7 +624,7 @@ pub const FunctionLiteral = struct {
 
         var body = std.ArrayList(u8).init(allocator);
         for (self.body.statements) |stmt| {
-            const stmt_string = try stmt.print(allocator);
+            const stmt_string = try stmt.fmt(allocator);
             try body.appendSlice(stmt_string);
             allocator.free(stmt_string);
         }

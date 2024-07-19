@@ -28,7 +28,7 @@ pub fn formatError(
     }
     _ = pointer.appendSlice(" here") catch null;
 
-    const tok_string = tok.pos.print(allocator);
+    const tok_string = tok.pos.fmt(allocator);
     const msg = std.fmt.allocPrint(
         allocator,
         "{s}:{s}: {s}\n{s}\n{s}",

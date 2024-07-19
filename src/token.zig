@@ -9,7 +9,7 @@ pub const Token = struct {
 
     const Self = @This();
 
-    pub fn print(
+    pub fn fmt(
         self: Token,
         allocator: std.mem.Allocator,
     ) []const u8 {
@@ -25,7 +25,7 @@ pub const Pos = struct {
     ln: u32,
     col: u32,
 
-    pub fn print(
+    pub fn fmt(
         self: Pos,
         allocator: std.mem.Allocator,
     ) []const u8 {
@@ -79,7 +79,7 @@ pub const TokenType = enum {
     kw_else,
     kw_return,
 
-    pub fn print(
+    pub fn fmt(
         self: TokenType,
         allocator: std.mem.Allocator,
     ) []const u8 {
