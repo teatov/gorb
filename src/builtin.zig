@@ -36,11 +36,15 @@ fn len(
         .array => |obj| blk: {
             break :blk .{ .integer = @intCast(obj.elements.len) };
         },
-        else => try eval.newError(
-            "'len' does not support {s}",
-            .{args[0].stringify(eval.allocator)},
-            tok,
-        ),
+        else => blk: {
+            const obj_string = args[0].stringify(eval.allocator);
+            defer eval.allocator.free(obj_string);
+            break :blk try eval.newError(
+                "'len' does not support {s}",
+                .{obj_string},
+                tok,
+            );
+        },
     };
 }
 
@@ -65,11 +69,15 @@ fn first(
 
             break :blk obj.elements[0];
         },
-        else => try eval.newError(
-            "'first' does not support {s}",
-            .{args[0].stringify(eval.allocator)},
-            tok,
-        ),
+        else => blk: {
+            const obj_string = args[0].stringify(eval.allocator);
+            defer eval.allocator.free(obj_string);
+            break :blk try eval.newError(
+                "'first' does not support {s}",
+                .{obj_string},
+                tok,
+            );
+        },
     };
 }
 
@@ -94,11 +102,15 @@ fn last(
 
             break :blk obj.elements[obj.elements.len - 1];
         },
-        else => try eval.newError(
-            "'last' does not support {s}",
-            .{args[0].stringify(eval.allocator)},
-            tok,
-        ),
+        else => blk: {
+            const obj_string = args[0].stringify(eval.allocator);
+            defer eval.allocator.free(obj_string);
+            break :blk try eval.newError(
+                "'last' does not support {s}",
+                .{obj_string},
+                tok,
+            );
+        },
     };
 }
 
@@ -127,11 +139,15 @@ fn rest(
             );
             break :blk .{ .array = val };
         },
-        else => try eval.newError(
-            "'rest' does not support {s}",
-            .{args[0].stringify(eval.allocator)},
-            tok,
-        ),
+        else => blk: {
+            const obj_string = args[0].stringify(eval.allocator);
+            defer eval.allocator.free(obj_string);
+            break :blk try eval.newError(
+                "'rest' does not support {s}",
+                .{obj_string},
+                tok,
+            );
+        },
     };
 }
 
@@ -160,11 +176,15 @@ fn push(
             );
             break :blk .{ .array = val };
         },
-        else => try eval.newError(
-            "'push' does not support {s}",
-            .{args[0].stringify(eval.allocator)},
-            tok,
-        ),
+        else => blk: {
+            const obj_string = args[0].stringify(eval.allocator);
+            defer eval.allocator.free(obj_string);
+            break :blk try eval.newError(
+                "'push' does not support {s}",
+                .{obj_string},
+                tok,
+            );
+        },
     };
 }
 

@@ -27,7 +27,7 @@ pub fn runFile(
         try startRepl(allocator, options, out, errout, env);
         return;
     }
-    val.obj.deref(allocator);
+    _ = val.obj.deref(allocator);
     env.deref();
     val.program.deinit(allocator, true);
 }
@@ -92,6 +92,7 @@ fn run(
             for (p.errors.items) |parse_err| {
                 _ = try errout.write(parse_err);
                 _ = try errout.write("\n");
+                allocator.free(parse_err);
             }
             return error.ParserError;
         }

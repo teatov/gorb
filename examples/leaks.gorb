@@ -1,2 +1,8 @@
-so ass = fn(x) {return x};
-puts(ass, "\n");
+so newAdder = fn(a, b) {
+  fn(c) { a + b + c };
+};
+
+so adder = newAdder(1, 2);
+
+so result = adder(8);
+puts(result, "   :)\n");

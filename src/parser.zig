@@ -518,12 +518,16 @@ pub const Parser = struct {
         self: *Self,
         tok_type: token.TokenType,
     ) void {
+        const tok_text = tok_type.print(self.allocator);
+        const peek_tok_text = self.peek_token.print(self.allocator);
+        defer self.allocator.free(tok_text);
+        defer self.allocator.free(peek_tok_text);
         const msg = std.fmt.allocPrint(
             self.allocator,
             "expected {s}, got {s}",
             .{
-                tok_type.print(self.allocator),
-                self.peek_token.print(self.allocator),
+                tok_text,
+                peek_tok_text,
             },
         ) catch |err| {
             std.debug.print(
@@ -536,11 +540,13 @@ pub const Parser = struct {
     }
 
     fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
+        const tok_text = tok.print(self.allocator);
+        defer self.allocator.free(tok_text);
         const msg = std.fmt.allocPrint(
             self.allocator,
             "no unary parse function for {s} found",
             .{
-                tok.print(self.allocator),
+                tok_text,
             },
         ) catch |err| {
             std.debug.print(

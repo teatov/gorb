@@ -19,6 +19,9 @@ pub const Evaluator = struct {
         node: ast.Node,
         env: *object.Environment,
     ) Error!object.Object {
+        const value_string = try node.print(self.allocator);
+        defer self.allocator.free(value_string);
+        std.debug.print("EVAL {s} - {s}\n", .{ @tagName(node), value_string });
         return switch (node) {
             .block => |obj| try self.evalBlock(obj.*, env),
 
@@ -75,16 +78,7 @@ pub const Evaluator = struct {
                     return args[0];
                 }
 
-                for (args) |arg| {
-                    arg.ref();
-                }
-
-                defer {
-                    for (args) |arg| {
-                        arg.deref(self.allocator);
-                    }
-                    self.allocator.free(args);
-                }
+                defer self.allocator.free(args);
 
                 break :blk try self.applyFunction(function, args, obj.token);
             },
@@ -521,19 +515,32 @@ pub const Evaluator = struct {
                     );
                 }
 
+                for (args) |arg| {
+                    arg.ref();
+                }
+
+                defer {
+                    for (args) |arg| {
+                        _ = arg.deref(self.allocator);
+                    }
+                }
+
                 const extended_env = try self.extendFunctionEnv(
                     obj.*,
                     args,
                 );
+
                 const val = try self.eval(
                     .{ .block = obj.body },
                     extended_env,
                 );
+
+                defer extended_env.deref();
                 break :blk self.unwrapReturnValue(val);
             },
 
             .builtin => |obj| blk: {
-                defer function.deref(self.allocator);
+                defer _ = function.deref(self.allocator);
                 break :blk obj.function(self, args, tok);
             },
 
