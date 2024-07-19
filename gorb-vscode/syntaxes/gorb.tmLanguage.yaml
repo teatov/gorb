@@ -1,76 +1,84 @@
 $schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
 name: gorb
+scopeName: source.gorb
 patterns:
-  - include: '#invalid'
-  - include: '#comment'
-  - include: '#variable'
-  - include: '#constant'
-  - include: '#string'
-  - include: '#operator'
+  - include: '#comments'
+  - include: '#keywords'
+  - include: '#strings'
+  - include: '#operators'
   - include: '#punctuation'
-  - include: '#keyword'
+  - include: '#constants'
   - include: '#support'
-  - include: '#entity'
+  - include: '#variables'
 repository:
-  invalid:
-    patterns: []
-  comment:
+  comments:
     patterns:
-      - begin: //
+      - name: comment.line.double-slash.gorb
+        begin: //
         beginCaptures:
           '0':
             name: punctuation.definition.comment.gorb
         end: $
-        name: comment.line.double-slash.gorb
-  variable:
+        patterns:
+          - include: '#commentContents'
+  commentContents:
     patterns:
-      - comment: integers
-        match: \b[0-9]+\b
-        name: constant.numeric.integer.gorb
-  constant:
+      - match: \b(TODO|FIXME|XXX|NOTE)\b:?
+        name: keyword.todo.gorb
+  variables:
     patterns:
-      - comment: integers
-        match: \b[0-9]+\b
-        name: constant.numeric.integer.gorb
-      - comment: language constants
+      - name: meta.function.declaration.gorb
+        patterns:
+          - match: \b(fn)\s*(?=\s*\()\b
+            captures:
+              '1':
+                name: storage.type.function.gorb
+      - name: meta.function.call.gorb
+        patterns:
+          - match: ([_a-zA-Z][_a-zA-Z0-9]*)(?=\s*\()
+            name: entity.name.function.gorb
+      - name: meta.variable.gorb
+        patterns:
+          - match: \b[_a-zA-Z][_a-zA-Z0-9]*\b
+            name: variable.gorb
+  constants:
+    patterns:
+      - name: constant.numeric.decimal.gorb
+        match: \b[0-9][0-9_]*\b
+      - name: constant.language.gorb
         match: \b(true|false)\b
-        name: constant.language.gorb
-  string:
+  strings:
     name: string.quoted.double.gorb
     begin: '"'
     end: '"'
     patterns:
       - name: constant.character.escape.gorb
         match: \\.
-  operator:
+  operators:
     patterns:
-      - match: (\+|\-|\*|/)
-        name: keyword.operator.arithmetic.gorb
-      - match: '!'
-        name: keyword.operator.logical.gorb
-      - match: (<|>|==|!=)
-        name: keyword.operator.comparison.gorb
-      - match: '='
-        name: keyword.operator.assignment.gorb
+      - name: keyword.operator.arithmetic.gorb
+        match: (\+|\-|\*|/)
+      - name: keyword.operator.logical.gorb
+        match: '!'
+      - name: keyword.operator.comparison.gorb
+        match: (<|>|==|!=)
+      - name: keyword.operator.assignment.gorb
+        match: '='
   punctuation:
     patterns:
-      - match: ','
-        name: punctuation.other.comma.gorb
-      - match: ':'
-        name: punctuation.other.colon.gorb
-      - match: ;
-        name: punctuation.terminator.gorb
-  keyword:
+      - name: punctuation.other.comma.gorb
+        match: ','
+      - name: punctuation.other.colon.gorb
+        match: ':'
+      - name: punctuation.terminator.gorb
+        match: ;
+  keywords:
     patterns:
-      - name: keyword.function.gorb
-        match: \bfn\b
-      - name: keyword.so.gorb
+      - name: keyword.let.gorb
         match: \bso\b
       - name: keyword.control.gorb
         match: \b(if|else|return)\b
   support:
     patterns:
-      - match: \b(len|first|last|rest|push|puts)\b(?=\()
-        name: support.function.builtin.gorb
-scopeName: source.gorb
-
+      - name: support.function.builtin.gorb
+        match: \b(len|first|last|rest|push|puts)\b(?=\()
