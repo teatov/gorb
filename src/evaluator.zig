@@ -4,19 +4,16 @@ const object = @import("./object.zig");
 const token = @import("./token.zig");
 const builtin = @import("./builtin.zig");
 const errors = @import("./errors.zig");
-const debug = @import("./debug.zig");
 
 pub const Evaluator = struct {
     allocator: std.mem.Allocator,
-    debugger: debug.Debugger,
 
     const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
-        debugger: debug.Debugger,
     ) Evaluator {
-        return .{ .allocator = allocator, .debugger = debugger };
+        return .{ .allocator = allocator };
     }
 
     pub fn eval(
@@ -24,11 +21,6 @@ pub const Evaluator = struct {
         node: ast.Node,
         env: *object.Environment,
     ) Error!object.Object {
-        self.debugger.printEnvironment(self.allocator, env) catch unreachable;
-        self.debugger.awaitInput() catch unreachable;
-        const value_string = try node.fmt(self.allocator);
-        defer self.allocator.free(value_string);
-        std.debug.print("EVAL {s} - {s}\n", .{ @tagName(node), value_string });
         return switch (node) {
             .block => |obj| try self.evalBlock(obj.*, env),
 

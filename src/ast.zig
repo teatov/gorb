@@ -91,7 +91,7 @@ pub const Block = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -121,7 +121,7 @@ pub const Return = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -155,7 +155,7 @@ pub const Declaration = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -189,7 +189,7 @@ pub const Index = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -230,7 +230,7 @@ pub const Call = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -278,7 +278,7 @@ pub const If = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -328,7 +328,7 @@ pub const UnaryOperation = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -363,7 +363,7 @@ pub const BinaryOperation = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -400,7 +400,7 @@ pub const Identifier = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -426,7 +426,7 @@ pub const BooleanLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -452,7 +452,7 @@ pub const IntegerLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -485,7 +485,7 @@ pub const StringLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -515,7 +515,7 @@ pub const ArrayLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -558,7 +558,7 @@ pub const HashLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {
@@ -610,7 +610,7 @@ pub const FunctionLiteral = struct {
         allocator.destroy(self);
     }
 
-    pub fn fml(
+    pub fn fmt(
         self: Self,
         allocator: std.mem.Allocator,
     ) ![]const u8 {

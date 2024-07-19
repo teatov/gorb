@@ -19,7 +19,6 @@ pub const Environment = struct {
         env.store = std.StringHashMap(Object).init(allocator);
         env.outer = null;
         env.allocator = allocator;
-        std.debug.print("  ENV INIT {*}\n", .{env});
         return env;
     }
 
@@ -29,23 +28,19 @@ pub const Environment = struct {
     ) !*Environment {
         var env = try Environment.init(allocator);
         env.outer = outer_env;
-        std.debug.print("    ENV ENCLOSE WITH {*}\n", .{outer_env});
         return env;
     }
 
     pub fn close(self: *Self) void {
-        std.debug.print("  ENV DEREF {*}\n", .{self});
         var iterator = self.store.iterator();
         while (iterator.next()) |value| {
             value.value_ptr.deref(self.allocator);
         }
-        std.debug.print("  ENV DESTROY {*}\n", .{self});
         self.store.deinit();
         self.allocator.destroy(self);
     }
 
     pub fn get(self: *Self, name: []const u8) ?Object {
-        std.debug.print("   ENV GET {s} IN {*}\n", .{ name, self });
         var obj = self.store.get(name);
         if (obj == null) {
             if (self.outer) |outer| {
@@ -60,13 +55,6 @@ pub const Environment = struct {
         name: []const u8,
         value: Object,
     ) Object {
-        const value_string = value.inspect(self.allocator) catch unreachable;
-        defer self.allocator.free(value_string);
-        std.debug.print("   ENV SET {s} = {s} IN {*}\n", .{
-            name,
-            value_string,
-            self,
-        });
         _ = self.store.put(name, value) catch |err| std.debug.print(
             "{s}",
             .{@errorName(err)},
@@ -113,10 +101,7 @@ pub const Object = union(ObjectType) {
             .hash => |obj| obj.ref_counter.ref(),
             // .return_value => |obj| obj.ref(),
             .@"error" => |obj| obj.ref_counter.ref(),
-            else => std.debug.print(
-                "    +REF {s} - {any}\n",
-                .{ @tagName(self), self },
-            ),
+            else => null,
         };
     }
 
@@ -124,12 +109,6 @@ pub const Object = union(ObjectType) {
         self: Self,
         allocator: std.mem.Allocator,
     ) void {
-        const value_string = self.inspect(allocator) catch unreachable;
-        defer allocator.free(value_string);
-        std.debug.print(
-            "    DEREF {s} - {s} {*}\n",
-            .{ @tagName(self), value_string, &self },
-        );
         _ = switch (self) {
             .function => |obj| obj.ref_counter.deref(allocator, obj),
             .builtin => |obj| obj.ref_counter.deref(allocator, obj),
@@ -211,9 +190,7 @@ pub fn RefCounter(ObjType: type) type {
         }
 
         pub fn ref(self: *Self) void {
-            std.debug.print("       COUNTER REF {s} - {d}", .{ @typeName(ObjType), self.refs });
             self.refs += 1;
-            std.debug.print(" -> {d}\n", .{self.refs});
         }
 
         pub fn deref(
@@ -221,9 +198,7 @@ pub fn RefCounter(ObjType: type) type {
             allocator: std.mem.Allocator,
             obj: *ObjType,
         ) void {
-            std.debug.print("       COUNTER -DEREF- {s} - {d}", .{ @typeName(ObjType), self.refs });
             self.refs -= 1;
-            std.debug.print(" -> {d}\n", .{self.refs});
             if (self.refs == 0) {
                 self.deinit_fn(obj, allocator);
                 allocator.destroy(self);
@@ -257,7 +232,6 @@ pub const Function = struct {
     fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
-        std.debug.print("DEINIT {s}\n", .{value_string});
         // self.env.deinit();
         // self.body.deinit(allocator, false);
         // for (self.parameters) |param| {
@@ -323,7 +297,6 @@ pub const Builtin = struct {
     fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
-        std.debug.print("DEINIT {s}\n", .{value_string});
         allocator.destroy(self);
     }
 
@@ -354,7 +327,6 @@ pub const Array = struct {
     fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
-        std.debug.print("DEINIT {s}\n", .{value_string});
         for (self.elements) |element| {
             _ = element.deref(allocator);
         }
@@ -439,7 +411,6 @@ pub const Hash = struct {
     fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
-        std.debug.print("DEINIT {s}\n", .{value_string});
         var iterator = self.pairs.iterator();
         while (iterator.next()) |hash_pair| {
             const pair = hash_pair.value_ptr.*;
@@ -503,7 +474,6 @@ pub const Error = struct {
     fn deinit(self: *Self, allocator: std.mem.Allocator) void {
         const value_string = self.inspect(allocator) catch unreachable;
         defer allocator.free(value_string);
-        std.debug.print("DEINIT {s}\n", .{value_string});
         allocator.free(self.message);
         allocator.destroy(self);
     }

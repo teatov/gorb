@@ -4,7 +4,6 @@ const parser = @import("./parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const evaluator = @import("./evaluator.zig");
-const debug = @import("./debug.zig");
 const linenoise = @import("linenoise");
 
 pub fn runFile(
@@ -107,9 +106,7 @@ fn run(
         allocator.free(program_string);
     }
 
-    const debugger = debug.Debugger.init();
-
-    var e = evaluator.Evaluator.init(allocator, debugger);
+    var e = evaluator.Evaluator.init(allocator);
 
     const obj = try e.eval(program, env);
     return .{ .obj = obj, .program = program };
