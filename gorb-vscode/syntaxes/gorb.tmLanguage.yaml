@@ -1,0 +1,76 @@
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+name: gorb
+patterns:
+  - include: '#invalid'
+  - include: '#comment'
+  - include: '#variable'
+  - include: '#constant'
+  - include: '#string'
+  - include: '#operator'
+  - include: '#punctuation'
+  - include: '#keyword'
+  - include: '#support'
+  - include: '#entity'
+repository:
+  invalid:
+    patterns: []
+  comment:
+    patterns:
+      - begin: //
+        beginCaptures:
+          '0':
+            name: punctuation.definition.comment.gorb
+        end: $
+        name: comment.line.double-slash.gorb
+  variable:
+    patterns:
+      - comment: integers
+        match: \b[0-9]+\b
+        name: constant.numeric.integer.gorb
+  constant:
+    patterns:
+      - comment: integers
+        match: \b[0-9]+\b
+        name: constant.numeric.integer.gorb
+      - comment: language constants
+        match: \b(true|false)\b
+        name: constant.language.gorb
+  string:
+    name: string.quoted.double.gorb
+    begin: '"'
+    end: '"'
+    patterns:
+      - name: constant.character.escape.gorb
+        match: \\.
+  operator:
+    patterns:
+      - match: (\+|\-|\*|/)
+        name: keyword.operator.arithmetic.gorb
+      - match: '!'
+        name: keyword.operator.logical.gorb
+      - match: (<|>|==|!=)
+        name: keyword.operator.comparison.gorb
+      - match: '='
+        name: keyword.operator.assignment.gorb
+  punctuation:
+    patterns:
+      - match: ','
+        name: punctuation.other.comma.gorb
+      - match: ':'
+        name: punctuation.other.colon.gorb
+      - match: ;
+        name: punctuation.terminator.gorb
+  keyword:
+    patterns:
+      - name: keyword.function.gorb
+        match: \bfn\b
+      - name: keyword.so.gorb
+        match: \bso\b
+      - name: keyword.control.gorb
+        match: \b(if|else|return)\b
+  support:
+    patterns:
+      - match: \b(len|first|last|rest|push|puts)\b(?=\()
+        name: support.function.builtin.gorb
+scopeName: source.gorb
+

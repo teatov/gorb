@@ -6,6 +6,9 @@
   "repository": "https://github.com/teatov/gorb",
   "license": "MIT",
   "version": "0.0.1",
+  "scripts": {
+    "build": "npx js-yaml syntaxes/gorb.tmLanguage.yaml > syntaxes/gorb.tmLanguage.json && vsce package && code --install-extension gorb-vscode-0.0.1.vsix"
+  },
   "engines": {
     "vscode": "^1.91.0"
   },
@@ -33,5 +36,8 @@
         "path": "./syntaxes/gorb.tmLanguage.json"
       }
     ]
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
   }
 }
