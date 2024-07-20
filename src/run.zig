@@ -8,7 +8,7 @@ const linenoise = @import("linenoise");
 
 pub fn runFile(
     allocator: std.mem.Allocator,
-    options: Options,
+    options: RunOptions,
     input: []const u8,
     file_path: []const u8,
     out: std.fs.File.Writer,
@@ -44,7 +44,7 @@ pub fn runFile(
 
 pub fn startRepl(
     allocator: std.mem.Allocator,
-    options: Options,
+    options: RunOptions,
     out: std.fs.File.Writer,
     errout: std.fs.File.Writer,
     // environment: ?*object.Environment,
@@ -91,7 +91,7 @@ const RunResult = struct {
 
 // fn run(
 //     allocator: std.mem.Allocator,
-//     options: Options,
+//     options: RunOptions,
 //     errout: std.fs.File.Writer,
 //     input: []const u8,
 //     file_path: ?[]const u8,
@@ -99,7 +99,7 @@ const RunResult = struct {
 // ) !RunResult {
 fn run(
     allocator: std.mem.Allocator,
-    options: Options,
+    options: RunOptions,
     _: std.fs.File.Writer,
     input: []const u8,
     file_path: ?[]const u8,
@@ -147,12 +147,12 @@ fn run(
     return .{ .obj = .null, .program = .nothing };
 }
 
-pub const Options = struct {
+pub const RunOptions = struct {
     debug_tokents: bool = false,
     debug_ast: bool = false,
     interactive: bool = false,
 
-    pub fn trySet(self: *Options, arg: []const u8) void {
+    pub fn trySet(self: *RunOptions, arg: []const u8) void {
         if (std.mem.eql(u8, arg, "--tokens") or checkFlag(arg, "t")) {
             self.debug_tokents = true;
         }

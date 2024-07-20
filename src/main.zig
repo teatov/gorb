@@ -9,7 +9,7 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    var options = run.Options{};
+    var options = run.RunOptions{};
 
     var arg_it = try std.process.argsWithAllocator(allocator);
     defer arg_it.deinit();
