@@ -50,8 +50,8 @@ pub const Block = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Block {
-        return try allocator.create(Block);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -81,8 +81,8 @@ pub const Return = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Return {
-        return try allocator.create(Return);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -114,8 +114,8 @@ pub const Declaration = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Declaration {
-        return try allocator.create(Declaration);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -148,8 +148,8 @@ pub const Index = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Index {
-        return try allocator.create(Index);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -186,8 +186,8 @@ pub const Call = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Call {
-        return try allocator.create(Call);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -208,7 +208,7 @@ pub const Call = struct {
         for (self.arguments, 0..) |arg, i| {
             const arg_string = try arg.fmt(allocator);
             try args.appendSlice(arg_string);
-            // allocator.free(arg_string);
+            allocator.free(arg_string);
             if (i < self.arguments.len - 1) {
                 try args.appendSlice(", ");
             }
@@ -232,8 +232,8 @@ pub const If = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*If {
-        return try allocator.create(If);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -280,8 +280,8 @@ pub const UnaryOperation = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*UnaryOperation {
-        return try allocator.create(UnaryOperation);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -314,8 +314,8 @@ pub const BinaryOperation = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*BinaryOperation {
-        return try allocator.create(BinaryOperation);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -353,8 +353,8 @@ pub const Identifier = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*Identifier {
-        return try allocator.create(Identifier);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -379,8 +379,8 @@ pub const BooleanLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*BooleanLiteral {
-        return try allocator.create(BooleanLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -405,8 +405,8 @@ pub const IntegerLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*IntegerLiteral {
-        return try allocator.create(IntegerLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -431,8 +431,8 @@ pub const StringLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*StringLiteral {
-        return try allocator.create(StringLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -458,8 +458,8 @@ pub const ArrayLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*ArrayLiteral {
-        return try allocator.create(ArrayLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -497,8 +497,8 @@ pub const HashLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*HashLiteral {
-        return try allocator.create(HashLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {
@@ -550,8 +550,8 @@ pub const FunctionLiteral = struct {
 
     const Self = @This();
 
-    pub fn init(allocator: std.mem.Allocator) !*FunctionLiteral {
-        return try allocator.create(FunctionLiteral);
+    pub fn init(allocator: std.mem.Allocator) !*Self {
+        return try allocator.create(Self);
     }
 
     pub fn deinit(self: *Self, allocator: std.mem.Allocator) void {

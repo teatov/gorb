@@ -59,12 +59,16 @@ pub fn startRepl(
     defer ln.deinit();
 
     var input = std.ArrayList([]const u8).init(allocator);
-    defer input.deinit();
-    defer for (input.items) |line| allocator.free(line);
+    defer {
+        for (input.items) |line| allocator.free(line);
+        input.deinit();
+    }
 
     var programs = std.ArrayList(ast.Node).init(allocator);
-    defer programs.deinit();
-    defer for (programs.items) |program| program.deinit(allocator);
+    defer {
+        for (programs.items) |program| program.deinit(allocator);
+        programs.deinit();
+    }
 
     while (ln.linenoise("> ") catch |err| (if (err == error.CtrlC) null else return err)) |line| {
         try input.append(line);

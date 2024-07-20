@@ -191,6 +191,7 @@ fn parseGroupedExpression(self: *Self) Error!ast.Node {
     self.nextToken();
 
     const node = try self.parseExpression(.lowest);
+    errdefer node.deinit(self.allocator);
 
     try self.expectPeek(.paren_close);
 
@@ -205,6 +206,7 @@ fn parseIndexExpression(self: *Self, left: ast.Node) !ast.Node {
 
     self.nextToken();
     expr.index = try self.parseExpression(.lowest);
+    errdefer expr.index.deinit(self.allocator);
 
     try self.expectPeek(.bracket_close);
 
@@ -233,12 +235,14 @@ fn parseIfExpression(self: *Self) !ast.Node {
 
     self.nextToken();
     expr.condition = try self.parseExpression(.lowest);
+    errdefer expr.condition.deinit(self.allocator);
 
     try self.expectPeek(.paren_close);
 
     try self.expectPeek(.brace_open);
 
     expr.consequence = (try self.parseBlockStatement()).block;
+    errdefer expr.consequence.deinit(self.allocator);
 
     if (self.peekTokenIs(.kw_else)) {
         self.nextToken();
@@ -406,6 +410,7 @@ fn parseFunctionLiteral(self: *Self) !ast.Node {
     try self.expectPeek(.paren_open);
 
     function.parameters = try self.parseFunctionParameters();
+    errdefer for(function.parameters) |param| param.deinit(self.allocator);
 
     try self.expectPeek(.brace_open);
 
