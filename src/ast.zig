@@ -1,5 +1,5 @@
 const std = @import("std");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const object = @import("./object.zig");
 
 pub const PrintError = error{OutOfMemory};
@@ -76,7 +76,7 @@ pub const Node = union(enum) {
 };
 
 pub const Block = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     statements: []Node = undefined,
 
     const Self = @This();
@@ -109,7 +109,7 @@ pub const Block = struct {
 };
 
 pub const Return = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     return_value: Node = undefined,
 
     const Self = @This();
@@ -135,13 +135,13 @@ pub const Return = struct {
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s};",
-            .{ self.token.literal, return_value },
+            .{ self.tok.literal, return_value },
         );
     }
 };
 
 pub const Declaration = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     name: *Identifier = undefined,
     value: Node = undefined,
 
@@ -169,13 +169,13 @@ pub const Declaration = struct {
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s} = {s};",
-            .{ self.token.literal, self.name.value, value },
+            .{ self.tok.literal, self.name.value, value },
         );
     }
 };
 
 pub const Index = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     left: Node = undefined,
     index: Node = undefined,
 
@@ -213,7 +213,7 @@ pub const Index = struct {
 };
 
 pub const Call = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     function: Node = undefined,
     arguments: []Node = undefined,
 
@@ -260,7 +260,7 @@ pub const Call = struct {
 };
 
 pub const If = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     condition: Node = undefined,
     consequence: *Block = undefined,
     alternative: ?*Block = undefined,
@@ -315,8 +315,8 @@ pub const If = struct {
 };
 
 pub const UnaryOperation = struct {
-    token: token.Token = undefined,
-    operator: token.Token = undefined,
+    tok: Token = undefined,
+    operator: Token = undefined,
     right: Node = undefined,
 
     const Self = @This();
@@ -348,9 +348,9 @@ pub const UnaryOperation = struct {
 };
 
 pub const BinaryOperation = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     left: Node = undefined,
-    operator: token.Token = undefined,
+    operator: Token = undefined,
     right: Node = undefined,
 
     const Self = @This();
@@ -389,7 +389,7 @@ pub const BinaryOperation = struct {
 // literals
 
 pub const Identifier = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     value: []const u8 = undefined,
 
     const Self = @This();
@@ -415,7 +415,7 @@ pub const Identifier = struct {
 };
 
 pub const BooleanLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     value: bool = undefined,
 
     const Self = @This();
@@ -441,7 +441,7 @@ pub const BooleanLiteral = struct {
 };
 
 pub const IntegerLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     value: object.Integer = undefined,
 
     const Self = @This();
@@ -467,7 +467,7 @@ pub const IntegerLiteral = struct {
 };
 
 pub const StringLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     value: []const u8 = undefined,
 
     const Self = @This();
@@ -500,7 +500,7 @@ pub const StringLiteral = struct {
 };
 
 pub const ArrayLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     elements: []Node = undefined,
 
     const Self = @This();
@@ -541,7 +541,7 @@ pub const ArrayLiteral = struct {
 };
 
 pub const HashLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     pairs: std.AutoHashMap(Node, Node) = undefined,
 
     const Self = @This();
@@ -593,7 +593,7 @@ pub const HashLiteral = struct {
 };
 
 pub const FunctionLiteral = struct {
-    token: token.Token = undefined,
+    tok: Token = undefined,
     parameters: []*Identifier = undefined,
     body: *Block = undefined,
 
@@ -637,7 +637,7 @@ pub const FunctionLiteral = struct {
             allocator,
             "{s}({s}){s}",
             .{
-                self.token.literal,
+                self.tok.literal,
                 params.items,
                 body.items,
             },

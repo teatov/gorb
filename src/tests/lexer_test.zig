@@ -1,5 +1,5 @@
 const std = @import("std");
-const token = @import("../token.zig");
+const Token = @import("../Token.zig");
 const lexer = @import("../lexer.zig");
 
 test "next token is correct" {
@@ -30,7 +30,7 @@ test "next token is correct" {
         \\{"foo": "bar"};
     ;
 
-    const tests = [_]struct { type: token.TokenType, literal: []const u8 }{
+    const tests = [_]struct { type: Token.TokenType, literal: []const u8 }{
         .{ .type = .kw_declaration, .literal = "so" },
         .{ .type = .identifier, .literal = "five" },
         .{ .type = .assign, .literal = "=" },

@@ -1,5 +1,5 @@
 const std = @import("std");
-const token = @import("../token.zig");
+const Token = @import("../Token.zig");
 const lexer = @import("../lexer.zig");
 const ast = @import("../ast.zig");
 const parser = @import("../parser.zig");
@@ -44,14 +44,14 @@ fn testIntegerLiteral(node: ast.Node, expected: i32) !void {
     try std.testing.expectEqual(expected, expr.value);
     var buf: [256]u8 = undefined;
     const lit = try std.fmt.bufPrint(&buf, "{d}", .{expected});
-    try std.testing.expectEqualStrings(lit, expr.token.literal);
+    try std.testing.expectEqualStrings(lit, expr.tok.literal);
 }
 
 fn testIdentifier(node: ast.Node, expected: []const u8) !void {
     const expr = node.identifier;
 
     try std.testing.expectEqualStrings(expected, expr.value);
-    try std.testing.expectEqualStrings(expected, expr.token.literal);
+    try std.testing.expectEqualStrings(expected, expr.tok.literal);
 }
 
 fn testBinaryOperation(node: ast.Node, left: PossibleValue, operator: []const u8, right: PossibleValue) !void {
@@ -88,9 +88,9 @@ test "so statements" {
         const node = try init(arena.allocator(), expect.input);
         const expr = node.declaration;
 
-        try std.testing.expectEqualStrings("so", expr.token.literal);
+        try std.testing.expectEqualStrings("so", expr.tok.literal);
         try std.testing.expectEqualStrings(expect.ident, expr.name.value);
-        try std.testing.expectEqualStrings(expect.ident, expr.name.token.literal);
+        try std.testing.expectEqualStrings(expect.ident, expr.name.tok.literal);
 
         try testLiteralExpression(expr.value, expect.value);
     }
@@ -110,7 +110,7 @@ test "return statements" {
         const node = try init(arena.allocator(), expect.input);
         const expr = node.@"return";
 
-        try std.testing.expectEqualStrings("return", expr.token.literal);
+        try std.testing.expectEqualStrings("return", expr.tok.literal);
 
         try testLiteralExpression(expr.return_value, expect.value);
     }
@@ -126,7 +126,7 @@ test "identifier" {
     const expr = node.identifier;
 
     try std.testing.expectEqualStrings("foobar", expr.value);
-    try std.testing.expectEqualStrings("foobar", expr.token.literal);
+    try std.testing.expectEqualStrings("foobar", expr.tok.literal);
 }
 
 test "integer literal" {
@@ -139,7 +139,7 @@ test "integer literal" {
     const expr = node.integer_literal;
 
     try std.testing.expectEqual(5, expr.value);
-    try std.testing.expectEqualStrings("5", expr.token.literal);
+    try std.testing.expectEqualStrings("5", expr.tok.literal);
 }
 
 test "string literal" {
@@ -152,7 +152,7 @@ test "string literal" {
     const expr = node.string_literal;
 
     try std.testing.expectEqualStrings("hello world", expr.value);
-    try std.testing.expectEqualStrings("hello world", expr.token.literal);
+    try std.testing.expectEqualStrings("hello world", expr.tok.literal);
 }
 
 test "array literal" {

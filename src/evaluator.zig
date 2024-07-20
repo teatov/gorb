@@ -1,7 +1,7 @@
 const std = @import("std");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const builtin = @import("./builtin.zig");
 const errors = @import("./errors.zig");
 
@@ -202,7 +202,7 @@ pub const Evaluator = struct {
         self: *Self,
         left: object.Object,
         index: object.Object,
-        tok: token.Token,
+        tok: Token,
     ) !object.Object {
         return switch (left) {
             .array => |obj| self.evalArrayIndexExpression(
@@ -241,7 +241,7 @@ pub const Evaluator = struct {
         self: *Self,
         hash: object.Hash,
         index: object.Object,
-        tok: token.Token,
+        tok: Token,
     ) !object.Object {
         const hash_key = index.hashKey();
 
@@ -283,7 +283,7 @@ pub const Evaluator = struct {
 
     fn evalUnaryExpression(
         self: *Self,
-        operator: token.Token,
+        operator: Token,
         right: object.Object,
     ) !object.Object {
         const obj: ?object.Object = switch (operator.type) {
@@ -324,7 +324,7 @@ pub const Evaluator = struct {
 
     fn evalBinaryExpression(
         self: *Self,
-        operator: token.Token,
+        operator: Token,
         left: object.Object,
         right: object.Object,
     ) !object.Object {
@@ -350,10 +350,10 @@ pub const Evaluator = struct {
             return o;
         }
 
-        if (operator.type == token.TokenType.equals) {
+        if (operator.type == Token.TokenType.equals) {
             return .{ .boolean = std.meta.eql(left, right) };
         }
-        if (operator.type == token.TokenType.not_equals) {
+        if (operator.type == Token.TokenType.not_equals) {
             return .{ .boolean = !std.meta.eql(left, right) };
         }
         if (@intFromEnum(left) != @intFromEnum(right)) {
@@ -380,7 +380,7 @@ pub const Evaluator = struct {
 
     fn evalIntegerBinaryExpression(
         _: *Self,
-        operator: token.Token,
+        operator: Token,
         left: object.Integer,
         right: object.Integer,
     ) !?object.Object {
@@ -409,7 +409,7 @@ pub const Evaluator = struct {
 
     fn evalStringBinaryExpression(
         self: *Self,
-        operator: token.Token,
+        operator: Token,
         left: object.String,
         right: object.String,
     ) !?object.Object {
@@ -502,7 +502,7 @@ pub const Evaluator = struct {
         self: *Self,
         function: object.Object,
         args: []object.Object,
-        tok: token.Token,
+        tok: Token,
     ) !object.Object {
         return switch (function) {
             .function => |obj| blk: {
@@ -589,7 +589,7 @@ pub const Evaluator = struct {
         self: *Self,
         comptime format: []const u8,
         a: anytype,
-        tok: token.Token,
+        tok: Token,
     ) !object.Object {
         const msg = try std.fmt.allocPrint(
             self.allocator,
@@ -608,7 +608,7 @@ pub const Evaluator = struct {
         self: *Self,
         expect: usize,
         got: usize,
-        tok: token.Token,
+        tok: Token,
     ) !object.Object {
         return try self.newError(
             "expected {d} argument{s}, got {d}",

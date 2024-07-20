@@ -1,5 +1,5 @@
 const std = @import("std");
-const token = @import("../token.zig");
+const Token = @import("../Token.zig");
 const lexer = @import("../lexer.zig");
 const ast = @import("../ast.zig");
 const parser = @import("../parser.zig");

@@ -1,6 +1,6 @@
 const std = @import("std");
 const ast = @import("./ast.zig");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const evaluator = @import("./evaluator.zig");
 const errors = @import("./errors.zig");
 
@@ -275,7 +275,7 @@ pub const Function = struct {
 pub const BuiltinFunction = fn (
     *evaluator.Evaluator,
     []Object,
-    token.Token,
+    Token,
 ) evaluator.Evaluator.Error!Object;
 
 pub const Builtin = struct {
@@ -455,14 +455,14 @@ pub const Hash = struct {
 pub const Error = struct {
     // ref_counter: *RefCounter(Self) = undefined,
     message: []const u8 = undefined,
-    tok: token.Token = undefined,
+    tok: Token = undefined,
 
     const Self = @This();
 
     pub fn init(
         allocator: std.mem.Allocator,
         message: []const u8,
-        tok: token.Token,
+        tok: Token,
     ) !*Self {
         var obj = try allocator.create(Self);
         // obj.ref_counter = try RefCounter(Self).init(allocator, &Self.deinit);

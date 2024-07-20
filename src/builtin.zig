@@ -1,6 +1,6 @@
 const std = @import("std");
 const object = @import("./object.zig");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const evaluator = @import("./evaluator.zig");
 
 pub const builtins = std.StaticStringMap(
@@ -19,7 +19,7 @@ pub const builtins = std.StaticStringMap(
 fn len(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    tok: token.Token,
+    tok: Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 1) {
         return try eval.invalidArgumentAmountError(
@@ -51,7 +51,7 @@ fn len(
 fn first(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    tok: token.Token,
+    tok: Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 1) {
         return try eval.invalidArgumentAmountError(
@@ -84,7 +84,7 @@ fn first(
 fn last(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    tok: token.Token,
+    tok: Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 1) {
         return try eval.invalidArgumentAmountError(
@@ -117,7 +117,7 @@ fn last(
 fn rest(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    tok: token.Token,
+    tok: Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 1) {
         return try eval.invalidArgumentAmountError(
@@ -154,7 +154,7 @@ fn rest(
 fn push(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    tok: token.Token,
+    tok: Token,
 ) evaluator.Evaluator.Error!object.Object {
     if (args.len != 2) {
         return try eval.invalidArgumentAmountError(
@@ -191,7 +191,7 @@ fn push(
 fn puts(
     eval: *evaluator.Evaluator,
     args: []object.Object,
-    _: token.Token,
+    _: Token,
 ) evaluator.Evaluator.Error!object.Object {
     // const writer = std.io.getStdOut();
     for (args) |arg| {

@@ -1,12 +1,12 @@
 const std = @import("std");
 const lexer = @import("./lexer.zig");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const ast = @import("./ast.zig");
 
 pub fn formatError(
     allocator: std.mem.Allocator,
     message: []const u8,
-    tok: token.Token,
+    tok: Token,
 ) []const u8 {
     var pointer = std.ArrayList(u8).init(allocator);
     for (0..(tok.pos.col - 1)) |_| {

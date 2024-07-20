@@ -27,9 +27,9 @@ pub fn runFile(
 
     if (val.obj == object.ObjectType.@"error") {
         const error_message = try val.obj.inspect(allocator);
+        defer allocator.free(error_message);
         try errout.writeAll(error_message);
         try errout.writeAll("\n");
-        // allocator.free(error_message);
     } else if (options.interactive) {
         try startRepl(
             allocator,
@@ -55,11 +55,14 @@ pub fn startRepl(
     // defer env.close();
 
     var ln = linenoise.Linenoise.init(allocator);
-    // defer ln.deinit();
+    defer ln.deinit();
 
-    var lines = std.ArrayList([]const u8).init(allocator);
-    while (ln.linenoise("> ") catch |err| if (err == error.CtrlC) null else return err) |line| {
-        try lines.append(line);
+    var input = std.ArrayList([]const u8).init(allocator);
+    defer input.deinit();
+    defer for (input.items) |line| allocator.free(line);
+
+    while (ln.linenoise("> ") catch |err| (if (err == error.CtrlC) null else return err)) |line| {
+        try input.append(line);
         if (std.mem.eql(u8, line, "exit")) {
             break;
         }
@@ -74,15 +77,11 @@ pub fn startRepl(
         );
 
         const val_string = try val.obj.inspect(allocator);
+        defer allocator.free(val_string);
         try out.writeAll(val_string);
         try out.writeAll("\n");
-        // allocator.free(val_string);
         try ln.history.add(line);
     }
-
-    // for (lines.items) |item| allocator.free(item);
-    // lines.deinit();
-    try out.writeAll("\n");
 }
 
 const RunResult = struct {
@@ -138,7 +137,7 @@ fn run(
     //     const program_string = try program.fmt(allocator);
     //     std.debug.print("{s}", .{program_string});
     //     std.debug.print("\n", .{});
-    //     // allocator.free(program_string);
+    // allocator.free(program_string);
     // }
 
     // var e = evaluator.Evaluator.init(allocator);

@@ -1,6 +1,6 @@
 const std = @import("std");
 const lexer = @import("./lexer.zig");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 const ast = @import("./ast.zig");
 const errors = @import("./errors.zig");
 const object = @import("./object.zig");
@@ -9,8 +9,8 @@ pub const Parser = struct {
     lexer: lexer.Lexer,
     errors: std.ArrayList([]const u8),
 
-    cur_token: token.Token = undefined,
-    peek_token: token.Token = undefined,
+    cur_token: Token = undefined,
+    peek_token: Token = undefined,
 
     allocator: std.mem.Allocator,
 
@@ -274,7 +274,7 @@ pub const Parser = struct {
 
     fn parseExpressionList(
         self: *Self,
-        end: token.TokenType,
+        end: Token.TokenType,
     ) ![]ast.Node {
         var list = std.ArrayList(ast.Node).init(self.allocator);
 
@@ -309,7 +309,7 @@ pub const Parser = struct {
     fn parseBooleanLiteral(self: *Self) !ast.Node {
         const boolean = try ast.BooleanLiteral.init(self.allocator);
         boolean.token = self.cur_token;
-        boolean.value = self.curTokenIs(token.TokenType.kw_true);
+        boolean.value = self.curTokenIs(Token.TokenType.kw_true);
         return .{ .boolean_literal = boolean };
     }
 
@@ -425,15 +425,15 @@ pub const Parser = struct {
         self.peek_token = self.lexer.nextToken();
     }
 
-    fn curTokenIs(self: *Self, tok_type: token.TokenType) bool {
+    fn curTokenIs(self: *Self, tok_type: Token.TokenType) bool {
         return self.cur_token.type == tok_type;
     }
 
-    fn peekTokenIs(self: *Self, tok_type: token.TokenType) bool {
+    fn peekTokenIs(self: *Self, tok_type: Token.TokenType) bool {
         return self.peek_token.type == tok_type;
     }
 
-    fn expectPeek(self: *Self, tok_type: token.TokenType) !void {
+    fn expectPeek(self: *Self, tok_type: Token.TokenType) !void {
         if (self.peekTokenIs(tok_type)) {
             self.nextToken();
         } else {
@@ -453,7 +453,7 @@ pub const Parser = struct {
         index,
     };
 
-    fn getPrecedence(tok_type: token.TokenType) Precedence {
+    fn getPrecedence(tok_type: Token.TokenType) Precedence {
         return switch (tok_type) {
             .equals => .equality,
             .not_equals => .equality,
@@ -490,7 +490,7 @@ pub const Parser = struct {
     fn newError(
         self: *Self,
         msg: []const u8,
-        tok: token.Token,
+        tok: Token,
     ) void {
         self.errors.append(errors.formatError(
             self.allocator,
@@ -504,7 +504,7 @@ pub const Parser = struct {
 
     fn expectPeekError(
         self: *Self,
-        tok_type: token.TokenType,
+        tok_type: Token.TokenType,
     ) void {
         const tok_text = tok_type.fmt(self.allocator);
         const peek_tok_text = self.peek_token.fmt(self.allocator);
@@ -527,7 +527,7 @@ pub const Parser = struct {
         self.newError(msg, self.peek_token);
     }
 
-    fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
+    fn noUnaryParseFnError(self: *Self, tok: Token) void {
         const tok_text = tok.fmt(self.allocator);
         // defer self.allocator.free(tok_text);
         const msg = std.fmt.allocPrint(

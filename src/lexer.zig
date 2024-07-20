@@ -1,5 +1,5 @@
 const std = @import("std");
-const token = @import("./token.zig");
+const Token = @import("./Token.zig");
 
 pub const Lexer = struct {
     input: []const u8,
@@ -7,7 +7,7 @@ pub const Lexer = struct {
     offset: u32 = 0,
     read_offset: u32 = 0,
     ch: u8 = 0,
-    pos: token.Pos = .{ .ln = 1, .col = 0 },
+    pos: Token.Pos = .{ .ln = 1, .col = 0 },
     lines_it: std.mem.SplitIterator(u8, .scalar),
     file_path: ?[]const u8,
 
@@ -32,8 +32,8 @@ pub const Lexer = struct {
         return lexer;
     }
 
-    pub fn next(self: *Self) !?token.Token {
-        const tok = self.nextToken();
+    pub fn next(self: *Self) !?Token {
+        const tok = try self.nextToken();
 
         if (self.finished) {
             return null;
@@ -46,10 +46,10 @@ pub const Lexer = struct {
         return tok;
     }
 
-    pub fn nextToken(self: *Self) token.Token {
+    pub fn nextToken(self: *Self) !Token {
         self.skipWhitespace();
 
-        const tok: token.Token = switch (self.ch) {
+        const tok: Token = switch (self.ch) {
             // operators
             '=' => blk: {
                 if (self.peekChar() == '=') {
@@ -106,7 +106,7 @@ pub const Lexer = struct {
             // identifiers and literals
             '"' => blk: {
                 const pos = self.pos;
-                const literal = self.readString() catch break :blk self.newToken(.out_of_memory);
+                const literal = try self.readString();
                 break :blk .{
                     .type = .string,
                     .literal = literal,
@@ -145,8 +145,8 @@ pub const Lexer = struct {
 
     fn newToken(
         self: *Self,
-        tok_type: token.TokenType,
-    ) token.Token {
+        tok_type: Token.TokenType,
+    ) Token {
         defer self.readChar();
         return .{
             .type = tok_type,
@@ -242,8 +242,8 @@ pub const Lexer = struct {
         return self.input[start_offset..self.offset];
     }
 
-    fn lookupIdentifier(_: *Self, identifier: []const u8) token.TokenType {
-        if (token.keywords.get(identifier)) |keyword| {
+    fn lookupIdentifier(_: *Self, identifier: []const u8) Token.TokenType {
+        if (Token.keywords.get(identifier)) |keyword| {
             return keyword;
         } else {
             return .identifier;
