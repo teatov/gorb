@@ -1,6 +1,6 @@
 const std = @import("std");
 const Lexer = @import("./Lexer.zig");
-const parser = @import("./parser.zig");
+const Parser = @import("./Parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
 const evaluator = @import("./evaluator.zig");
@@ -16,7 +16,7 @@ pub fn runFile(
 ) !void {
     // const env = try object.Environment.init(allocator);
 
-    const val = try run(
+    const obj, const program = try run(
         allocator,
         options,
         errout,
@@ -24,9 +24,10 @@ pub fn runFile(
         file_path,
         // env,
     );
+    defer if (program) |prog| prog.deinit(allocator);
 
-    if (val.obj == object.ObjectType.@"error") {
-        const error_message = try val.obj.inspect(allocator);
+    if (obj == object.ObjectType.@"error") {
+        const error_message = try obj.inspect(allocator);
         defer allocator.free(error_message);
         try errout.writeAll(error_message);
         try errout.writeAll("\n");
@@ -61,13 +62,17 @@ pub fn startRepl(
     defer input.deinit();
     defer for (input.items) |line| allocator.free(line);
 
+    var programs = std.ArrayList(ast.Node).init(allocator);
+    defer programs.deinit();
+    defer for (programs.items) |program| program.deinit(allocator);
+
     while (ln.linenoise("> ") catch |err| (if (err == error.CtrlC) null else return err)) |line| {
         try input.append(line);
         if (std.mem.eql(u8, line, "exit")) {
             break;
         }
 
-        const val = try run(
+        const obj, const program = try run(
             allocator,
             options,
             errout,
@@ -76,18 +81,15 @@ pub fn startRepl(
             // env,
         );
 
-        const val_string = try val.obj.inspect(allocator);
+        if (program) |prog| try programs.append(prog);
+
+        const val_string = try obj.inspect(allocator);
         defer allocator.free(val_string);
         try out.writeAll(val_string);
         try out.writeAll("\n");
         try ln.history.add(line);
     }
 }
-
-const RunResult = struct {
-    obj: object.Object,
-    program: ast.Node,
-};
 
 // fn run(
 //     allocator: std.mem.Allocator,
@@ -100,11 +102,11 @@ const RunResult = struct {
 fn run(
     allocator: std.mem.Allocator,
     options: RunOptions,
-    _: std.fs.File.Writer,
+    errout: std.fs.File.Writer,
     input: []const u8,
     file_path: ?[]const u8,
     // _: *object.Environment,
-) !RunResult {
+) !struct { object.Object, ?ast.Node } {
     var l = try Lexer.init(allocator, input, file_path);
 
     if (options.debug_tokents) {
@@ -119,33 +121,35 @@ fn run(
         std.debug.print("\n", .{});
     }
 
-    // var p = parser.Parser.init(allocator, &l);
+    var p = Parser.init(allocator, l);
+    defer p.deinit();
 
-    // const program = p.parseProgram() catch |err| {
-    //     if (err == parser.Parser.Error.OutOfMemory) {
-    //         return err;
-    //     } else {
-    //         for (p.errors.items) |parse_err| {
-    //             try errout.writeAll(parse_err);
-    //             try errout.writeAll("\n");
-    //         }
-    //         return error.ParserError;
-    //     }
-    // };
+    const program = p.parseProgram() catch |err| {
+        switch (err) {
+            Parser.ParserError.UnexpectedPeekToken,
+            Parser.ParserError.NoUnaryParseFn,
+            => {
+                for (p.errors.items) |parse_err| {
+                    try errout.writeAll(parse_err);
+                    try errout.writeAll("\n");
+                }
+                return .{ .null, null };
+            },
+            else => return err,
+        }
+    };
 
-    // if (options.debug_ast) {
-    //     std.debug.print("AST: ", .{});
-    //     const program_string = try program.fmt(allocator);
-    //     std.debug.print("{s}", .{program_string});
-    //     std.debug.print("\n", .{});
-    // allocator.free(program_string);
-    // }
+    if (options.debug_ast) {
+        const program_string = try program.fmt(allocator);
+        std.debug.print("AST: {s}\n", .{program_string});
+        allocator.free(program_string);
+    }
 
     // var e = evaluator.Evaluator.init(allocator);
 
     // const obj = try e.eval(program, env);
     // return .{ .obj = obj, .program = program };
-    return .{ .obj = .null, .program = .nothing };
+    return .{ .null, program };
 }
 
 pub const RunOptions = struct {

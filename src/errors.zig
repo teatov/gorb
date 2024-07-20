@@ -9,6 +9,7 @@ pub fn formatError(
     tok: Token,
 ) []const u8 {
     var pointer = std.ArrayList(u8).init(allocator);
+    defer pointer.deinit();
     for (0..(tok.pos.col - 1)) |_| {
         _ = pointer.append(' ') catch null;
     }
@@ -29,6 +30,7 @@ pub fn formatError(
     _ = pointer.appendSlice(" here") catch null;
 
     const tok_string = tok.pos.fmt(allocator);
+    defer allocator.free(tok_string);
     const msg = std.fmt.allocPrint(
         allocator,
         "{s}:{s}: {s}\n{s}\n{s}",
@@ -42,7 +44,5 @@ pub fn formatError(
     ) catch |err| {
         return @errorName(err);
     };
-    // pointer.deinit();
-    // allocator.free(tok_string);
     return msg;
 }

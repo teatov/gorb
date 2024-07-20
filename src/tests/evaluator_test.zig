@@ -2,13 +2,13 @@ const std = @import("std");
 const Token = @import("../Token.zig");
 const Lexer = @import("../Lexer.zig");
 const ast = @import("../ast.zig");
-const parser = @import("../parser.zig");
+const Parser = @import("../Parser.zig");
 const object = @import("../object.zig");
 const evaluator = @import("../evaluator.zig");
 
 fn init(allocator: std.mem.Allocator, input: []const u8) !object.Object {
     var l = try Lexer.init(allocator, input, null);
-    var p = parser.Parser.init(allocator, &l);
+    var p = Parser.init(allocator, &l);
     const program = try p.parseProgram(false);
     var e = evaluator.Evaluator.init(allocator);
     const env = try object.Environment.init(allocator);
