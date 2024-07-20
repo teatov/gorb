@@ -11,6 +11,7 @@ ch: u8 = 0,
 pos: Token.Pos = .{ .ln = 1, .col = 0 },
 
 lines_it: std.mem.SplitIterator(u8, .scalar),
+cur_line: []const u8 = undefined,
 file_path: ?[]const u8,
 
 const Self = @This();
@@ -26,6 +27,7 @@ pub fn init(
         .lines_it = std.mem.splitScalar(u8, input, '\n'),
         .file_path = file_path,
     };
+    lexer.cur_line = lexer.lines_it.next() orelse unreachable;
     lexer.readChar();
     return lexer;
 }
@@ -55,13 +57,14 @@ pub fn nextToken(self: *Self) !Token {
             if (self.peekChar() == '=') {
                 const start_offset = self.offset;
                 const pos = self.pos;
+                const tok_line = self.cur_line;
                 self.readChar();
                 self.readChar();
                 break :blk .{
                     .type = .equals,
                     .literal = self.input[start_offset..self.offset],
                     .pos = pos,
-                    .line = self.nthLine(pos.ln),
+                    .line = tok_line,
                     .file_path = self.file_path,
                 };
             } else {
@@ -74,13 +77,14 @@ pub fn nextToken(self: *Self) !Token {
             if (self.peekChar() == '=') {
                 const start_offset = self.offset;
                 const pos = self.pos;
+                const tok_line = self.cur_line;
                 self.readChar();
                 self.readChar();
                 break :blk .{
                     .type = .not_equals,
                     .literal = self.input[start_offset..self.offset],
                     .pos = pos,
-                    .line = self.nthLine(pos.ln),
+                    .line = tok_line,
                     .file_path = self.file_path,
                 };
             } else {
@@ -106,33 +110,36 @@ pub fn nextToken(self: *Self) !Token {
         // identifiers and literals
         '"' => blk: {
             const pos = self.pos;
+            const tok_line = self.cur_line;
             const literal = try self.readString();
             break :blk .{
                 .type = .string,
                 .literal = literal,
                 .pos = pos,
-                .line = self.nthLine(pos.ln),
+                .line = tok_line,
                 .file_path = self.file_path,
             };
         },
         '_', 'a'...'z', 'A'...'Z' => blk: {
             const pos = self.pos;
+            const tok_line = self.cur_line;
             const literal = self.readIdentifier();
             break :blk .{
                 .type = self.lookupIdentifier(literal),
                 .literal = literal,
                 .pos = pos,
-                .line = self.nthLine(pos.ln),
+                .line = tok_line,
                 .file_path = self.file_path,
             };
         },
         '0'...'9' => blk: {
             const pos = self.pos;
+            const tok_line = self.cur_line;
             break :blk .{
                 .type = .integer,
                 .literal = self.readNumber(),
                 .pos = pos,
-                .line = self.nthLine(pos.ln),
+                .line = tok_line,
                 .file_path = self.file_path,
             };
         },
@@ -148,11 +155,12 @@ fn newToken(
     tok_type: Token.TokenType,
 ) Token {
     defer self.readChar();
+    const tok_line = self.cur_line;
     return .{
         .type = tok_type,
         .literal = self.input[self.offset..self.read_offset],
         .pos = self.pos,
-        .line = self.nthLine(self.pos.ln),
+        .line = tok_line,
         .file_path = self.file_path,
     };
 }
@@ -169,6 +177,7 @@ fn readChar(self: *Self) void {
     if (self.ch == '\n') {
         self.pos.ln += 1;
         self.pos.col = 0;
+        self.cur_line = self.lines_it.next() orelse unreachable;
     } else {
         self.pos.col += 1;
     }
@@ -247,18 +256,6 @@ fn lookupIdentifier(_: *Self, identifier: []const u8) Token.TokenType {
     } else {
         return .identifier;
     }
-}
-
-fn nthLine(self: *Self, ln: usize) []const u8 {
-    self.lines_it.reset();
-    var i: usize = 1;
-    while (self.lines_it.next()) |line| {
-        if (i == ln) {
-            return line;
-        }
-        i += 1;
-    }
-    unreachable;
 }
 
 test {
