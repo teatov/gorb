@@ -196,19 +196,18 @@ fn readString(self: *Self) ![]u8 {
         self.readChar();
 
         if (self.ch == '\\') {
-            const escape: u8 = switch (self.peekChar()) {
+            const escape: ?u8 = switch (self.peekChar()) {
                 'n' => '\n',
                 'r' => '\r',
                 't' => '\t',
                 '\\' => '\\',
                 '"' => '"',
-                else => 0,
+                else => null,
             };
 
-            if (escape != 0) {
-                try literal.append(escape);
+            if (escape) |esc| {
+                try literal.append(esc);
             } else {
-                try literal.append(self.ch);
                 try literal.append(self.peekChar());
             }
 
