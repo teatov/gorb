@@ -1,8 +1,6 @@
 const std = @import("std");
 const run = @import("./run.zig");
 
-const version = "0.0.1";
-
 pub fn main() !void {
     const stdout = std.io.getStdOut().writer();
     const stderr = std.io.getStdErr().writer();
@@ -18,30 +16,31 @@ pub fn main() !void {
     var arg_it = try std.process.argsWithAllocator(allocator);
     defer arg_it.deinit();
     _ = arg_it.next() orelse unreachable;
-    var file_path: ?[]const u8 = null;
+    var command: ?[]const u8 = null;
     while (arg_it.next()) |arg| {
-        if (!options.trySet(arg) and arg[0] != '-') {
-            file_path = arg;
+        options.trySet(arg);
+        if (arg[0] != '-' and command == null) {
+            command = arg;
         }
     }
 
-    if (options.version) {
-        _ = try stdout.write("gorb ");
-        _ = try stdout.write(version);
-        _ = try stdout.write("\n");
+    if (command == null) {
+        try stdout.writeAll("welcome to gorb.\n");
+        try run.startRepl(allocator, options, stdout, stderr, null);
         return;
     }
 
-    if (options.help) {
-        _ = try stdout.write(help);
-        _ = try stdout.write("\n");
-        return;
+    if (command) |comm| {
+        const is_command = try runCommand(stdout, comm);
+        if (is_command) {
+            return;
+        }
     }
 
-    if (file_path) |f| {
-        const file = std.fs.cwd().openFile(f, .{}) catch |err| {
+    if (command) |file_path| {
+        const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
             if (err == std.fs.File.OpenError.FileNotFound) {
-                try stderr.print("file '{s}' not found\n", .{f});
+                try stderr.print("file '{s}' not found\n", .{file_path});
                 return;
             }
             return err;
@@ -53,30 +52,54 @@ pub fn main() !void {
             std.math.maxInt(usize),
         ) catch |err| {
             if (err == std.fs.File.OpenError.IsDir) {
-                try stderr.print("'{s}' is a directory and not a file\n", .{f});
+                try stderr.print("'{s}' is a directory and not a file\n", .{file_path});
                 return;
             }
             return err;
         };
         // defer allocator.free(input);
 
-        try run.runFile(allocator, options, input, f, stdout, stderr);
-    } else {
-        _ = try stdout.write("welcome to gorb.\n");
-        try run.startRepl(allocator, options, stdout, stderr, null);
+        try run.runFile(allocator, options, input, file_path, stdout, stderr);
     }
 }
 
+fn runCommand(out: std.fs.File.Writer, command: []const u8) !bool {
+    if (std.mem.eql(u8, command, "version")) {
+        try out.print("gorb {s}\n", .{version});
+        return true;
+    }
+
+    if (std.mem.eql(u8, command, "help")) {
+        try out.writeAll(help);
+        try out.writeAll("\n");
+        return true;
+    }
+
+    if (std.mem.eql(u8, command, "zen")) {
+        try out.writeAll(zen);
+        try out.writeAll("\n");
+        return true;
+    }
+
+    return false;
+}
+
+const version = "0.0.1";
+
+const zen = "ᗜˬᗜ не будь злись не бесись не кричись";
+
 const help =
-    \\usage: gorb [options] [file path]
-    \\you can omit the file path to start a repl
+    \\usage: gorb [command | file path] [options]
+    \\you can omit the command to start a repl
+    \\
+    \\commands:
+    \\  version           print version info
+    \\  help              print this
     \\
     \\options:
     \\  -i, --interactive execute the file and start a repl with it's environment
     \\  -t, --tokens      enable debug token information
     \\  -a, --ast         enable debug ast information
-    \\  -v, --version     print version
-    \\  -h, --help        print this
 ;
 
 test {

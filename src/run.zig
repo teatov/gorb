@@ -20,8 +20,8 @@ pub fn runFile(
 
     if (@intFromEnum(val.obj) == @intFromEnum(object.ObjectType.@"error")) {
         const error_message = try val.obj.inspect(allocator);
-        _ = try errout.write(error_message);
-        _ = try errout.write("\n");
+        try errout.writeAll(error_message);
+        try errout.writeAll("\n");
         // allocator.free(error_message);
     } else if (options.interactive) {
         try startRepl(allocator, options, out, errout, env);
@@ -57,15 +57,15 @@ pub fn startRepl(
         const val = try run(allocator, options, errout, line, null, env);
 
         const val_string = try val.obj.inspect(allocator);
-        _ = try out.write(val_string);
-        _ = try out.write("\n");
+        try out.writeAll(val_string);
+        try out.writeAll("\n");
         // allocator.free(val_string);
         try ln.history.add(line);
     }
 
     // for (lines.items) |item| allocator.free(item);
     // lines.deinit();
-    _ = try out.write("\n");
+    try out.writeAll("\n");
 }
 
 const RunResult = struct {
@@ -90,8 +90,8 @@ fn run(
             return err;
         } else {
             for (p.errors.items) |parse_err| {
-                _ = try errout.write(parse_err);
-                _ = try errout.write("\n");
+                try errout.writeAll(parse_err);
+                try errout.writeAll("\n");
                 // allocator.free(parse_err);
             }
             return error.ParserError;
@@ -116,32 +116,17 @@ pub const Options = struct {
     debug_tokents: bool = false,
     debug_ast: bool = false,
     interactive: bool = false,
-    version: bool = false,
-    help: bool = false,
 
-    pub fn trySet(self: *Options, arg: []const u8) bool {
-        var did_set = false;
+    pub fn trySet(self: *Options, arg: []const u8) void {
         if (std.mem.eql(u8, arg, "--tokens") or checkFlag(arg, "t")) {
             self.debug_tokents = true;
-            did_set = true;
         }
         if (std.mem.eql(u8, arg, "--ast") or checkFlag(arg, "a")) {
             self.debug_ast = true;
-            did_set = true;
         }
         if (std.mem.eql(u8, arg, "--interactive") or checkFlag(arg, "i")) {
             self.interactive = true;
-            did_set = true;
         }
-        if (std.mem.eql(u8, arg, "--version") or checkFlag(arg, "v")) {
-            self.version = true;
-            did_set = true;
-        }
-        if (std.mem.eql(u8, arg, "--help") or checkFlag(arg, "h")) {
-            self.help = true;
-            did_set = true;
-        }
-        return did_set;
     }
 
     fn checkFlag(arg: []const u8, flag: []const u8) bool {

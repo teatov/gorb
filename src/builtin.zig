@@ -198,7 +198,7 @@ fn puts(
         const text = try arg.inspect(eval.allocator);
         std.debug.print("{s}", .{text});
         // eval.allocator.free(text);
-        // _ = try writer.write(text);
+        // try writer.writeAll(text);
     }
 
     return .null;
