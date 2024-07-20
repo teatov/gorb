@@ -130,7 +130,7 @@ test "next token is correct" {
     var l = try Lexer.init(arena.allocator(), input, null);
 
     for (tests) |expected| {
-        const tok = l.nextToken();
+        const tok = try l.nextToken();
         try std.testing.expectEqual(expected.type, tok.type);
         try std.testing.expectEqualStrings(expected.literal, tok.literal);
     }

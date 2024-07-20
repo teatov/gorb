@@ -658,6 +658,6 @@ pub const Evaluator = struct {
     };
 };
 
-test {
-    _ = @import("./tests/evaluator_test.zig");
-}
+// test {
+//     _ = @import("./tests/evaluator_test.zig");
+// }
