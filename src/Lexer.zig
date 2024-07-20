@@ -5,13 +5,13 @@ allocator: std.mem.Allocator,
 
 input: []const u8,
 
-offset: u32 = 0,
-read_offset: u32 = 0,
+offset: usize = 0,
+read_offset: usize = 0,
 ch: u8 = 0,
 pos: Token.Pos = .{ .ln = 1, .col = 0 },
+cur_line: []const u8 = undefined,
 
 lines_it: std.mem.SplitIterator(u8, .scalar),
-cur_line: []const u8 = undefined,
 file_path: ?[]const u8,
 
 const Self = @This();
@@ -51,7 +51,7 @@ pub const Iterator = struct {
 pub fn nextToken(self: *Self) !Token {
     self.skipWhitespace();
 
-    const tok: Token = switch (self.ch) {
+    return switch (self.ch) {
         // operators
         '=' => blk: {
             if (self.peekChar() == '=') {
@@ -146,8 +146,6 @@ pub fn nextToken(self: *Self) !Token {
         0 => self.newToken(.eof),
         else => self.newToken(.illegal),
     };
-
-    return tok;
 }
 
 fn newToken(
@@ -184,9 +182,7 @@ fn readChar(self: *Self) void {
 }
 
 fn skipWhitespace(self: *Self) void {
-    while (std.ascii.isWhitespace(self.ch)) {
-        self.readChar();
-    }
+    while (std.ascii.isWhitespace(self.ch)) self.readChar();
 }
 
 fn peekChar(self: *Self) u8 {
@@ -224,9 +220,7 @@ fn readString(self: *Self) ![]u8 {
             continue;
         }
 
-        if (self.ch == '"' or self.ch == 0) {
-            break;
-        }
+        if (self.ch == '"' or self.ch == 0) break;
 
         try literal.append(self.ch);
     }
@@ -236,21 +230,20 @@ fn readString(self: *Self) ![]u8 {
 
 fn readIdentifier(self: *Self) []const u8 {
     const start_offset = self.offset;
-    while (std.ascii.isAlphabetic(self.ch) or self.ch == '_') {
-        self.readChar();
-    }
+    while (std.ascii.isAlphabetic(self.ch) or self.ch == '_') self.readChar();
     return self.input[start_offset..self.offset];
 }
 
 fn readNumber(self: *Self) []const u8 {
     const start_offset = self.offset;
-    while (std.ascii.isDigit(self.ch)) {
-        self.readChar();
-    }
+    while (std.ascii.isDigit(self.ch)) self.readChar();
     return self.input[start_offset..self.offset];
 }
 
-fn lookupIdentifier(_: *Self, identifier: []const u8) Token.TokenType {
+fn lookupIdentifier(
+    _: *Self,
+    identifier: []const u8,
+) Token.TokenType {
     if (Token.keywords.get(identifier)) |keyword| {
         return keyword;
     } else {
