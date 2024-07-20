@@ -38,6 +38,11 @@ pub fn main() !void {
     }
 
     if (command) |file_path| {
+        if (!std.mem.eql(u8, std.fs.path.extension(file_path), ".gorb")) {
+            try stderr.print("file must have a .gorb extension\n", .{});
+            return;
+        }
+
         const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
             if (err == std.fs.File.OpenError.FileNotFound) {
                 try stderr.print("file '{s}' not found\n", .{file_path});
