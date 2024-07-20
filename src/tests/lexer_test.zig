@@ -1,6 +1,6 @@
 const std = @import("std");
 const Token = @import("../Token.zig");
-const lexer = @import("../lexer.zig");
+const Lexer = @import("../Lexer.zig");
 
 test "next token is correct" {
     const input =
@@ -127,7 +127,7 @@ test "next token is correct" {
 
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
-    var l = try lexer.Lexer.init(arena.allocator(), input, null);
+    var l = try Lexer.init(arena.allocator(), input, null);
 
     for (tests) |expected| {
         const tok = l.nextToken();

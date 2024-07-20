@@ -1,5 +1,5 @@
 const std = @import("std");
-const lexer = @import("./lexer.zig");
+const Lexer = @import("./Lexer.zig");
 const parser = @import("./parser.zig");
 const ast = @import("./ast.zig");
 const object = @import("./object.zig");
@@ -105,7 +105,7 @@ fn run(
     file_path: ?[]const u8,
     // _: *object.Environment,
 ) !RunResult {
-    var l = try lexer.Lexer.init(allocator, input, file_path);
+    var l = try Lexer.init(allocator, input, file_path);
 
     if (options.debug_tokents) {
         std.debug.print("TOKENS: ", .{});

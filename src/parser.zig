@@ -1,12 +1,12 @@
 const std = @import("std");
-const lexer = @import("./lexer.zig");
+const Lexer = @import("./Lexer.zig");
 const Token = @import("./Token.zig");
 const ast = @import("./ast.zig");
 const errors = @import("./errors.zig");
 const object = @import("./object.zig");
 
 pub const Parser = struct {
-    lexer: lexer.Lexer,
+    lexer: Lexer,
     errors: std.ArrayList([]const u8),
 
     cur_token: Token = undefined,
@@ -18,7 +18,7 @@ pub const Parser = struct {
 
     pub fn init(
         allocator: std.mem.Allocator,
-        l: lexer.Lexer,
+        l: Lexer,
     ) Parser {
         var parser = Parser{
             .lexer = l,
