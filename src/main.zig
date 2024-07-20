@@ -7,9 +7,7 @@ pub fn main() !void {
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
-    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
-    defer arena.deinit();
-    const allocator = arena.allocator();
+    const allocator = gpa.allocator();
 
     var options = run.Options{};
 
@@ -26,26 +24,43 @@ pub fn main() !void {
 
     if (command == null) {
         try stdout.writeAll("welcome to gorb.\n");
-        try run.startRepl(allocator, options, stdout, stderr, null);
+        try run.startRepl(
+            allocator,
+            options,
+            stdout,
+            stderr,
+            // null,
+        );
         return;
     }
 
     if (command) |comm| {
         const is_command = try runCommand(stdout, comm);
-        if (is_command) {
-            return;
-        }
+        if (is_command) return;
     }
 
     if (command) |file_path| {
-        if (!std.mem.eql(u8, std.fs.path.extension(file_path), ".gorb")) {
-            try stderr.print("file must have a .gorb extension\n", .{});
+        if (!std.mem.eql(
+            u8,
+            std.fs.path.extension(file_path),
+            ".gorb",
+        )) {
+            try stderr.print(
+                "file must have a .gorb extension\n",
+                .{},
+            );
             return;
         }
 
-        const file = std.fs.cwd().openFile(file_path, .{}) catch |err| {
+        const file = std.fs.cwd().openFile(
+            file_path,
+            .{},
+        ) catch |err| {
             if (err == std.fs.File.OpenError.FileNotFound) {
-                try stderr.print("file '{s}' not found\n", .{file_path});
+                try stderr.print(
+                    "file '{s}' not found\n",
+                    .{file_path},
+                );
                 return;
             }
             return err;
@@ -57,14 +72,24 @@ pub fn main() !void {
             std.math.maxInt(usize),
         ) catch |err| {
             if (err == std.fs.File.OpenError.IsDir) {
-                try stderr.print("'{s}' is a directory and not a file\n", .{file_path});
+                try stderr.print(
+                    "'{s}' is a directory and not a file\n",
+                    .{file_path},
+                );
                 return;
             }
             return err;
         };
-        // defer allocator.free(input);
+        defer allocator.free(input);
 
-        try run.runFile(allocator, options, input, file_path, stdout, stderr);
+        try run.runFile(
+            allocator,
+            options,
+            input,
+            file_path,
+            stdout,
+            stderr,
+        );
     }
 }
 

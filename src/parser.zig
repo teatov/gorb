@@ -6,13 +6,11 @@ const errors = @import("./errors.zig");
 const object = @import("./object.zig");
 
 pub const Parser = struct {
-    lexer: *lexer.Lexer,
+    lexer: lexer.Lexer,
     errors: std.ArrayList([]const u8),
 
     cur_token: token.Token = undefined,
     peek_token: token.Token = undefined,
-
-    debug_tokents: bool = false,
 
     allocator: std.mem.Allocator,
 
@@ -20,7 +18,7 @@ pub const Parser = struct {
 
     pub fn init(
         allocator: std.mem.Allocator,
-        l: *lexer.Lexer,
+        l: lexer.Lexer,
     ) Parser {
         var parser = Parser{
             .lexer = l,
@@ -38,11 +36,7 @@ pub const Parser = struct {
     //     self.errors.deinit();
     // }
 
-    pub fn parseProgram(self: *Self, debug_tokens: bool) !ast.Node {
-        self.debug_tokents = debug_tokens;
-        if (debug_tokens) {
-            std.debug.print("TOKENS: ", .{});
-        }
+    pub fn parseProgram(self: *Self) !ast.Node {
         const program = try ast.Block.init(self.allocator);
         var statements = std.ArrayList(ast.Node).init(
             self.allocator,
@@ -429,12 +423,6 @@ pub const Parser = struct {
     fn nextToken(self: *Self) void {
         self.cur_token = self.peek_token;
         self.peek_token = self.lexer.nextToken();
-        if (self.debug_tokents) {
-            const tok_string = self.cur_token.fmt(self.allocator);
-            std.debug.print("{s}", .{tok_string});
-            std.debug.print(" ", .{});
-            // self.allocator.free(tok_string);
-        }
     }
 
     fn curTokenIs(self: *Self, tok_type: token.TokenType) bool {

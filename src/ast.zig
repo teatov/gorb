@@ -5,6 +5,7 @@ const object = @import("./object.zig");
 pub const PrintError = error{OutOfMemory};
 
 pub const Node = union(enum) {
+    nothing: void,
     block: *Block,
     @"return": *Return,
     declaration: *Declaration,
@@ -54,6 +55,7 @@ pub const Node = union(enum) {
         allocator: std.mem.Allocator,
     ) PrintError![]const u8 {
         return switch (self) {
+            .nothing => "NOTHING",
             .block => |node| try node.fmt(allocator),
             .@"return" => |node| try node.fmt(allocator),
             .declaration => |node| try node.fmt(allocator),

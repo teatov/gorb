@@ -33,7 +33,7 @@ pub const Lexer = struct {
     }
 
     pub fn next(self: *Self) !?token.Token {
-        const tok = try self.nextToken();
+        const tok = self.nextToken();
 
         if (self.finished) {
             return null;

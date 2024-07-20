@@ -9,6 +9,12 @@ pub const Token = struct {
 
     const Self = @This();
 
+    pub fn deinit(self: Token, allocator: std.mem.Allocator) void {
+        if (self.type == TokenType.string) {
+            allocator.free(self.literal);
+        }
+    }
+
     pub fn fmt(
         self: Token,
         allocator: std.mem.Allocator,

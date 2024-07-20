@@ -14,22 +14,32 @@ pub fn runFile(
     out: std.fs.File.Writer,
     errout: std.fs.File.Writer,
 ) !void {
-    const env = try object.Environment.init(allocator);
+    // const env = try object.Environment.init(allocator);
 
-    const val = try run(allocator, options, errout, input, file_path, env);
+    const val = try run(
+        allocator,
+        options,
+        errout,
+        input,
+        file_path,
+        // env,
+    );
 
-    if (@intFromEnum(val.obj) == @intFromEnum(object.ObjectType.@"error")) {
+    if (val.obj == object.ObjectType.@"error") {
         const error_message = try val.obj.inspect(allocator);
         try errout.writeAll(error_message);
         try errout.writeAll("\n");
         // allocator.free(error_message);
     } else if (options.interactive) {
-        try startRepl(allocator, options, out, errout, env);
+        try startRepl(
+            allocator,
+            options,
+            out,
+            errout,
+            // env,
+        );
         return;
     }
-    // _ = val.obj.deref(allocator);
-    // env.close();
-    // val.program.deinit(allocator, true);
 }
 
 pub fn startRepl(
@@ -37,11 +47,11 @@ pub fn startRepl(
     options: Options,
     out: std.fs.File.Writer,
     errout: std.fs.File.Writer,
-    environment: ?*object.Environment,
+    // environment: ?*object.Environment,
 ) !void {
-    const env = if (environment) |e| e else try object.Environment.init(
-        allocator,
-    );
+    // const env = if (environment) |e| e else try object.Environment.init(
+    //     allocator,
+    // );
     // defer env.close();
 
     var ln = linenoise.Linenoise.init(allocator);
@@ -54,7 +64,14 @@ pub fn startRepl(
             break;
         }
 
-        const val = try run(allocator, options, errout, line, null, env);
+        const val = try run(
+            allocator,
+            options,
+            errout,
+            line,
+            null,
+            // env,
+        );
 
         const val_string = try val.obj.inspect(allocator);
         try out.writeAll(val_string);
@@ -73,43 +90,62 @@ const RunResult = struct {
     program: ast.Node,
 };
 
+// fn run(
+//     allocator: std.mem.Allocator,
+//     options: Options,
+//     errout: std.fs.File.Writer,
+//     input: []const u8,
+//     file_path: ?[]const u8,
+//     env: *object.Environment,
+// ) !RunResult {
 fn run(
     allocator: std.mem.Allocator,
     options: Options,
-    errout: std.fs.File.Writer,
+    _: std.fs.File.Writer,
     input: []const u8,
     file_path: ?[]const u8,
-    env: *object.Environment,
+    // _: *object.Environment,
 ) !RunResult {
     var l = try lexer.Lexer.init(allocator, input, file_path);
 
-    var p = parser.Parser.init(allocator, &l);
-
-    const program = p.parseProgram(options.debug_tokents) catch |err| {
-        if (err == parser.Parser.Error.OutOfMemory) {
-            return err;
-        } else {
-            for (p.errors.items) |parse_err| {
-                try errout.writeAll(parse_err);
-                try errout.writeAll("\n");
-                // allocator.free(parse_err);
-            }
-            return error.ParserError;
+    if (options.debug_tokents) {
+        std.debug.print("TOKENS: ", .{});
+        while (try l.next()) |tok| {
+            const tok_string = tok.fmt(allocator);
+            std.debug.print("{s} ", .{tok_string});
+            allocator.free(tok_string);
+            tok.deinit(allocator);
         }
-    };
-
-    if (options.debug_ast) {
-        std.debug.print("AST: ", .{});
-        const program_string = try program.fmt(allocator);
-        std.debug.print("{s}", .{program_string});
         std.debug.print("\n", .{});
-        // allocator.free(program_string);
     }
 
-    var e = evaluator.Evaluator.init(allocator);
+    // var p = parser.Parser.init(allocator, &l);
 
-    const obj = try e.eval(program, env);
-    return .{ .obj = obj, .program = program };
+    // const program = p.parseProgram() catch |err| {
+    //     if (err == parser.Parser.Error.OutOfMemory) {
+    //         return err;
+    //     } else {
+    //         for (p.errors.items) |parse_err| {
+    //             try errout.writeAll(parse_err);
+    //             try errout.writeAll("\n");
+    //         }
+    //         return error.ParserError;
+    //     }
+    // };
+
+    // if (options.debug_ast) {
+    //     std.debug.print("AST: ", .{});
+    //     const program_string = try program.fmt(allocator);
+    //     std.debug.print("{s}", .{program_string});
+    //     std.debug.print("\n", .{});
+    //     // allocator.free(program_string);
+    // }
+
+    // var e = evaluator.Evaluator.init(allocator);
+
+    // const obj = try e.eval(program, env);
+    // return .{ .obj = obj, .program = program };
+    return .{ .obj = .null, .program = .nothing };
 }
 
 pub const Options = struct {
