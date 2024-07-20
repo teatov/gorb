@@ -1,18 +1,17 @@
 const std = @import("std");
 const Token = @import("./Token.zig");
 
+allocator: std.mem.Allocator,
+
 input: []const u8,
 
 offset: u32 = 0,
 read_offset: u32 = 0,
 ch: u8 = 0,
 pos: Token.Pos = .{ .ln = 1, .col = 0 },
+
 lines_it: std.mem.SplitIterator(u8, .scalar),
 file_path: ?[]const u8,
-
-finished: bool = false,
-
-allocator: std.mem.Allocator,
 
 const Self = @This();
 
@@ -31,19 +30,21 @@ pub fn init(
     return lexer;
 }
 
-pub fn next(self: *Self) !?Token {
-    const tok = try self.nextToken();
-
-    if (self.finished) {
-        return null;
-    }
-
-    if (tok.type == .eof) {
-        self.finished = true;
-    }
-
-    return tok;
+pub fn iterator(self: Self) Iterator {
+    return Iterator{ .lexer = self };
 }
+
+pub const Iterator = struct {
+    finished: bool = false,
+    lexer: Self,
+
+    pub fn next(self: *Iterator) !?Token {
+        const tok = try self.lexer.nextToken();
+        if (self.finished) return null;
+        if (tok.type == .eof) self.finished = true;
+        return tok;
+    }
+};
 
 pub fn nextToken(self: *Self) !Token {
     self.skipWhitespace();
@@ -249,9 +250,9 @@ fn lookupIdentifier(_: *Self, identifier: []const u8) Token.TokenType {
     }
 }
 
-fn nthLine(self: *Self, ln: u32) []const u8 {
+fn nthLine(self: *Self, ln: usize) []const u8 {
     self.lines_it.reset();
-    var i: u32 = 1;
+    var i: usize = 1;
     while (self.lines_it.next()) |line| {
         if (i == ln) {
             return line;

@@ -109,7 +109,8 @@ fn run(
 
     if (options.debug_tokents) {
         std.debug.print("TOKENS: ", .{});
-        while (try l.next()) |tok| {
+        var iter = l.iterator();
+        while (try iter.next()) |tok| {
             const tok_string = tok.fmt(allocator);
             std.debug.print("{s} ", .{tok_string});
             allocator.free(tok_string);
@@ -165,7 +166,7 @@ pub const RunOptions = struct {
     }
 
     fn checkFlag(arg: []const u8, flag: []const u8) bool {
-        return arg[0] == '-' and arg[1] != '-' and std.mem.containsAtLeast(
+        return arg.len > 1 and arg[0] == '-' and arg[1] != '-' and std.mem.containsAtLeast(
             u8,
             arg,
             1,

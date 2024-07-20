@@ -26,8 +26,8 @@ pub fn fmt(
 }
 
 pub const Pos = struct {
-    ln: u32,
-    col: u32,
+    ln: usize,
+    col: usize,
 
     pub fn fmt(
         self: Pos,
