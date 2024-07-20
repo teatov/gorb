@@ -9,7 +9,9 @@ pub fn main() !void {
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    var arena = std.heap.ArenaAllocator.init(gpa.allocator());
+    defer arena.deinit();
+    const allocator = arena.allocator();
 
     var options = run.Options{};
 
@@ -56,7 +58,7 @@ pub fn main() !void {
             }
             return err;
         };
-        defer allocator.free(input);
+        // defer allocator.free(input);
 
         try run.runFile(allocator, options, input, f, stdout, stderr);
     } else {

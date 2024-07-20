@@ -1,9 +1,4 @@
-so fib = fn(x) {
-  if (x < 2) {
-    return x
-  }
-  return fib(x-1) + fib(x-2)
-}
+let fib = fn(x) {  if (x < 2) {    return x;  }  return fib(x - 1) + fib(x - 2);};
 
 puts(fib(0))
 puts("\n")

@@ -34,9 +34,9 @@ pub const Parser = struct {
         return parser;
     }
 
-    pub fn deinit(self: *Self) void {
-        self.errors.deinit();
-    }
+    // pub fn deinit(self: *Self) void {
+    //     self.errors.deinit();
+    // }
 
     pub fn parseProgram(self: *Self, debug_tokens: bool) !ast.Node {
         self.debug_tokents = debug_tokens;
@@ -433,7 +433,7 @@ pub const Parser = struct {
             const tok_string = self.cur_token.fmt(self.allocator);
             std.debug.print("{s}", .{tok_string});
             std.debug.print(" ", .{});
-            self.allocator.free(tok_string);
+            // self.allocator.free(tok_string);
         }
     }
 
@@ -520,8 +520,8 @@ pub const Parser = struct {
     ) void {
         const tok_text = tok_type.fmt(self.allocator);
         const peek_tok_text = self.peek_token.fmt(self.allocator);
-        defer self.allocator.free(tok_text);
-        defer self.allocator.free(peek_tok_text);
+        // defer self.allocator.free(tok_text);
+        // defer self.allocator.free(peek_tok_text);
         const msg = std.fmt.allocPrint(
             self.allocator,
             "expected {s}, got {s}",
@@ -541,7 +541,7 @@ pub const Parser = struct {
 
     fn noUnaryParseFnError(self: *Self, tok: token.Token) void {
         const tok_text = tok.fmt(self.allocator);
-        defer self.allocator.free(tok_text);
+        // defer self.allocator.free(tok_text);
         const msg = std.fmt.allocPrint(
             self.allocator,
             "no unary parse function for {s} found",

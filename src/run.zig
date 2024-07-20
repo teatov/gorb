@@ -22,14 +22,14 @@ pub fn runFile(
         const error_message = try val.obj.inspect(allocator);
         _ = try errout.write(error_message);
         _ = try errout.write("\n");
-        allocator.free(error_message);
+        // allocator.free(error_message);
     } else if (options.interactive) {
         try startRepl(allocator, options, out, errout, env);
         return;
     }
-    _ = val.obj.deref(allocator);
-    env.close();
-    val.program.deinit(allocator, true);
+    // _ = val.obj.deref(allocator);
+    // env.close();
+    // val.program.deinit(allocator, true);
 }
 
 pub fn startRepl(
@@ -42,10 +42,10 @@ pub fn startRepl(
     const env = if (environment) |e| e else try object.Environment.init(
         allocator,
     );
-    defer env.close();
+    // defer env.close();
 
     var ln = linenoise.Linenoise.init(allocator);
-    defer ln.deinit();
+    // defer ln.deinit();
 
     var lines = std.ArrayList([]const u8).init(allocator);
     while (ln.linenoise("> ") catch |err| if (err == error.CtrlC) null else return err) |line| {
@@ -59,12 +59,12 @@ pub fn startRepl(
         const val_string = try val.obj.inspect(allocator);
         _ = try out.write(val_string);
         _ = try out.write("\n");
-        allocator.free(val_string);
+        // allocator.free(val_string);
         try ln.history.add(line);
     }
 
-    for (lines.items) |item| allocator.free(item);
-    lines.deinit();
+    // for (lines.items) |item| allocator.free(item);
+    // lines.deinit();
     _ = try out.write("\n");
 }
 
@@ -92,7 +92,7 @@ fn run(
             for (p.errors.items) |parse_err| {
                 _ = try errout.write(parse_err);
                 _ = try errout.write("\n");
-                allocator.free(parse_err);
+                // allocator.free(parse_err);
             }
             return error.ParserError;
         }
@@ -103,7 +103,7 @@ fn run(
         const program_string = try program.fmt(allocator);
         std.debug.print("{s}", .{program_string});
         std.debug.print("\n", .{});
-        allocator.free(program_string);
+        // allocator.free(program_string);
     }
 
     var e = evaluator.Evaluator.init(allocator);

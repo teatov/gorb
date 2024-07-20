@@ -38,7 +38,7 @@ fn len(
         },
         else => blk: {
             const obj_string = args[0].stringify(eval.allocator);
-            defer eval.allocator.free(obj_string);
+            // defer eval.allocator.free(obj_string);
             break :blk try eval.newError(
                 "'len' does not support {s}",
                 .{obj_string},
@@ -71,7 +71,7 @@ fn first(
         },
         else => blk: {
             const obj_string = args[0].stringify(eval.allocator);
-            defer eval.allocator.free(obj_string);
+            // defer eval.allocator.free(obj_string);
             break :blk try eval.newError(
                 "'first' does not support {s}",
                 .{obj_string},
@@ -104,7 +104,7 @@ fn last(
         },
         else => blk: {
             const obj_string = args[0].stringify(eval.allocator);
-            defer eval.allocator.free(obj_string);
+            // defer eval.allocator.free(obj_string);
             break :blk try eval.newError(
                 "'last' does not support {s}",
                 .{obj_string},
@@ -141,7 +141,7 @@ fn rest(
         },
         else => blk: {
             const obj_string = args[0].stringify(eval.allocator);
-            defer eval.allocator.free(obj_string);
+            // defer eval.allocator.free(obj_string);
             break :blk try eval.newError(
                 "'rest' does not support {s}",
                 .{obj_string},
@@ -178,7 +178,7 @@ fn push(
         },
         else => blk: {
             const obj_string = args[0].stringify(eval.allocator);
-            defer eval.allocator.free(obj_string);
+            // defer eval.allocator.free(obj_string);
             break :blk try eval.newError(
                 "'push' does not support {s}",
                 .{obj_string},
@@ -197,7 +197,7 @@ fn puts(
     for (args) |arg| {
         const text = try arg.inspect(eval.allocator);
         std.debug.print("{s}", .{text});
-        eval.allocator.free(text);
+        // eval.allocator.free(text);
         // _ = try writer.write(text);
     }
 

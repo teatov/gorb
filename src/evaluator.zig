@@ -77,7 +77,7 @@ pub const Evaluator = struct {
                     return args[0];
                 }
 
-                defer self.allocator.free(args);
+                // defer self.allocator.free(args);
 
                 break :blk try self.applyFunction(function, args, obj.token);
             },
@@ -518,11 +518,11 @@ pub const Evaluator = struct {
                 //     arg.ref();
                 // }
 
-                defer {
-                    for (args) |arg| {
-                        _ = arg.deref(self.allocator);
-                    }
-                }
+                // defer {
+                //     for (args) |arg| {
+                //         _ = arg.deref(self.allocator);
+                //     }
+                // }
 
                 const extended_env = try self.extendFunctionEnv(
                     obj.*,
@@ -539,13 +539,13 @@ pub const Evaluator = struct {
             },
 
             .builtin => |obj| blk: {
-                defer _ = function.deref(self.allocator);
+                // defer _ = function.deref(self.allocator);
                 break :blk obj.function(self, args, tok);
             },
 
             else => blk: {
                 const fn_string = function.stringify(self.allocator);
-                defer self.allocator.free(fn_string);
+                // defer self.allocator.free(fn_string);
                 break :blk try self.newError(
                     "{s} is not a function",
                     .{fn_string},
@@ -576,7 +576,7 @@ pub const Evaluator = struct {
         _: *Self,
         obj: object.Object,
     ) !object.Object {
-        obj.ref();
+        // obj.ref();
         return switch (obj) {
             .return_value => |o| o.*,
             else => obj,

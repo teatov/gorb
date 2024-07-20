@@ -42,7 +42,7 @@ pub fn formatError(
     ) catch |err| {
         return @errorName(err);
     };
-    pointer.deinit();
-    allocator.free(tok_string);
+    // pointer.deinit();
+    // allocator.free(tok_string);
     return msg;
 }

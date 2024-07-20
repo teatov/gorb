@@ -25,29 +25,29 @@ pub const Node = union(enum) {
 
     const Self = @This();
 
-    pub fn deinit(
-        self: Self,
-        allocator: std.mem.Allocator,
-        cleanup: bool,
-    ) void {
-        _ = switch (self) {
-            .block => |node| node.deinit(allocator, cleanup),
-            .@"return" => |node| node.deinit(allocator, cleanup),
-            .declaration => |node| node.deinit(allocator, cleanup),
-            .index => |node| node.deinit(allocator, cleanup),
-            .call => |node| node.deinit(allocator, cleanup),
-            .@"if" => |node| node.deinit(allocator, cleanup),
-            .unary_operation => |node| node.deinit(allocator, cleanup),
-            .binary_operation => |node| node.deinit(allocator, cleanup),
-            .identifier => |node| node.deinit(allocator, cleanup),
-            .boolean_literal => |node| node.deinit(allocator, cleanup),
-            .integer_literal => |node| node.deinit(allocator, cleanup),
-            .string_literal => |node| node.deinit(allocator, cleanup),
-            .array_literal => |node| node.deinit(allocator, cleanup),
-            .hash_literal => |node| node.deinit(allocator, cleanup),
-            .function_literal => |node| node.deinit(allocator, cleanup),
-        };
-    }
+    // pub fn deinit(
+    //     self: Self,
+    //     allocator: std.mem.Allocator,
+    //     cleanup: bool,
+    // ) void {
+    //     _ = switch (self) {
+    //         .block => |node| node.deinit(allocator, cleanup),
+    //         .@"return" => |node| node.deinit(allocator, cleanup),
+    //         .declaration => |node| node.deinit(allocator, cleanup),
+    //         .index => |node| node.deinit(allocator, cleanup),
+    //         .call => |node| node.deinit(allocator, cleanup),
+    //         .@"if" => |node| node.deinit(allocator, cleanup),
+    //         .unary_operation => |node| node.deinit(allocator, cleanup),
+    //         .binary_operation => |node| node.deinit(allocator, cleanup),
+    //         .identifier => |node| node.deinit(allocator, cleanup),
+    //         .boolean_literal => |node| node.deinit(allocator, cleanup),
+    //         .integer_literal => |node| node.deinit(allocator, cleanup),
+    //         .string_literal => |node| node.deinit(allocator, cleanup),
+    //         .array_literal => |node| node.deinit(allocator, cleanup),
+    //         .hash_literal => |node| node.deinit(allocator, cleanup),
+    //         .function_literal => |node| node.deinit(allocator, cleanup),
+    //     };
+    // }
 
     pub fn fmt(
         self: Node,
@@ -83,13 +83,13 @@ pub const Block = struct {
         return try allocator.create(Block);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        for (self.statements) |stmt| {
-            stmt.deinit(allocator, cleanup);
-        }
-        allocator.free(self.statements);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     for (self.statements) |stmt| {
+    //         stmt.deinit(allocator, cleanup);
+    //     }
+    //     allocator.free(self.statements);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -99,7 +99,7 @@ pub const Block = struct {
         for (self.statements) |stmt| {
             const stmt_string = try stmt.fmt(allocator);
             try node_string.appendSlice(stmt_string);
-            allocator.free(stmt_string);
+            // allocator.free(stmt_string);
         }
 
         return try node_string.toOwnedSlice();
@@ -116,10 +116,10 @@ pub const Return = struct {
         return try allocator.create(Return);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.return_value.deinit(allocator, cleanup);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.return_value.deinit(allocator, cleanup);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -129,7 +129,7 @@ pub const Return = struct {
             allocator,
         );
 
-        defer allocator.free(return_value);
+        // defer allocator.free(return_value);
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s};",
@@ -149,11 +149,11 @@ pub const Declaration = struct {
         return try allocator.create(Declaration);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.name.deinit(allocator, cleanup);
-        self.value.deinit(allocator, cleanup);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.name.deinit(allocator, cleanup);
+    //     self.value.deinit(allocator, cleanup);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -163,7 +163,7 @@ pub const Declaration = struct {
             allocator,
         );
 
-        defer allocator.free(value);
+        // defer allocator.free(value);
         return try std.fmt.allocPrint(
             allocator,
             "{s} {s} = {s};",
@@ -183,11 +183,11 @@ pub const Index = struct {
         return try allocator.create(Index);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.left.deinit(allocator, cleanup);
-        self.index.deinit(allocator, cleanup);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.left.deinit(allocator, cleanup);
+    //     self.index.deinit(allocator, cleanup);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -200,8 +200,8 @@ pub const Index = struct {
             allocator,
         );
 
-        defer allocator.free(left);
-        defer allocator.free(index);
+        // defer allocator.free(left);
+        // defer allocator.free(index);
         return try std.fmt.allocPrint(
             allocator,
             "({s}[{s}])",
@@ -221,14 +221,14 @@ pub const Call = struct {
         return try allocator.create(Call);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.function.deinit(allocator, cleanup);
-        for (self.arguments) |arg| {
-            arg.deinit(allocator, cleanup);
-        }
-        allocator.free(self.arguments);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.function.deinit(allocator, cleanup);
+    //     for (self.arguments) |arg| {
+    //         arg.deinit(allocator, cleanup);
+    //     }
+    //     allocator.free(self.arguments);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -241,14 +241,14 @@ pub const Call = struct {
         for (self.arguments, 0..) |arg, i| {
             const arg_string = try arg.fmt(allocator);
             try args.appendSlice(arg_string);
-            allocator.free(arg_string);
+            // allocator.free(arg_string);
             if (i < self.arguments.len - 1) {
                 try args.appendSlice(", ");
             }
         }
 
-        defer allocator.free(function);
-        defer args.deinit();
+        // defer allocator.free(function);
+        // defer args.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{s}({s})",
@@ -269,14 +269,14 @@ pub const If = struct {
         return try allocator.create(If);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.condition.deinit(allocator, cleanup);
-        self.consequence.deinit(allocator, cleanup);
-        if (self.alternative) |alternative| {
-            alternative.deinit(allocator, cleanup);
-        }
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.condition.deinit(allocator, cleanup);
+    //     self.consequence.deinit(allocator, cleanup);
+    //     if (self.alternative) |alternative| {
+    //         alternative.deinit(allocator, cleanup);
+    //     }
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -290,7 +290,7 @@ pub const If = struct {
         for (self.consequence.statements) |stmt| {
             const stmt_string = try stmt.fmt(allocator);
             try body.appendSlice(stmt_string);
-            allocator.free(stmt_string);
+            // allocator.free(stmt_string);
         }
 
         if (self.alternative) |alternative| {
@@ -298,12 +298,12 @@ pub const If = struct {
             for (alternative.statements) |stmt| {
                 const stmt_string = try stmt.fmt(allocator);
                 try body.appendSlice(stmt_string);
-                allocator.free(stmt_string);
+                // allocator.free(stmt_string);
             }
         }
 
-        defer body.deinit();
-        defer allocator.free(condition);
+        // defer body.deinit();
+        // defer allocator.free(condition);
         return try std.fmt.allocPrint(
             allocator,
             "if {s} {s}",
@@ -323,10 +323,10 @@ pub const UnaryOperation = struct {
         return try allocator.create(UnaryOperation);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.right.deinit(allocator, cleanup);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.right.deinit(allocator, cleanup);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -336,7 +336,7 @@ pub const UnaryOperation = struct {
             allocator,
         );
 
-        defer allocator.free(right);
+        // defer allocator.free(right);
         return try std.fmt.allocPrint(
             allocator,
             "({s}{s})",
@@ -357,11 +357,11 @@ pub const BinaryOperation = struct {
         return try allocator.create(BinaryOperation);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.left.deinit(allocator, cleanup);
-        self.right.deinit(allocator, cleanup);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.left.deinit(allocator, cleanup);
+    //     self.right.deinit(allocator, cleanup);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -374,8 +374,8 @@ pub const BinaryOperation = struct {
             allocator,
         );
 
-        defer allocator.free(left);
-        defer allocator.free(right);
+        // defer allocator.free(left);
+        // defer allocator.free(right);
         return try std.fmt.allocPrint(
             allocator,
             "({s} {s} {s})",
@@ -396,9 +396,9 @@ pub const Identifier = struct {
         return try allocator.create(Identifier);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -422,9 +422,9 @@ pub const BooleanLiteral = struct {
         return try allocator.create(BooleanLiteral);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -448,9 +448,9 @@ pub const IntegerLiteral = struct {
         return try allocator.create(IntegerLiteral);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, _: bool) void {
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -474,16 +474,16 @@ pub const StringLiteral = struct {
         return try allocator.create(StringLiteral);
     }
 
-    pub fn deinit(
-        self: *Self,
-        allocator: std.mem.Allocator,
-        cleanup: bool,
-    ) void {
-        if (cleanup) {
-            allocator.free(self.value);
-        }
-        allocator.destroy(self);
-    }
+    // pub fn deinit(
+    //     self: *Self,
+    //     allocator: std.mem.Allocator,
+    //     cleanup: bool,
+    // ) void {
+    //     if (cleanup) {
+    //         allocator.free(self.value);
+    //     }
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -507,13 +507,13 @@ pub const ArrayLiteral = struct {
         return try allocator.create(ArrayLiteral);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        for (self.elements) |element| {
-            element.deinit(allocator, cleanup);
-        }
-        allocator.free(self.elements);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     for (self.elements) |element| {
+    //         element.deinit(allocator, cleanup);
+    //     }
+    //     allocator.free(self.elements);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -523,13 +523,13 @@ pub const ArrayLiteral = struct {
         for (self.elements, 0..) |element, i| {
             const element_string = try element.fmt(allocator);
             try elements.appendSlice(element_string);
-            allocator.free(element_string);
+            // allocator.free(element_string);
             if (i < self.elements.len - 1) {
                 try elements.appendSlice(", ");
             }
         }
 
-        defer elements.deinit();
+        // defer elements.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "[{s}]",
@@ -548,15 +548,15 @@ pub const HashLiteral = struct {
         return try allocator.create(HashLiteral);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        var iterator = self.pairs.iterator();
-        while (iterator.next()) |value| {
-            value.key_ptr.deinit(allocator, cleanup);
-            value.value_ptr.deinit(allocator, cleanup);
-        }
-        self.pairs.deinit();
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     var iterator = self.pairs.iterator();
+    //     while (iterator.next()) |value| {
+    //         value.key_ptr.deinit(allocator, cleanup);
+    //         value.value_ptr.deinit(allocator, cleanup);
+    //     }
+    //     self.pairs.deinit();
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -568,20 +568,20 @@ pub const HashLiteral = struct {
         while (iterator.next()) |key| {
             const key_string = try key.fmt(allocator);
             try pairs.appendSlice(key_string);
-            allocator.free(key_string);
+            // allocator.free(key_string);
             try pairs.appendSlice(":");
             const value_string = try self.pairs.get(key.*).?.fmt(
                 allocator,
             );
             try pairs.appendSlice(value_string);
-            allocator.free(value_string);
+            // allocator.free(value_string);
             if (i < self.pairs.count() - 1) {
                 try pairs.appendSlice(", ");
             }
             i += 1;
         }
 
-        defer pairs.deinit();
+        // defer pairs.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{{{s}}}",
@@ -601,14 +601,14 @@ pub const FunctionLiteral = struct {
         return try allocator.create(FunctionLiteral);
     }
 
-    pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
-        self.body.deinit(allocator, cleanup);
-        for (self.parameters) |param| {
-            param.deinit(allocator, cleanup);
-        }
-        allocator.free(self.parameters);
-        allocator.destroy(self);
-    }
+    // pub fn deinit(self: *Self, allocator: std.mem.Allocator, cleanup: bool) void {
+    //     self.body.deinit(allocator, cleanup);
+    //     for (self.parameters) |param| {
+    //         param.deinit(allocator, cleanup);
+    //     }
+    //     allocator.free(self.parameters);
+    //     allocator.destroy(self);
+    // }
 
     pub fn fmt(
         self: Self,
@@ -626,11 +626,11 @@ pub const FunctionLiteral = struct {
         for (self.body.statements) |stmt| {
             const stmt_string = try stmt.fmt(allocator);
             try body.appendSlice(stmt_string);
-            allocator.free(stmt_string);
+            // allocator.free(stmt_string);
         }
 
-        defer params.deinit();
-        defer body.deinit();
+        // defer params.deinit();
+        // defer body.deinit();
         return try std.fmt.allocPrint(
             allocator,
             "{s}({s}){s}",
