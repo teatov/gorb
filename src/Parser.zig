@@ -38,11 +38,12 @@ pub fn deinit(self: *Self) void {
 
 pub fn parseProgram(self: *Self) !ast.Node {
     const program = try ast.Block.init(self.allocator);
-    errdefer self.allocator.destroy(program);
     var statements = std.ArrayList(ast.Node).init(self.allocator);
     errdefer {
         for (statements.items) |stmt| stmt.deinit(self.allocator);
         statements.deinit();
+        self.peek_token.deinit(self.allocator);
+        self.allocator.destroy(program);
     }
 
     while (!self.curTokenIs(.eof)) {
@@ -165,6 +166,7 @@ fn parseExpression(
             return ParserError.NoUnaryParseFn;
         },
     };
+    errdefer expr.deinit(self.allocator);
 
     while (!self.peekTokenIs(.semicolon) and @intFromEnum(precedence) < @intFromEnum(self.peekPrecedence())) {
         const tok_type = self.peek_token.type;
@@ -410,7 +412,10 @@ fn parseFunctionLiteral(self: *Self) !ast.Node {
     try self.expectPeek(.paren_open);
 
     function.parameters = try self.parseFunctionParameters();
-    errdefer for(function.parameters) |param| param.deinit(self.allocator);
+    errdefer {
+        for (function.parameters) |param| param.deinit(self.allocator);
+        self.allocator.free(function.parameters);
+    }
 
     try self.expectPeek(.brace_open);
 
@@ -434,7 +439,6 @@ fn parseFunctionParameters(self: *Self) ![]*ast.Identifier {
     self.nextToken();
 
     const identifier = try ast.Identifier.init(self.allocator);
-    errdefer self.allocator.destroy(identifier);
     identifier.tok = self.cur_token;
     identifier.value = self.cur_token.literal;
     try identifiers.append(identifier);
@@ -444,7 +448,6 @@ fn parseFunctionParameters(self: *Self) ![]*ast.Identifier {
         self.nextToken();
 
         const ident = try ast.Identifier.init(self.allocator);
-        errdefer self.allocator.destroy(ident);
         ident.tok = self.cur_token;
         ident.value = self.cur_token.literal;
         try identifiers.append(ident);

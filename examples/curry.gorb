@@ -1,9 +1,9 @@
-let add = fn(x,y) {  return x + y;};
+so add = fn(x,y) {  return x + y;};
 
-let x = 5;
-let y = 10;
+so x = 5;
+so y = 10;
 add(x,y);
 
-let addTwo = fn(x) { return add(x,2); }
+so addTwo = fn(x) { return add(x,2); }
 
 addTwo(40);

@@ -122,7 +122,7 @@ fn run(
             allocator.free(tok_string);
             tok.deinit(allocator);
         }
-        std.debug.print("\n", .{});
+        std.debug.print("\n\n", .{});
     }
 
     var p = Parser.init(allocator, l);
@@ -145,7 +145,7 @@ fn run(
 
     if (options.debug_ast) {
         const program_string = try program.fmt(allocator);
-        std.debug.print("AST: {s}\n", .{program_string});
+        std.debug.print("AST: {s}\n\n", .{program_string});
         allocator.free(program_string);
     }
 
