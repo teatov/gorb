@@ -3,6 +3,12 @@ const Lexer = @import("./Lexer.zig");
 const Token = @import("./Token.zig");
 const ast = @import("./ast.zig");
 
+const esc = "\x1B";
+const reset = esc ++ "[0m";
+const bold = esc ++ "[1m";
+const red = esc ++ "[0;31m";
+const dim = esc ++ "[2m";
+
 pub fn formatError(
     allocator: std.mem.Allocator,
     message: []const u8,
@@ -29,17 +35,23 @@ pub fn formatError(
     }
     _ = pointer.appendSlice(" here") catch null;
 
-    const tok_string = tok.pos.fmt(allocator);
-    defer allocator.free(tok_string);
+    const pos_string = tok.pos.fmt(allocator);
+    defer allocator.free(pos_string);
     const msg = std.fmt.allocPrint(
         allocator,
-        "{s}:{s}: {s}\n{s}\n{s}",
+        "{s}error:{s} {s}\n{s}{s}:{s}:{s}\n{s}\n{s}{s}{s}",
         .{
-            tok.file_path orelse "",
-            tok_string,
+            red,
+            reset,
             message,
+            bold,
+            tok.file_path orelse "",
+            pos_string,
+            reset,
             tok.line,
+            dim,
             pointer.items,
+            reset,
         },
     ) catch |err| {
         return @errorName(err);
